@@ -1,0 +1,17 @@
+{
+  "name": "volei-bot",
+  "version": "1.0.0",
+  "description": "Bot de WhatsApp para organizar lista de vôlei via WPPConnect",
+  "main": "src/bot.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/bot.js"
+  },
+  "dependencies": {
+    "@wppconnect-team/wppconnect": "^1.35.0",
+    "better-sqlite3": "^11.3.0",
+    "express": "^4.19.2",
+    "node-fetch": "^2.7.0",
+    "dotenv": "^16.4.5"
+  }
+}

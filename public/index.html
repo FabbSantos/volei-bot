@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Bot Vôlei - Pareamento</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #111; color: #eee; display: flex;
+         flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+  h1 { font-size: 1.2rem; margin-bottom: 1rem; }
+  img { background: #fff; padding: 16px; border-radius: 12px; max-width: 280px; }
+  #status { margin-top: 1rem; color: #9a9; }
+  #erro { color: #e77; }
+</style>
+</head>
+<body>
+  <h1>Escaneie pra conectar o bot do vôlei</h1>
+  <div id="conteudo">Carregando...</div>
+  <div id="status"></div>
+
+<script>
+async function atualizar() {
+  try {
+    const statusRes = await fetch('/status');
+    const statusData = await statusRes.json();
+    document.getElementById('status').textContent = 'Status: ' + statusData.status;
+
+    if (statusData.status === 'CONNECTED' || statusData.status === 'inChat') {
+      document.getElementById('conteudo').innerHTML = '<p>✅ Conectado! Pode fechar essa página.</p>';
+      return;
+    }
+
+    const qrRes = await fetch('/qr');
+    if (qrRes.ok) {
+      const qrData = await qrRes.json();
+      document.getElementById('conteudo').innerHTML =
+        '<img src="' + qrData.qr + '" alt="QR Code" />';
+    } else {
+      document.getElementById('conteudo').innerHTML = '<p id="erro">Aguardando QR code...</p>';
+    }
+  } catch (e) {
+    document.getElementById('conteudo').innerHTML = '<p id="erro">Erro ao carregar status.</p>';
+  }
+}
+
+atualizar();
+setInterval(atualizar, 4000);
+</script>
+</body>
+</html>
