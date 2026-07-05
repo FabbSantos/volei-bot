@@ -8,14 +8,20 @@ const { notificarFalha } = require('./notify');
 const PORT = process.env.PORT || 3000;
 const NOME_GRUPO_ALVO = process.env.NOME_GRUPO_ALVO || null; // opcional: filtrar por nome do grupo
 
+const ESTADOS_DESCONEXAO = ['CONFLICT', 'CLOSED', 'DISCONNECTED', 'DEPRECATED_VERSION', 'UNPAIRED', 'UNPAIRED_IDLE'];
+const DELAY_RECONEXAO_MS = 15_000;
+const TENTATIVAS_ANTES_DE_NOTIFICAR = 2;
+
 let ultimoQrBase64 = null;
 let statusConexao = 'iniciando';
+let tentativasReconexao = 0;
+let reconexaoAgendada = false;
 
 const app = express();
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.get('/status', (req, res) => {
-  res.json({ status: statusConexao });
+  res.json({ status: statusConexao, tentativasReconexao });
 });
 
 app.get('/qr', (req, res) => {
@@ -29,34 +35,60 @@ app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
 
-wppconnect
-  .create({
-    session: 'volei-bot',
-    catchQR: (base64Qrimg, asciiQR, attempts) => {
-      console.log(`QR code gerado (tentativa ${attempts})`);
-      ultimoQrBase64 = base64Qrimg;
-      statusConexao = 'aguardando_qr';
-    },
-    statusFind: (statusSession) => {
-      console.log('Status da sessão:', statusSession);
-      statusConexao = statusSession;
-      if (['CONFLICT', 'CLOSED', 'DISCONNECTED', 'DEPRECATED_VERSION'].includes(statusSession)) {
-        notificarFalha(`sessão caiu com status "${statusSession}". Precisa reconectar via /qr.`);
-      }
-      if (statusSession === 'CONNECTED' || statusSession === 'inChat') {
-        ultimoQrBase64 = null;
-      }
-    },
-    headless: true,
-    puppeteerOptions: {
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    },
-  })
-  .then((client) => start(client))
-  .catch((erro) => {
-    console.error('Erro ao iniciar WPPConnect:', erro);
-    notificarFalha(`erro fatal ao iniciar: ${erro.message}`);
-  });
+function iniciarSessao() {
+  wppconnect
+    .create({
+      session: 'volei-bot',
+      catchQR: (base64Qrimg, asciiQR, attempts) => {
+        console.log(`QR code gerado (tentativa ${attempts})`);
+        ultimoQrBase64 = base64Qrimg;
+        statusConexao = 'aguardando_qr';
+      },
+      statusFind: (statusSession) => {
+        console.log('Status da sessão:', statusSession);
+        statusConexao = statusSession;
+
+        if (statusSession === 'CONNECTED' || statusSession === 'inChat') {
+          ultimoQrBase64 = null;
+          tentativasReconexao = 0; // conexão de volta ao normal, zera o contador
+        }
+
+        if (ESTADOS_DESCONEXAO.includes(statusSession)) {
+          agendarReconexao(`status da sessão: "${statusSession}"`);
+        }
+      },
+      headless: true,
+      puppeteerOptions: {
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      },
+    })
+    .then((client) => start(client))
+    .catch((erro) => {
+      console.error('Erro ao iniciar WPPConnect:', erro);
+      agendarReconexao(`erro ao iniciar: ${erro.message}`);
+    });
+}
+
+function agendarReconexao(motivo) {
+  if (reconexaoAgendada) return; // evita empilhar várias reconexões em paralelo
+  reconexaoAgendada = true;
+  tentativasReconexao++;
+
+  console.warn(`[reconexao] tentativa ${tentativasReconexao} — motivo: ${motivo}`);
+
+  if (tentativasReconexao >= TENTATIVAS_ANTES_DE_NOTIFICAR) {
+    notificarFalha(
+      `${tentativasReconexao} tentativas de reconexão seguidas falharam. Motivo mais recente: ${motivo}. Confere o /qr, pode ser que precise parear de novo.`
+    );
+  }
+
+  setTimeout(() => {
+    reconexaoAgendada = false;
+    iniciarSessao();
+  }, DELAY_RECONEXAO_MS);
+}
+
+iniciarSessao();
 
 function start(client) {
   client.onMessage(async (message) => {
@@ -80,11 +112,10 @@ function start(client) {
     }
   });
 
+  // Log auxiliar — a reconexão em si já é tratada via statusFind acima,
+  // pra não disparar duas rotinas de retry em paralelo.
   client.onStateChange((state) => {
     console.log('Mudança de estado:', state);
-    if (state === 'CONFLICT' || state === 'UNPAIRED' || state === 'UNPAIRED_IDLE') {
-      notificarFalha(`estado da conexão mudou para "${state}". Verifique o WhatsApp.`);
-    }
   });
 
   console.log('Bot pronto e escutando mensagens.');
