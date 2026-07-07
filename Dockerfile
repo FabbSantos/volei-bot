@@ -1,8 +1,7 @@
 FROM node:20-slim
 
-# Dependências do Chromium que o Puppeteer/WPPConnect precisa
+# Bibliotecas que o Chrome for Testing (baixado pelo Puppeteer) precisa em runtime
 RUN apt-get update && apt-get install -y \
-    chromium \
     fonts-liberation \
     libasound2 \
     libatk-bridge2.0-0 \
@@ -36,12 +35,15 @@ RUN apt-get update && apt-get install -y \
     libxss1 \
     libxtst6 \
     ca-certificates \
+    wget \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# Diz pro Puppeteer usar o Chromium do sistema em vez de baixar o dele
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+# NÃO usamos o chromium do apt: a versão do Debian trixie/sid costuma bater
+# com "Trace/breakpoint trap" no isolamento de syscalls do Railway (o filtro
+# seccomp interno do Chromium falha mesmo com --no-sandbox). Deixamos o
+# Puppeteer baixar o Chrome for Testing dele, que é validado contra a versão
+# exata do puppeteer-core usada aqui e costuma ser mais estável nesses PaaS.
 
 WORKDIR /app
 
