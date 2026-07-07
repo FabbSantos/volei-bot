@@ -9,13 +9,15 @@ const PORT = process.env.PORT || 3000;
 const NOME_GRUPO_ALVO = process.env.NOME_GRUPO_ALVO || null; // opcional: filtrar por nome do grupo
 
 const ESTADOS_DESCONEXAO = ['CONFLICT', 'CLOSED', 'DISCONNECTED', 'DEPRECATED_VERSION', 'UNPAIRED', 'UNPAIRED_IDLE'];
-const DELAY_RECONEXAO_MS = 15_000;
+const DELAY_BASE_MS = 15_000;
+const DELAY_MAX_MS = 5 * 60_000; // teto de 5min entre tentativas, pra não martelar o host
 const TENTATIVAS_ANTES_DE_NOTIFICAR = 2;
 
 let ultimoQrBase64 = null;
 let statusConexao = 'iniciando';
 let tentativasReconexao = 0;
 let reconexaoAgendada = false;
+let notificacaoEnviada = false; // evita spammar o Telegram a cada retry do mesmo incidente
 
 const app = express();
 app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -51,6 +53,7 @@ function iniciarSessao() {
         if (statusSession === 'CONNECTED' || statusSession === 'inChat') {
           ultimoQrBase64 = null;
           tentativasReconexao = 0; // conexão de volta ao normal, zera o contador
+          notificacaoEnviada = false;
         }
 
         if (ESTADOS_DESCONEXAO.includes(statusSession)) {
@@ -59,7 +62,14 @@ function iniciarSessao() {
       },
       headless: true,
       puppeteerOptions: {
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--no-zygote',
+          '--single-process',
+        ],
       },
     })
     .then((client) => start(client))
@@ -74,18 +84,23 @@ function agendarReconexao(motivo) {
   reconexaoAgendada = true;
   tentativasReconexao++;
 
-  console.warn(`[reconexao] tentativa ${tentativasReconexao} — motivo: ${motivo}`);
+  // backoff exponencial (15s, 30s, 60s... até 5min), pra não martelar o host
+  // toda hora quando o problema é falta de recurso (ex: "Cannot fork")
+  const delay = Math.min(DELAY_BASE_MS * 2 ** (tentativasReconexao - 1), DELAY_MAX_MS);
 
-  if (tentativasReconexao >= TENTATIVAS_ANTES_DE_NOTIFICAR) {
+  console.warn(`[reconexao] tentativa ${tentativasReconexao} — motivo: ${motivo} — próxima em ${delay / 1000}s`);
+
+  if (tentativasReconexao >= TENTATIVAS_ANTES_DE_NOTIFICAR && !notificacaoEnviada) {
+    notificacaoEnviada = true; // só um alerta por incidente, não um por tentativa
     notificarFalha(
-      `${tentativasReconexao} tentativas de reconexão seguidas falharam. Motivo mais recente: ${motivo}. Confere o /qr, pode ser que precise parear de novo.`
+      `${tentativasReconexao} tentativas de reconexão seguidas falharam. Motivo mais recente: ${motivo}. Confere o /qr, pode ser que precise parear de novo ou faltar recurso no host.`
     );
   }
 
   setTimeout(() => {
     reconexaoAgendada = false;
     iniciarSessao();
-  }, DELAY_RECONEXAO_MS);
+  }, delay);
 }
 
 iniciarSessao();
