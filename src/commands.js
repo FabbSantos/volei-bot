@@ -8,6 +8,12 @@ const CMD_MOSTRAR = '#mostralista';
 const CMD_ENCERRAR = '#encerrarlista';
 const CMD_AJUDA = '#comandos';
 const REGEX_REMOVER = /^#remover\s+(\d+)$/i;
+// Comandos de teste — só funcionam se TEST_MODE=true no .env/Railway.
+// Pensados pra validar o fluxo de lotação/espera sem precisar de 22 pessoas reais.
+const REGEX_TESTAR_ENCHER = /^#testarencher\s+(\d+)$/i;
+const CMD_TESTAR_LIMPAR = '#testarlimpar';
+
+const TEST_MODE = process.env.TEST_MODE === 'true';
 
 const TEXTO_AJUDA = `🏐 *Comandos do bot*
 
@@ -19,13 +25,13 @@ const TEXTO_AJUDA = `🏐 *Comandos do bot*
 *#encerrarlista* — fecha a lista, para de aceitar nomes
 *#comandos* — mostra essa ajuda`;
 
-// Testa se o texto bate com algum comando reconhecido de verdade — usado
-// pra decidir se avisa "grupo não liberado" ou ignora silenciosamente.
-// Sem isso, qualquer mensagem começando com # (tipo "#quintou") disparava
-// aviso à toa em grupos inativos.
+const TEXTO_AJUDA_TESTE = `\n\n🧪 *Comandos de teste (TEST_MODE ligado)*
+*#testarencher N* — adiciona N pessoas fake na lista (ex: #testarencher 15)
+*#testarlimpar* — apaga todo mundo da lista ativa, sem precisar recriar`;
+
 function correspondeAlgumComando(texto) {
   const textoLower = texto.toLowerCase();
-  return (
+  const comandoNormal = (
     REGEX_ABRIR.test(texto) ||
     REGEX_ENTRAR.test(texto) ||
     REGEX_REMOVER.test(texto) ||
@@ -33,6 +39,10 @@ function correspondeAlgumComando(texto) {
     textoLower === CMD_ENCERRAR ||
     textoLower === CMD_AJUDA
   );
+  const comandoTeste = TEST_MODE && (
+    REGEX_TESTAR_ENCHER.test(texto) || textoLower === CMD_TESTAR_LIMPAR
+  );
+  return comandoNormal || comandoTeste;
 }
 
 // msg = { body, pushname, chatId, numero, nomeGrupo, reply(texto) }
@@ -143,8 +153,49 @@ async function processarMensagem(msg) {
     return msg.reply(textoLista);
   }
 
+  if (TEST_MODE) {
+    const matchEncher = texto.match(REGEX_TESTAR_ENCHER);
+    if (matchEncher) {
+      const lista = db.getListaAtiva(chatId);
+      if (!lista) {
+        return msg.reply('Nenhuma lista aberta pra testar. Abre uma com *#listaDD/MM* primeiro.');
+      }
+
+      const quantidade = parseInt(matchEncher[1], 10);
+      const sufixo = Date.now(); // evita colidir com testes anteriores
+      let ultimoEvento = null;
+      let adicionados = 0;
+
+      for (let i = 1; i <= quantidade; i++) {
+        const resultado = db.adicionarEntrada(lista.id, `Teste ${i}`, `fake-${sufixo}-${i}@c.us`);
+        if (resultado.erro) break; // lotou de vez, para de tentar
+        adicionados++;
+        if (resultado.evento) ultimoEvento = resultado.evento;
+      }
+
+      await msg.reply(`🧪 ${adicionados} pessoa(s) fake adicionada(s).`);
+      if (ultimoEvento === 'lista_cheia') {
+        await msg.reply('🚨 Lista encheu! Vamos começar a lista de espera.');
+      } else if (ultimoEvento === 'tudo_lotado') {
+        await msg.reply('🚨 Tudo lotado! Encerrando as vagas por hoje.');
+      }
+
+      const textoLista = db.montarListaFormatada(lista.id, lista.data_jogo);
+      return msg.reply(textoLista);
+    }
+
+    if (texto.toLowerCase() === CMD_TESTAR_LIMPAR) {
+      const lista = db.getListaAtiva(chatId);
+      if (!lista) {
+        return msg.reply('Nenhuma lista aberta pra limpar.');
+      }
+      const removidos = db.limparEntradas(lista.id);
+      return msg.reply(`🧪 Lista limpa! ${removidos} entrada(s) removida(s). A lista *${lista.data_jogo}* continua aberta, zerada.`);
+    }
+  }
+
   if (texto.toLowerCase() === CMD_AJUDA) {
-    return msg.reply(TEXTO_AJUDA);
+    return msg.reply(TEXTO_AJUDA + (TEST_MODE ? TEXTO_AJUDA_TESTE : ''));
   }
 }
 

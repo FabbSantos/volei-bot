@@ -107,6 +107,14 @@ function jaEstaNaLista(listaId, numero) {
   ).get(listaId, numero);
 }
 
+// Apaga todas as entradas de uma lista, mantendo a lista em si (não recria
+// data/status) — útil pra retestar o fluxo de lotação sem abrir lista nova
+// toda vez. Só é exposta via comando se TEST_MODE estiver ligado.
+function limparEntradas(listaId) {
+  const info = db.prepare('DELETE FROM entradas WHERE lista_id = ?').run(listaId);
+  return info.changes;
+}
+
 // Retorna: { tipo: 'principal'|'espera', posicao, evento: null|'lista_cheia'|'tudo_lotado' }
 function adicionarEntrada(listaId, nome, numero) {
   if (jaEstaNaLista(listaId, numero)) {
@@ -217,6 +225,7 @@ module.exports = {
   getListaAtiva,
   encerrarLista,
   adicionarEntrada,
+  limparEntradas,
   montarListaFormatada,
   removerPorPosicao,
   historico,
