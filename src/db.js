@@ -6,19 +6,29 @@ const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS grupos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id TEXT NOT NULL UNIQUE,   -- JID do grupo, ex: 123456789-987654321@g.us
+    nome TEXT,
+    ativo INTEGER NOT NULL DEFAULT 1, -- reservado pra futuro liga/desliga por cobrança
+    primeira_mensagem_em TEXT NOT NULL
+  );
+
   CREATE TABLE IF NOT EXISTS listas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    data_jogo TEXT NOT NULL UNIQUE,     -- ex: "05/07"
+    chat_id TEXT NOT NULL,          -- isola a lista por grupo
+    data_jogo TEXT NOT NULL,        -- ex: "05/07"
     status TEXT NOT NULL DEFAULT 'aberta', -- aberta | encerrada
-    criada_em TEXT NOT NULL
+    criada_em TEXT NOT NULL,
+    UNIQUE(chat_id, data_jogo)
   );
 
   CREATE TABLE IF NOT EXISTS entradas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     lista_id INTEGER NOT NULL,
     nome TEXT NOT NULL,
-    numero TEXT NOT NULL,
-    tipo TEXT NOT NULL,        -- principal | espera1 | espera2 | espera3 | espera4
+    numero TEXT NOT NULL,           -- número/JID individual de quem entrou (não o do grupo)
+    tipo TEXT NOT NULL,             -- principal | espera
     timestamp TEXT NOT NULL,
     FOREIGN KEY (lista_id) REFERENCES listas(id)
   );
@@ -27,22 +37,57 @@ db.exec(`
 const LIMITE_PRINCIPAL = 18;
 const LIMITE_ESPERA = 4;
 
-function criarLista(dataJogo) {
-  const existente = db.prepare('SELECT * FROM listas WHERE data_jogo = ?').get(dataJogo);
+// Cadastra o grupo na primeira vez que ele manda qualquer mensagem.
+// Fica INATIVO por padrão — precisa ser liberado manualmente via comando
+// de admin no privado (ver adminCommands.js) antes de aceitar comandos de lista.
+function registrarGrupoSeNovo(chatId, nomeGrupo) {
+  const existente = db.prepare('SELECT * FROM grupos WHERE chat_id = ?').get(chatId);
+  if (existente) return existente;
+
+  db.prepare(
+    'INSERT INTO grupos (chat_id, nome, ativo, primeira_mensagem_em) VALUES (?, ?, 0, ?)'
+  ).run(chatId, nomeGrupo || null, new Date().toISOString());
+
+  console.log(`[grupos] novo grupo cadastrado (inativo): ${chatId} (${nomeGrupo || 'sem nome'})`);
+  return db.prepare('SELECT * FROM grupos WHERE chat_id = ?').get(chatId);
+}
+
+function getGrupo(chatId) {
+  return db.prepare('SELECT * FROM grupos WHERE chat_id = ?').get(chatId);
+}
+
+function ativarGrupo(chatId) {
+  const info = db.prepare('UPDATE grupos SET ativo = 1 WHERE chat_id = ?').run(chatId);
+  return info.changes > 0;
+}
+
+function desativarGrupo(chatId) {
+  const info = db.prepare('UPDATE grupos SET ativo = 0 WHERE chat_id = ?').run(chatId);
+  return info.changes > 0;
+}
+
+function listarGrupos() {
+  return db.prepare('SELECT * FROM grupos ORDER BY primeira_mensagem_em DESC').all();
+}
+
+function criarLista(chatId, dataJogo) {
+  const existente = db.prepare(
+    'SELECT * FROM listas WHERE chat_id = ? AND data_jogo = ?'
+  ).get(chatId, dataJogo);
   if (existente) return { ja_existia: true, lista: existente };
 
   const info = db.prepare(
-    'INSERT INTO listas (data_jogo, status, criada_em) VALUES (?, ?, ?)'
-  ).run(dataJogo, 'aberta', new Date().toISOString());
+    'INSERT INTO listas (chat_id, data_jogo, status, criada_em) VALUES (?, ?, ?, ?)'
+  ).run(chatId, dataJogo, 'aberta', new Date().toISOString());
 
-  return { ja_existia: false, lista: { id: info.lastInsertRowid, data_jogo: dataJogo, status: 'aberta' } };
+  return { ja_existia: false, lista: { id: info.lastInsertRowid, chat_id: chatId, data_jogo: dataJogo, status: 'aberta' } };
 }
 
-function getListaAtiva() {
-  // A "ativa" é a lista aberta mais recente
+function getListaAtiva(chatId) {
+  // A "ativa" é a lista aberta mais recente DESSE grupo
   return db.prepare(
-    "SELECT * FROM listas WHERE status = 'aberta' ORDER BY id DESC LIMIT 1"
-  ).get();
+    "SELECT * FROM listas WHERE chat_id = ? AND status = 'aberta' ORDER BY id DESC LIMIT 1"
+  ).get(chatId);
 }
 
 function encerrarLista(listaId) {
@@ -156,11 +201,18 @@ function removerPorPosicao(listaId, posicao) {
   return { removido: alvo.nome, promovido };
 }
 
-function historico() {
-  return db.prepare('SELECT * FROM listas ORDER BY id DESC LIMIT 20').all();
+function historico(chatId) {
+  return db.prepare(
+    'SELECT * FROM listas WHERE chat_id = ? ORDER BY id DESC LIMIT 20'
+  ).all(chatId);
 }
 
 module.exports = {
+  registrarGrupoSeNovo,
+  getGrupo,
+  ativarGrupo,
+  desativarGrupo,
+  listarGrupos,
   criarLista,
   getListaAtiva,
   encerrarLista,

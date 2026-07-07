@@ -3,10 +3,12 @@ const express = require('express');
 const path = require('path');
 const wppconnect = require('@wppconnect-team/wppconnect');
 const { processarMensagem } = require('./commands');
+const { processarComandoAdmin } = require('./adminCommands');
 const { notificarFalha } = require('./notify');
 
 const PORT = process.env.PORT || 3000;
 const NOME_GRUPO_ALVO = process.env.NOME_GRUPO_ALVO || null; // opcional: filtrar por nome do grupo
+const ADMIN_NUMBER = process.env.ADMIN_NUMBER || null; // ex: 5521999999999@c.us — seu número, pra comandos de admin no privado
 
 const ESTADOS_DESCONEXAO = ['CONFLICT', 'CLOSED', 'DISCONNECTED', 'DEPRECATED_VERSION', 'UNPAIRED', 'UNPAIRED_IDLE'];
 const DELAY_BASE_MS = 15_000;
@@ -106,15 +108,31 @@ iniciarSessao();
 function start(client) {
   client.onMessage(async (message) => {
     try {
+      if (!message.body) return;
+
+      const ehGrupo = message.isGroupMsg || (message.from || '').endsWith('@g.us');
+
+      if (!ehGrupo) {
+        // Mensagem privada: só processa se vier do número admin configurado.
+        // Isso permite ativar/desativar grupos sem precisar estar neles.
+        if (ADMIN_NUMBER && message.from === ADMIN_NUMBER) {
+          await processarComandoAdmin({
+            body: message.body,
+            reply: (texto) => client.sendText(message.from, texto),
+          });
+        }
+        return;
+      }
+
       // Se quiser restringir a um grupo específico, descomente:
       // if (NOME_GRUPO_ALVO && message.chat?.name !== NOME_GRUPO_ALVO) return;
-
-      if (!message.body) return;
 
       const msg = {
         body: message.body,
         pushname: message.notifyName || message.sender?.pushname,
-        from: message.from,
+        chatId: message.from, // JID do grupo — usado pra isolar cada lista por grupo
+        numero: message.author || message.sender?.id || message.from, // remetente individual dentro do grupo
+        nomeGrupo: message.chat?.name || null,
         reply: (texto) => client.sendText(message.from, texto),
       };
 
