@@ -19,6 +19,22 @@ const TEXTO_AJUDA = `🏐 *Comandos do bot*
 *#encerrarlista* — fecha a lista, para de aceitar nomes
 *#comandos* — mostra essa ajuda`;
 
+// Testa se o texto bate com algum comando reconhecido de verdade — usado
+// pra decidir se avisa "grupo não liberado" ou ignora silenciosamente.
+// Sem isso, qualquer mensagem começando com # (tipo "#quintou") disparava
+// aviso à toa em grupos inativos.
+function correspondeAlgumComando(texto) {
+  const textoLower = texto.toLowerCase();
+  return (
+    REGEX_ABRIR.test(texto) ||
+    REGEX_ENTRAR.test(texto) ||
+    REGEX_REMOVER.test(texto) ||
+    textoLower === CMD_MOSTRAR ||
+    textoLower === CMD_ENCERRAR ||
+    textoLower === CMD_AJUDA
+  );
+}
+
 // msg = { body, pushname, chatId, numero, nomeGrupo, reply(texto) }
 async function processarMensagem(msg) {
   const texto = (msg.body || '').trim();
@@ -29,9 +45,10 @@ async function processarMensagem(msg) {
   const grupo = db.registrarGrupoSeNovo(chatId, msg.nomeGrupo);
 
   if (!grupo.ativo) {
-    // Só avisa se a mensagem parecer um comando do bot, pra não floodar
-    // o grupo respondendo a toda mensagem normal da galera.
-    if (texto.startsWith('#')) {
+    // Só avisa se for de fato um comando reconhecido do bot (ex: #lista,
+    // #lista05/07, #mostralista...), não qualquer mensagem com # no meio
+    // do papo normal do grupo (tipo "#quintou").
+    if (correspondeAlgumComando(texto)) {
       return msg.reply('🔒 Esse grupo ainda não foi liberado pra usar o bot. Fala com quem administra.');
     }
     return;
