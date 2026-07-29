@@ -1,0 +1,19 @@
+# Dependências
+node_modules/
+
+# Segredos e config local (use .env.example como modelo)
+.env
+
+# Banco SQLite local (produção usa o volume montado em /app/data)
+*.db
+*.db-wal
+*.db-shm
+data/
+
+# Sessão do WhatsApp salva pelo wppconnect/puppeteer
+tokens/
+
+# Logs e lixo de sistema operacional
+*.log
+.DS_Store
+Thumbs.db

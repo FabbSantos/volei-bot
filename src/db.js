@@ -7,7 +7,7 @@ db.pragma('journal_mode = WAL');
 
 // Padrões — cada grupo pode ter o seu, ajustado via #ativargrupo no privado do admin
 const LIMITE_PRINCIPAL = 18;
-const LIMITE_ESPERA = 4;
+const LIMITE_ESPERA = 6;
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS grupos (
@@ -70,9 +70,11 @@ function registrarGrupoSeNovo(chatId, nomeGrupo) {
   const existente = db.prepare('SELECT * FROM grupos WHERE chat_id = ?').get(chatId);
   if (existente) return existente;
 
+  // Limites explícitos no INSERT: o DEFAULT da coluna congela no valor da época
+  // da migração, então banco antigo teria o padrão velho pra grupos novos
   db.prepare(
-    'INSERT INTO grupos (chat_id, nome, ativo, primeira_mensagem_em) VALUES (?, ?, 0, ?)'
-  ).run(chatId, nomeGrupo || null, new Date().toISOString());
+    'INSERT INTO grupos (chat_id, nome, ativo, primeira_mensagem_em, limite_principal, limite_espera) VALUES (?, ?, 0, ?, ?, ?)'
+  ).run(chatId, nomeGrupo || null, new Date().toISOString(), LIMITE_PRINCIPAL, LIMITE_ESPERA);
 
   console.log(`[grupos] novo grupo cadastrado (inativo): ${chatId} (${nomeGrupo || 'sem nome'})`);
   return db.prepare('SELECT * FROM grupos WHERE chat_id = ?').get(chatId);

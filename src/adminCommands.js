@@ -11,7 +11,7 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (só funcionam aqui no privad
 
 *#listargrupos* — mostra todos os grupos que já mandaram mensagem, com status e tamanho da lista
 *#ativargrupo <chat_id>* — libera um grupo pra usar o bot
-*#ativargrupo <chat_id> 18 --6* — libera e dimensiona: lista de 18 vagas + 6 de espera (padrão: 18 + 4)
+*#ativargrupo <chat_id> 18 --6* — libera e dimensiona: lista de 18 vagas + 6 de espera (padrão: 18 + 6)
 *#desativargrupo <chat_id>* — bloqueia um grupo (ex: inadimplência)
 *#admin* — mostra essa ajuda
 
