@@ -14,6 +14,7 @@ const ESTADOS_DESCONEXAO = ['CONFLICT', 'CLOSED', 'DISCONNECTED', 'DEPRECATED_VE
 const DELAY_BASE_MS = 15_000;
 const DELAY_MAX_MS = 5 * 60_000; // teto de 5min entre tentativas, pra não martelar o host
 const TENTATIVAS_ANTES_DE_NOTIFICAR = 2;
+const TENTATIVAS_ANTES_DE_REINICIAR = 10; // depois disso, sai do processo pro host subir um container limpo
 
 let ultimoQrBase64 = null;
 let statusConexao = 'iniciando';
@@ -83,6 +84,17 @@ function agendarReconexao(motivo) {
   if (reconexaoAgendada) return; // evita empilhar várias reconexões em paralelo
   reconexaoAgendada = true;
   tentativasReconexao++;
+
+  // Retry infinito no mesmo processo acumula zumbi do Chrome até esgotar os PIDs
+  // do container (fork passa a falhar com EAGAIN). Melhor morrer e deixar o host
+  // reiniciar o container do zero, que nasce sem zumbi nenhum.
+  if (tentativasReconexao >= TENTATIVAS_ANTES_DE_REINICIAR) {
+    console.error(`[reconexao] ${tentativasReconexao} tentativas seguidas falharam — encerrando pro host subir um container limpo. Motivo: ${motivo}`);
+    notificarFalha(
+      `${tentativasReconexao} tentativas de reconexão falharam (última: ${motivo}). Reiniciando o container pra limpar recursos.`
+    ).finally(() => process.exit(1));
+    return;
+  }
 
   // backoff exponencial (15s, 30s, 60s... até 5min), pra não martelar o host
   // toda hora quando o problema é falta de recurso (ex: "Cannot fork")

@@ -36,6 +36,7 @@ RUN apt-get update && apt-get install -y \
     libxtst6 \
     ca-certificates \
     wget \
+    tini \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
@@ -59,4 +60,7 @@ RUN mkdir -p /app/data
 
 EXPOSE 3000
 
+# tini como PID 1 colhe os processos zumbis que o Chrome deixa quando crasha —
+# sem isso eles acumulam até esgotar o limite de PIDs do container (EAGAIN no fork)
+ENTRYPOINT ["tini", "--"]
 CMD ["node", "src/bot.js"]
