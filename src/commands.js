@@ -93,6 +93,11 @@ async function processarMensagem(msg) {
       return msg.reply(`${nome}, infelizmente já lotou tudo hoje 🏐`);
     }
 
+    // Se a lista cresceu, quem estava na espera subiu antes desse novato entrar
+    for (const promovido of resultado.promovidos || []) {
+      await msg.reply(`⬆️ ${promovido} subiu da espera pra lista principal!`);
+    }
+
     const rotulo = resultado.tipo === 'principal'
       ? `posição ${resultado.posicao} da lista principal`
       : `posição ${resultado.posicao} da lista de espera`;
@@ -145,8 +150,8 @@ async function processarMensagem(msg) {
     }
 
     await msg.reply(`❌ ${resultado.removido} removido(a) da posição ${posicao}.`);
-    if (resultado.promovido) {
-      await msg.reply(`⬆️ ${resultado.promovido} subiu da espera pra lista principal!`);
+    for (const promovido of resultado.promovidos || []) {
+      await msg.reply(`⬆️ ${promovido} subiu da espera pra lista principal!`);
     }
 
     const textoLista = db.montarListaFormatada(lista.id, lista.data_jogo);
