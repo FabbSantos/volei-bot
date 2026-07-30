@@ -2,9 +2,20 @@ const fs = require('fs');
 const path = require('path');
 const db = require('./db');
 
-// Figurinha comemorativa do #quitado — coloca a imagem do meme nesse caminho
-const FIGURINHA_QUITADO = process.env.FIGURINHA_QUITADO
-  || path.join(__dirname, '..', 'assets', 'agiota-pago.png');
+// Figurinha comemorativa do #quitado — qualquer assets/agiota-pago.(png|jpg|
+// jpeg|webp) serve; ou aponta outro arquivo via env FIGURINHA_QUITADO
+function acharFigurinhaQuitado() {
+  if (process.env.FIGURINHA_QUITADO) return process.env.FIGURINHA_QUITADO;
+  const pasta = path.join(__dirname, '..', 'assets');
+  let arquivos;
+  try {
+    arquivos = fs.readdirSync(pasta);
+  } catch {
+    return null;
+  }
+  const achado = arquivos.find((a) => /^agiota-pago\.(png|jpe?g|webp)$/i.test(a));
+  return achado ? path.join(pasta, achado) : null;
+}
 
 // Regex pro comando de abertura: #lista05/07, #lista 05/07, e com nome
 // opcional: "#lista30/07 Volei Riachuelo"
@@ -511,8 +522,9 @@ async function processarMensagem(msg) {
     }
     await msg.reply(`✅ ${resultado.nome} pagou o agiota. 🤝`);
     // Figurinha comemorativa, se a imagem existir no deploy
-    if (msg.enviarFigurinha && fs.existsSync(FIGURINHA_QUITADO)) {
-      await msg.enviarFigurinha(FIGURINHA_QUITADO);
+    const figurinha = acharFigurinhaQuitado();
+    if (msg.enviarFigurinha && figurinha && fs.existsSync(figurinha)) {
+      await msg.enviarFigurinha(figurinha);
     }
     return;
   }
