@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const wppconnect = require('@wppconnect-team/wppconnect');
+const db = require('./db');
 const { processarMensagem } = require('./commands');
 const { processarComandoAdmin } = require('./adminCommands');
 const { notificarFalha } = require('./notify');
@@ -117,6 +118,48 @@ function agendarReconexao(motivo) {
 
 iniciarSessao();
 
+// O wppconnect devolve ids como Wid (objeto) ou string, dependendo da chamada —
+// normaliza tudo pra string tipo "5521999999999@c.us"
+function widParaString(wid) {
+  if (!wid) return null;
+  if (typeof wid === 'string') return wid;
+  if (wid._serialized) return wid._serialized;
+  if (wid.user && wid.server) return `${wid.user}@${wid.server}`;
+  return String(wid);
+}
+
+// Cache da lista de admins por grupo — evita consultar o WhatsApp a cada #pago.
+// 5min de TTL: promover/rebaixar admin no grupo demora até isso pra valer no bot.
+const CACHE_ADMINS_TTL_MS = 5 * 60_000;
+const cacheAdmins = new Map(); // chatId -> { ids: string[], expira: epoch ms }
+
+async function listarAdminsDoGrupo(client, chatId) {
+  const agora = Date.now();
+  const cache = cacheAdmins.get(chatId);
+  if (cache && cache.expira > agora) return cache.ids;
+
+  const wids = await client.getGroupAdmins(chatId);
+  const ids = (wids || []).map(widParaString).filter(Boolean);
+  cacheAdmins.set(chatId, { ids, expira: agora + CACHE_ADMINS_TTL_MS });
+  return ids;
+}
+
+async function ehAdminDoGrupo(client, chatId, numero) {
+  if (ADMIN_NUMBER && numero === ADMIN_NUMBER) return true; // admin do bot pode tudo
+  if (!numero) return false;
+  try {
+    const ids = await listarAdminsDoGrupo(client, chatId);
+    if (ids.includes(numero)) return true;
+    // Fallback: compara só a parte antes do @ — cobre divergência de sufixo
+    // (@c.us vs @lid) entre o remetente e a lista de admins em alguns grupos
+    const usuario = String(numero).split('@')[0];
+    return ids.some((id) => id.split('@')[0] === usuario);
+  } catch (err) {
+    console.warn(`[admins] falha ao consultar admins de ${chatId}: ${err.message}`);
+    return false; // na dúvida, nega — melhor que liberar pagamento pra todo mundo
+  }
+}
+
 function start(client) {
   client.onMessage(async (message) => {
     try {
@@ -130,22 +173,51 @@ function start(client) {
         if (ADMIN_NUMBER && message.from === ADMIN_NUMBER) {
           await processarComandoAdmin({
             body: message.body,
+            origem: 'privado',
             reply: (texto) => client.sendText(message.from, texto),
+            getAdminsDoGrupo: (chatId) => listarAdminsDoGrupo(client, chatId),
           });
         }
+        return;
+      }
+
+      // Grupo de admins: comandos remotos de gestão, não tem lista própria.
+      // Qualquer membro dele pode comandar — quem controla é a membresia do grupo.
+      const grupo = db.registrarGrupoSeNovo(message.from, message.chat?.name || null);
+      if (grupo.eh_admin) {
+        await processarComandoAdmin({
+          body: message.body,
+          origem: 'grupoadmin',
+          reply: (texto) => client.sendText(message.from, texto),
+          getAdminsDoGrupo: (chatId) => listarAdminsDoGrupo(client, chatId),
+        });
         return;
       }
 
       // Se quiser restringir a um grupo específico, descomente:
       // if (NOME_GRUPO_ALVO && message.chat?.name !== NOME_GRUPO_ALVO) return;
 
+      const numero = widParaString(message.author || message.sender?.id || message.from); // remetente individual dentro do grupo
+
       const msg = {
         body: message.body,
         pushname: message.notifyName || message.sender?.pushname,
         chatId: message.from, // JID do grupo — usado pra isolar cada lista por grupo
-        numero: message.author || message.sender?.id || message.from, // remetente individual dentro do grupo
+        numero,
         nomeGrupo: message.chat?.name || null,
         reply: (texto) => client.sendText(message.from, texto),
+        ehAdmin: () => ehAdminDoGrupo(client, message.from, numero),
+        // Quem enviou a mensagem que está sendo respondida (ex: o comprovante)
+        remetenteCitado: async () => {
+          if (!message.quotedMsgId) return null;
+          try {
+            const citada = await client.getMessageById(message.quotedMsgId);
+            return widParaString(citada?.author || citada?.sender?.id || citada?.from);
+          } catch (err) {
+            console.warn(`[citada] falha ao buscar mensagem citada: ${err.message}`);
+            return null;
+          }
+        },
       };
 
       await processarMensagem(msg);

@@ -17,7 +17,9 @@ db.exec(`
     ativo INTEGER NOT NULL DEFAULT 1, -- reservado pra futuro liga/desliga por cobrança
     primeira_mensagem_em TEXT NOT NULL,
     limite_principal INTEGER NOT NULL DEFAULT ${LIMITE_PRINCIPAL},
-    limite_espera INTEGER NOT NULL DEFAULT ${LIMITE_ESPERA}
+    limite_espera INTEGER NOT NULL DEFAULT ${LIMITE_ESPERA},
+    eh_admin INTEGER NOT NULL DEFAULT 0, -- grupo de admins: comandos remotos, não tem lista própria
+    valor_padrao_centavos INTEGER NOT NULL DEFAULT 0 -- 0 = sem valor definido
   );
 
   CREATE TABLE IF NOT EXISTS listas (
@@ -26,6 +28,7 @@ db.exec(`
     data_jogo TEXT NOT NULL,        -- ex: "05/07"
     status TEXT NOT NULL DEFAULT 'aberta', -- aberta | encerrada
     criada_em TEXT NOT NULL,
+    valor_centavos INTEGER NOT NULL DEFAULT 0, -- por pessoa; copiado do padrão do grupo ao criar
     UNIQUE(chat_id, data_jogo)
   );
 
@@ -36,18 +39,42 @@ db.exec(`
     numero TEXT NOT NULL,           -- número/JID individual de quem entrou (não o do grupo)
     tipo TEXT NOT NULL,             -- principal | espera
     timestamp TEXT NOT NULL,
+    pago INTEGER NOT NULL DEFAULT 0,
+    valor_pago_centavos INTEGER NOT NULL DEFAULT 0, -- snapshot na hora do #pago: mudar o valor da lista depois não reescreve o caixa
     FOREIGN KEY (lista_id) REFERENCES listas(id)
   );
 `);
 
-// Migração: bancos criados antes do dimensionamento por grupo não têm essas
-// colunas — adiciona sem perder o que já está no volume.
-const colunasGrupos = db.pragma('table_info(grupos)').map((c) => c.name);
-if (!colunasGrupos.includes('limite_principal')) {
-  db.exec(`ALTER TABLE grupos ADD COLUMN limite_principal INTEGER NOT NULL DEFAULT ${LIMITE_PRINCIPAL}`);
+// Migração: bancos criados antes dessas colunas ganham elas no boot,
+// sem perder o que já está no volume.
+function migrarColunas(tabela, colunas) {
+  const existentes = db.pragma(`table_info(${tabela})`).map((c) => c.name);
+  for (const [nome, definicao] of Object.entries(colunas)) {
+    if (!existentes.includes(nome)) {
+      db.exec(`ALTER TABLE ${tabela} ADD COLUMN ${nome} ${definicao}`);
+    }
+  }
 }
-if (!colunasGrupos.includes('limite_espera')) {
-  db.exec(`ALTER TABLE grupos ADD COLUMN limite_espera INTEGER NOT NULL DEFAULT ${LIMITE_ESPERA}`);
+migrarColunas('grupos', {
+  limite_principal: `INTEGER NOT NULL DEFAULT ${LIMITE_PRINCIPAL}`,
+  limite_espera: `INTEGER NOT NULL DEFAULT ${LIMITE_ESPERA}`,
+  eh_admin: 'INTEGER NOT NULL DEFAULT 0',
+  valor_padrao_centavos: 'INTEGER NOT NULL DEFAULT 0',
+});
+migrarColunas('listas', { valor_centavos: 'INTEGER NOT NULL DEFAULT 0' });
+migrarColunas('entradas', {
+  pago: 'INTEGER NOT NULL DEFAULT 0',
+  valor_pago_centavos: 'INTEGER NOT NULL DEFAULT 0',
+});
+
+// ---- dinheiro: tudo em centavos (INTEGER) pra não sofrer com float
+function paraCentavos(texto) {
+  // aceita "25", "25,50", "25.50"
+  return Math.round(parseFloat(String(texto).replace(',', '.')) * 100);
+}
+
+function formatarReais(centavos) {
+  return `R$ ${(centavos / 100).toFixed(2).replace('.', ',')}`;
 }
 
 // Limites do grupo dono da lista — cai nos padrões se o grupo sumir do cadastro
@@ -68,7 +95,15 @@ function getLimitesDaLista(listaId) {
 // de admin no privado (ver adminCommands.js) antes de aceitar comandos de lista.
 function registrarGrupoSeNovo(chatId, nomeGrupo) {
   const existente = db.prepare('SELECT * FROM grupos WHERE chat_id = ?').get(chatId);
-  if (existente) return existente;
+  if (existente) {
+    // Mantém o nome fresco: grupo renomeado no WhatsApp continua achável
+    // por nome nos comandos remotos (#listade, #valorde...)
+    if (nomeGrupo && nomeGrupo !== existente.nome) {
+      db.prepare('UPDATE grupos SET nome = ? WHERE chat_id = ?').run(nomeGrupo, chatId);
+      existente.nome = nomeGrupo;
+    }
+    return existente;
+  }
 
   // Limites explícitos no INSERT: o DEFAULT da coluna congela no valor da época
   // da migração, então banco antigo teria o padrão velho pra grupos novos
@@ -139,17 +174,35 @@ function criarLista(chatId, dataJogo) {
   ).get(chatId, dataJogo);
   if (existente) return { ja_existia: true, lista: existente };
 
-  const info = db.prepare(
-    'INSERT INTO listas (chat_id, data_jogo, status, criada_em) VALUES (?, ?, ?, ?)'
-  ).run(chatId, dataJogo, 'aberta', new Date().toISOString());
+  // Copia o valor padrão do grupo — mudar o padrão depois não mexe em lista
+  // já aberta (pra isso existe o #valor, que altera só a lista atual)
+  const grupo = getGrupo(chatId);
+  const valorCentavos = grupo?.valor_padrao_centavos || 0;
 
-  return { ja_existia: false, lista: { id: info.lastInsertRowid, chat_id: chatId, data_jogo: dataJogo, status: 'aberta' } };
+  const info = db.prepare(
+    'INSERT INTO listas (chat_id, data_jogo, status, criada_em, valor_centavos) VALUES (?, ?, ?, ?, ?)'
+  ).run(chatId, dataJogo, 'aberta', new Date().toISOString(), valorCentavos);
+
+  return { ja_existia: false, lista: { id: info.lastInsertRowid, chat_id: chatId, data_jogo: dataJogo, status: 'aberta', valor_centavos: valorCentavos } };
+}
+
+function getLista(listaId) {
+  return db.prepare('SELECT * FROM listas WHERE id = ?').get(listaId);
 }
 
 function getListaAtiva(chatId) {
   // A "ativa" é a lista aberta mais recente DESSE grupo
   return db.prepare(
     "SELECT * FROM listas WHERE chat_id = ? AND status = 'aberta' ORDER BY id DESC LIMIT 1"
+  ).get(chatId);
+}
+
+// Última lista do grupo, aberta OU encerrada — os comandos de pagamento usam
+// esta: a cobrança costuma acontecer depois do #encerrarlista, e travar nomes
+// não pode travar o dinheiro
+function getListaMaisRecente(chatId) {
+  return db.prepare(
+    'SELECT * FROM listas WHERE chat_id = ? ORDER BY id DESC LIMIT 1'
   ).get(chatId);
 }
 
@@ -164,10 +217,23 @@ function contarPorTipo(listaId, tipo) {
   return row.total;
 }
 
-function jaEstaNaLista(listaId, numero) {
-  return db.prepare(
+// Acha a entrada de alguém pelo número, com fallback na parte antes do @ —
+// o WhatsApp às vezes endereça a MESMA pessoa ora como @c.us, ora como @lid,
+// e o match exato quebraria o #pago via comprovante e o dedup de entrada
+function acharEntradaPorNumero(listaId, numero) {
+  const exato = db.prepare(
     'SELECT * FROM entradas WHERE lista_id = ? AND numero = ?'
   ).get(listaId, numero);
+  if (exato) return exato;
+
+  const usuario = String(numero || '').split('@')[0];
+  if (!usuario) return undefined;
+  return db.prepare('SELECT * FROM entradas WHERE lista_id = ?').all(listaId)
+    .find((e) => String(e.numero).split('@')[0] === usuario);
+}
+
+function jaEstaNaLista(listaId, numero) {
+  return acharEntradaPorNumero(listaId, numero);
 }
 
 // Apaga todas as entradas de uma lista, mantendo a lista em si (não recria
@@ -221,19 +287,20 @@ function adicionarEntrada(listaId, nome, numero) {
 
 function montarListaFormatada(listaId, dataJogo) {
   const limites = getLimitesDaLista(listaId);
+  const marcaPago = (p) => (p.pago ? ' ✅' : '');
   const principal = db.prepare(
-    "SELECT nome FROM entradas WHERE lista_id = ? AND tipo = 'principal' ORDER BY timestamp ASC"
+    "SELECT nome, pago FROM entradas WHERE lista_id = ? AND tipo = 'principal' ORDER BY timestamp ASC"
   ).all(listaId);
 
   let texto = `📋 *Lista do vôlei — ${dataJogo}*\n`;
   texto += `━━━━━━━━━━━━━━━\n`;
   texto += `🟢 *PRINCIPAL* (${principal.length}/${limites.principal})\n`;
   texto += principal.length
-    ? principal.map((p, i) => `${i + 1}. ${p.nome}`).join('\n')
+    ? principal.map((p, i) => `${i + 1}. ${p.nome}${marcaPago(p)}`).join('\n')
     : '_(vazia)_';
 
   const espera = db.prepare(
-    "SELECT nome FROM entradas WHERE lista_id = ? AND tipo = 'espera' ORDER BY timestamp ASC"
+    "SELECT nome, pago FROM entradas WHERE lista_id = ? AND tipo = 'espera' ORDER BY timestamp ASC"
   ).all(listaId);
   // Grupo sem espera (--0) não mostra a seção, a não ser que alguém tenha
   // sobrado nela (ex: lista foi encolhida depois de cheia)
@@ -241,11 +308,97 @@ function montarListaFormatada(listaId, dataJogo) {
     texto += `\n━━━━━━━━━━━━━━━\n`;
     texto += `🟡 *ESPERA* (${espera.length}/${limites.espera})\n`;
     texto += espera.length
-      ? espera.map((p, idx) => `${principal.length + idx + 1}. ${p.nome}`).join('\n')
+      ? espera.map((p, idx) => `${principal.length + idx + 1}. ${p.nome}${marcaPago(p)}`).join('\n')
       : '_(vazia)_';
   }
 
+  // Total arrecadado fica só na visão dos admins (#pagosde) — no grupo
+  // mostra apenas o valor por pessoa e quantos já pagaram
+  const resumo = resumoPagamentos(listaId);
+  if (resumo.valorCentavos > 0) {
+    texto += `\n━━━━━━━━━━━━━━━\n`;
+    texto += `💰 ${formatarReais(resumo.valorCentavos)} por pessoa — ${resumo.pagos}/${resumo.totalPessoas} pagos ✅`;
+  }
+
   return texto;
+}
+
+// ---- pagamentos
+
+// Grava o pago com snapshot do valor vigente: se o #valor mudar depois,
+// o que já entrou em caixa não é reescrito
+function aplicarPago(entrada, listaId, pago) {
+  const valorPago = pago ? (getLista(listaId)?.valor_centavos || 0) : 0;
+  db.prepare('UPDATE entradas SET pago = ?, valor_pago_centavos = ? WHERE id = ?')
+    .run(pago ? 1 : 0, valorPago, entrada.id);
+  return { nome: entrada.nome };
+}
+
+function marcarPagoPorPosicao(listaId, posicao, pago) {
+  const combinada = listarCombinada(listaId);
+  const alvo = combinada[posicao - 1]; // mesma numeração exibida no #mostralista
+  if (!alvo) return { erro: 'posicao_invalida' };
+  return aplicarPago(alvo, listaId, pago);
+}
+
+// Usado quando o admin responde a mensagem do comprovante com #pago:
+// marca quem ENVIOU a mensagem citada, pelo número
+function marcarPagoPorNumero(listaId, numero, pago) {
+  const alvo = acharEntradaPorNumero(listaId, numero);
+  if (!alvo) return { erro: 'nao_esta_na_lista' };
+  return aplicarPago(alvo, listaId, pago);
+}
+
+function resumoPagamentos(listaId) {
+  const lista = getLista(listaId);
+  const entradas = listarCombinada(listaId);
+  const pagos = entradas.filter((e) => e.pago);
+  const valorCentavos = lista?.valor_centavos || 0;
+  return {
+    totalPessoas: entradas.length,
+    pagos: pagos.length,
+    nomesPagos: pagos.map((e) => e.nome),
+    pendentes: entradas.filter((e) => !e.pago).map((e) => e.nome),
+    valorCentavos,
+    // Soma dos snapshots — o fallback pro valor atual cobre marcas antigas
+    // de antes da coluna valor_pago_centavos existir
+    arrecadadoCentavos: pagos.reduce((soma, e) => soma + (e.valor_pago_centavos || valorCentavos), 0),
+  };
+}
+
+function setarValorLista(listaId, centavos) {
+  db.prepare('UPDATE listas SET valor_centavos = ? WHERE id = ?').run(centavos, listaId);
+}
+
+function setarValorPadraoGrupo(chatId, centavos) {
+  const info = db.prepare('UPDATE grupos SET valor_padrao_centavos = ? WHERE chat_id = ?').run(centavos, chatId);
+  return info.changes > 0;
+}
+
+// ---- grupo de admins e busca de grupo por termo (comandos remotos)
+
+function marcarGrupoAdmin(chatId, ehAdmin) {
+  const info = db.prepare('UPDATE grupos SET eh_admin = ? WHERE chat_id = ?').run(ehAdmin ? 1 : 0, chatId);
+  return info.changes > 0;
+}
+
+// Compara ignorando acento e caixa — "volei" tem que achar "Vôlei de Quinta"
+function normalizarTexto(texto) {
+  // NFD separa a letra do acento; \p{M} apaga as marcas combinantes
+  return String(texto || '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+}
+
+// termo pode ser o chat_id exato ou um pedaço do nome do grupo
+function buscarGrupos(termo) {
+  const porId = db.prepare('SELECT * FROM grupos WHERE chat_id = ?').get(termo);
+  if (porId) return [porId];
+
+  const alvo = normalizarTexto(termo).trim();
+  if (!alvo) return [];
+  // Filtra em JS em vez de LIKE: acento-insensível e sem %/_ virando coringa
+  return db.prepare(
+    'SELECT * FROM grupos WHERE eh_admin = 0 ORDER BY primeira_mensagem_em DESC'
+  ).all().filter((g) => normalizarTexto(g.nome).includes(alvo));
 }
 
 // Lista combinada (principal seguido de espera), na ordem de exibição/numeração
@@ -276,7 +429,9 @@ function removerPorPosicao(listaId, posicao) {
   // principal ainda está acima do limite novo
   const promovidos = promoverEsperaEnquantoCouber(listaId);
 
-  return { removido: alvo.nome, promovidos };
+  // Sinaliza se apagamos um ✅ junto — o grupo precisa saber que a pessoa
+  // removida já tinha pago, senão o rastro do dinheiro some em silêncio
+  return { removido: alvo.nome, removidoTinhaPago: Boolean(alvo.pago), promovidos };
 }
 
 function historico(chatId) {
@@ -292,13 +447,24 @@ module.exports = {
   desativarGrupo,
   listarGrupos,
   criarLista,
+  getLista,
   getListaAtiva,
+  getListaMaisRecente,
   encerrarLista,
   adicionarEntrada,
   limparEntradas,
   montarListaFormatada,
   removerPorPosicao,
   historico,
+  marcarPagoPorPosicao,
+  marcarPagoPorNumero,
+  resumoPagamentos,
+  setarValorLista,
+  setarValorPadraoGrupo,
+  marcarGrupoAdmin,
+  buscarGrupos,
+  paraCentavos,
+  formatarReais,
   LIMITE_PRINCIPAL,
   LIMITE_ESPERA,
 };
