@@ -56,6 +56,8 @@ COPY . .
 # Pasta onde o SQLite salva o histórico — monte um Volume do Railway aqui
 # apontando pra /app/data pra não perder o banco em cada redeploy
 ENV DB_PATH=/app/data/volei.db
+# Sessão do WhatsApp junto no volume — pareamento sobrevive a redeploys
+ENV TOKENS_DIR=/app/data/tokens
 RUN mkdir -p /app/data
 
 EXPOSE 3000

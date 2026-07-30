@@ -65,6 +65,9 @@ function iniciarSessao() {
         }
       },
       headless: true,
+      // Sessão do WhatsApp no volume persistente — sem isso, cada redeploy
+      // apaga o pareamento e obriga a escanear o QR de novo
+      folderNameToken: process.env.TOKENS_DIR || 'tokens',
       puppeteerOptions: {
         args: [
           '--no-sandbox',
