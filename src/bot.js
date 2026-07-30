@@ -157,8 +157,16 @@ async function listarMembrosDoGrupo(client, chatId) {
   return ids;
 }
 
+// Compara com o ADMIN_NUMBER tolerando sufixo diferente (@c.us vs @lid) —
+// o WhatsApp às vezes entrega o mesmo contato com endereçamentos distintos
+function ehAdminDoBot(numero) {
+  if (!ADMIN_NUMBER || !numero) return false;
+  if (numero === ADMIN_NUMBER) return true;
+  return String(numero).split('@')[0] === ADMIN_NUMBER.split('@')[0];
+}
+
 async function ehAdminDoGrupo(client, chatId, numero) {
-  if (ADMIN_NUMBER && numero === ADMIN_NUMBER) return true; // admin do bot pode tudo
+  if (ehAdminDoBot(numero)) return true; // admin do bot pode tudo
   if (!numero) return false;
 
   // Fallback comparando só a parte antes do @ — cobre divergência de sufixo
@@ -195,13 +203,20 @@ function start(client) {
       if (!ehGrupo) {
         // Mensagem privada: só processa se vier do número admin configurado.
         // Isso permite ativar/desativar grupos sem precisar estar neles.
-        if (ADMIN_NUMBER && message.from === ADMIN_NUMBER) {
+        const remetente = widParaString(message.from);
+        if (ehAdminDoBot(remetente)) {
           await processarComandoAdmin({
             body: message.body,
             origem: 'privado',
             reply: (texto) => client.sendText(message.from, texto),
             getAdminsDoGrupo: (chatId) => listarAdminsDoGrupo(client, chatId),
           });
+        } else {
+          // Log de diagnóstico: mostra o JID exato que chegou, pra conferir
+          // com o ADMIN_NUMBER configurado no host
+          console.log(
+            `[privado] mensagem de ${remetente} ignorada — ADMIN_NUMBER=${ADMIN_NUMBER || '(não configurado!)'}`
+          );
         }
         return;
       }
