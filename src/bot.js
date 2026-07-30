@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 const wppconnect = require('@wppconnect-team/wppconnect');
 const db = require('./db');
@@ -41,7 +42,39 @@ app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
 
+// O Chrome grava travas (SingletonLock etc.) dentro do perfil. Com o perfil
+// num volume persistente, a trava do container anterior sobrevive ao deploy e
+// o Chrome novo recusa abrir ("profile is in use... on another computer").
+// Remove as travas órfãs antes de cada tentativa de abrir o navegador.
+function limparLocksDoChrome(dir) {
+  let removidos = 0;
+  const varrer = (pasta) => {
+    let itens;
+    try {
+      itens = fs.readdirSync(pasta, { withFileTypes: true });
+    } catch {
+      return; // pasta ainda não existe (primeiro boot)
+    }
+    for (const item of itens) {
+      const caminho = path.join(pasta, item.name);
+      if (item.name.startsWith('Singleton')) {
+        try {
+          fs.rmSync(caminho, { force: true });
+          removidos++;
+        } catch {}
+      } else if (item.isDirectory()) {
+        varrer(caminho);
+      }
+    }
+  };
+  varrer(dir);
+  if (removidos > 0) {
+    console.log(`[browser] ${removidos} trava(s) órfã(s) do Chrome removida(s) de ${dir}`);
+  }
+}
+
 function iniciarSessao() {
+  limparLocksDoChrome(process.env.TOKENS_DIR || 'tokens');
   wppconnect
     .create({
       session: 'volei-bot',
