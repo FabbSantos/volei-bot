@@ -43,7 +43,9 @@ const CMD_TESTAR_LIMPAR = '#testarlimpar';
 
 const TEST_MODE = process.env.TEST_MODE === 'true';
 
-const TEXTO_AJUDA = `🏐 *Comandos do bot*
+// Ajuda em camadas: pessoa comum só vê o que pode usar; a parte de admin
+// entra apenas quando quem pediu tem a permissão
+const TEXTO_AJUDA_COMUM = `🏐 *Comandos do bot*
 
 *#lista* — entra na lista ativa usando seu nome do WhatsApp
 *#lista Nome* — entra na lista com um nome específico (ex: #lista João)
@@ -52,7 +54,9 @@ const TEXTO_AJUDA = `🏐 *Comandos do bot*
 *#valor* — mostra o valor por pessoa da lista atual
 *#mensalista* — vira candidato a mensalista (vaga garantida no topo das listas)
 *#mensalistas* — mostra o quadro de mensalistas do mês
-*#comandos* — mostra essa ajuda
+*#comandos* — mostra essa ajuda`;
+
+const TEXTO_AJUDA_ADMIN_GRUPO = `
 
 💰 *Só pra admins (do grupo ou do grupo de admins):*
 *#listaDD/MM* — abre a lista pro dia; com nome opcional: #lista30/07 Volei Riachuelo
@@ -562,7 +566,13 @@ async function processarMensagem(msg) {
   }
 
   if (texto.toLowerCase() === CMD_AJUDA) {
-    return msg.reply(TEXTO_AJUDA + (TEST_MODE ? TEXTO_AJUDA_TESTE : ''));
+    const solicitanteEhAdmin = await msg.ehAdmin();
+    let ajuda = TEXTO_AJUDA_COMUM;
+    if (solicitanteEhAdmin) {
+      ajuda += TEXTO_AJUDA_ADMIN_GRUPO;
+      if (TEST_MODE) ajuda += TEXTO_AJUDA_TESTE;
+    }
+    return msg.reply(ajuda);
   }
 
   // Variação malformada de comando conhecido (ex: "#pago 3 4", "#valor25",
