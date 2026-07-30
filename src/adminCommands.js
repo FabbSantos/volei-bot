@@ -145,18 +145,26 @@ async function processarComandoAdmin(msg) {
       return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}*: nenhuma lista criada ainda.`);
     }
     const resumo = db.resumoPagamentos(lista.id);
-    const marcaEncerrada = lista.status === 'encerrada' ? ' — encerrada' : '';
-    let resposta = `💰 *Pagamentos — ${r.grupo.nome || r.grupo.chat_id}* (lista ${lista.data_jogo}${marcaEncerrada})\n`;
-    resposta += `✅ ${resumo.pagos}/${resumo.totalPessoas} pagaram`;
-    if (resumo.valorCentavos > 0) {
-      resposta += `\n💵 Arrecadado: *${db.formatarReais(resumo.arrecadadoCentavos)}* (${db.formatarReais(resumo.valorCentavos)}/pessoa)`;
-    } else {
-      resposta += `\n(lista sem valor definido — define com *#valorlistade <grupo> 25*)`;
+    const marcaEncerrada = lista.status === 'encerrada' ? ' 🔒 encerrada' : '';
+    const tituloLista = lista.nome ? `*${lista.nome}* — ${lista.data_jogo}` : `lista ${lista.data_jogo}`;
+
+    let resposta = `💰 *Pagamentos — ${r.grupo.nome || r.grupo.chat_id}*\n`;
+    resposta += `📋 ${tituloLista}${marcaEncerrada}\n`;
+    resposta += `\n✅ ${resumo.emDia}/${resumo.totalPessoas} em dia`;
+    if (resumo.mensalistasNaLista > 0) {
+      resposta += `\n🗓 ${resumo.mensalistasNaLista} mensalista(s) — contam pelo mês pago`;
     }
+    resposta += `\n`;
+    if (resumo.valorCentavos > 0) {
+      resposta += `\n💵 Arrecadado na lista: *${db.formatarReais(resumo.arrecadadoCentavos)}* (${db.formatarReais(resumo.valorCentavos)}/pessoa)`;
+    } else {
+      resposta += `\n💵 Lista sem valor definido — define com *#valorlistade <grupo> 25*`;
+    }
+    resposta += `\n`;
     if (resumo.pendentes.length > 0) {
       resposta += `\n⏳ Faltam: ${resumo.pendentes.join(', ')}`;
     } else if (resumo.totalPessoas > 0) {
-      resposta += `\n🎉 Todo mundo pagou!`;
+      resposta += `\n🎉 Todo mundo em dia!`;
     }
     return msg.reply(resposta);
   }

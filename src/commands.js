@@ -1,7 +1,14 @@
+const fs = require('fs');
+const path = require('path');
 const db = require('./db');
 
-// Regex pro comando de abertura: #lista05/07, #lista5/7, #lista 05/07 etc.
-const REGEX_ABRIR = /^#lista\s?(\d{1,2}\/\d{1,2})$/i;
+// Figurinha comemorativa do #quitado — coloca a imagem do meme nesse caminho
+const FIGURINHA_QUITADO = process.env.FIGURINHA_QUITADO
+  || path.join(__dirname, '..', 'assets', 'agiota-pago.png');
+
+// Regex pro comando de abertura: #lista05/07, #lista 05/07, e com nome
+// opcional: "#lista30/07 Volei Riachuelo"
+const REGEX_ABRIR = /^#lista\s?(\d{1,2}\/\d{1,2})(?:\s+(.+))?$/i;
 // #lista sozinho, ou #lista Nome Sobrenome (nome explícito opcional)
 const REGEX_ENTRAR = /^#lista(?:\s+(.+))?$/i;
 const CMD_MOSTRAR = '#mostralista';
@@ -38,18 +45,18 @@ const TEST_MODE = process.env.TEST_MODE === 'true';
 
 const TEXTO_AJUDA = `🏐 *Comandos do bot*
 
-*#listaDD/MM* — abre a lista pro dia (ex: #lista05/07)
 *#lista* — entra na lista ativa usando seu nome do WhatsApp
 *#lista Nome* — entra na lista com um nome específico (ex: #lista João)
 *#mostralista* — mostra a lista atual
 *#remover* — sai da lista (também tira quem você adicionou com #lista Nome)
-*#encerrarlista* — fecha a lista, para de aceitar nomes
 *#valor* — mostra o valor por pessoa da lista atual
 *#mensalista* — vira candidato a mensalista (vaga garantida no topo das listas)
 *#mensalistas* — mostra o quadro de mensalistas do mês
 *#comandos* — mostra essa ajuda
 
 💰 *Só pra admins (do grupo ou do grupo de admins):*
+*#listaDD/MM* — abre a lista pro dia; com nome opcional: #lista30/07 Volei Riachuelo
+*#encerrarlista* — fecha a lista, para de aceitar nomes
 *#remover N* — remove quem está na posição N (ou #remover Nome)
 *#pago N* — marca ✅ de quem está na posição N (ou responde o comprovante com *#pago*)
 *#naopago N* — desmarca (ou respondendo a mensagem com *#naopago*)
@@ -124,12 +131,19 @@ async function processarMensagem(msg) {
 
   const matchAbrir = texto.match(REGEX_ABRIR);
   if (matchAbrir) {
+    // Abrir lista é coisa de admin — senão qualquer um cria lista fantasma
+    if (!(await msg.ehAdmin())) {
+      return msg.reply('🔒 Só admin pode abrir lista.');
+    }
     const dataJogo = matchAbrir[1];
-    const { ja_existia } = db.criarLista(chatId, dataJogo);
+    const nomeLista = matchAbrir[2]?.trim() || null;
+    const { ja_existia } = db.criarLista(chatId, dataJogo, nomeLista);
     if (ja_existia) {
       return msg.reply(`Já existe uma lista pro dia ${dataJogo}. Manda *#mostralista* pra ver.`);
     }
-    return msg.reply(`✅ Lista aberta pro dia *${dataJogo}*! Manda *#lista* pra entrar.`);
+    return msg.reply(
+      `✅ Lista ${nomeLista ? `*${nomeLista}* ` : ''}aberta pro dia *${dataJogo}*! Manda *#lista* pra entrar.`
+    );
   }
 
   const matchEntrar = texto.match(REGEX_ENTRAR);
@@ -189,6 +203,9 @@ async function processarMensagem(msg) {
   }
 
   if (texto.toLowerCase() === CMD_ENCERRAR) {
+    if (!(await msg.ehAdmin())) {
+      return msg.reply('🔒 Só admin pode encerrar a lista.');
+    }
     const lista = db.getListaAtiva(chatId);
     if (!lista) {
       return msg.reply('Não tem lista aberta pra encerrar.');
@@ -488,7 +505,12 @@ async function processarMensagem(msg) {
     if (resultado.erro) {
       return msg.reply('Não achei essa pessoa na lista de inadimplentes.');
     }
-    return msg.reply(`✅ ${resultado.nome} quitou — fora da lista de inadimplentes!`);
+    await msg.reply(`✅ ${resultado.nome} pagou o agiota. 🤝`);
+    // Figurinha comemorativa, se a imagem existir no deploy
+    if (msg.enviarFigurinha && fs.existsSync(FIGURINHA_QUITADO)) {
+      await msg.enviarFigurinha(FIGURINHA_QUITADO);
+    }
+    return;
   }
 
   if (TEST_MODE) {

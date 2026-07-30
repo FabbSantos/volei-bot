@@ -30,6 +30,7 @@ db.exec(`
     status TEXT NOT NULL DEFAULT 'aberta', -- aberta | encerrada
     criada_em TEXT NOT NULL,
     valor_centavos INTEGER NOT NULL DEFAULT 0, -- por pessoa; copiado do padrão do grupo ao criar
+    nome TEXT,                      -- opcional: "Volei Riachuelo" (#lista30/07 Volei Riachuelo)
     UNIQUE(chat_id, data_jogo)
   );
 
@@ -94,7 +95,10 @@ migrarColunas('grupos', {
   limite_mensalistas: `INTEGER NOT NULL DEFAULT ${LIMITE_MENSALISTAS}`,
   valor_mes_centavos: 'INTEGER NOT NULL DEFAULT 0', // mensalidade padrão do grupo
 });
-migrarColunas('listas', { valor_centavos: 'INTEGER NOT NULL DEFAULT 0' });
+migrarColunas('listas', {
+  valor_centavos: 'INTEGER NOT NULL DEFAULT 0',
+  nome: 'TEXT',
+});
 migrarColunas('entradas', {
   pago: 'INTEGER NOT NULL DEFAULT 0',
   valor_pago_centavos: 'INTEGER NOT NULL DEFAULT 0',
@@ -202,7 +206,7 @@ function listarGrupos() {
   return db.prepare('SELECT * FROM grupos ORDER BY primeira_mensagem_em DESC').all();
 }
 
-function criarLista(chatId, dataJogo) {
+function criarLista(chatId, dataJogo, nome = null) {
   const existente = db.prepare(
     'SELECT * FROM listas WHERE chat_id = ? AND data_jogo = ?'
   ).get(chatId, dataJogo);
@@ -214,8 +218,8 @@ function criarLista(chatId, dataJogo) {
   const valorCentavos = grupo?.valor_padrao_centavos || 0;
 
   const info = db.prepare(
-    'INSERT INTO listas (chat_id, data_jogo, status, criada_em, valor_centavos) VALUES (?, ?, ?, ?, ?)'
-  ).run(chatId, dataJogo, 'aberta', new Date().toISOString(), valorCentavos);
+    'INSERT INTO listas (chat_id, data_jogo, status, criada_em, valor_centavos, nome) VALUES (?, ?, ?, ?, ?, ?)'
+  ).run(chatId, dataJogo, 'aberta', new Date().toISOString(), valorCentavos, nome);
   const listaId = info.lastInsertRowid;
 
   // Mensalistas entram automaticamente no topo de toda lista nova — fixos
@@ -357,7 +361,7 @@ function montarListaFormatada(listaId, dataJogo) {
     "SELECT nome, pago, numero, mensalista FROM entradas WHERE lista_id = ? AND tipo = 'principal' ORDER BY timestamp ASC, id ASC"
   ).all(listaId);
 
-  let texto = `📋 *Lista do vôlei — ${dataJogo}*\n`;
+  let texto = `📋 *${lista?.nome || 'Lista do vôlei'} — ${dataJogo}*\n`;
   texto += `━━━━━━━━━━━━━━━\n`;
   texto += `🟢 *PRINCIPAL* (${principal.length}/${limites.principal})\n`;
   texto += principal.length
@@ -378,11 +382,11 @@ function montarListaFormatada(listaId, dataJogo) {
   }
 
   // Total arrecadado fica só na visão dos admins (#pagosde) — no grupo
-  // mostra apenas o valor por pessoa e quantos avulsos já pagaram
+  // mostra o valor por pessoa e quantos estão em dia (mensalista conta pelo mês)
   const resumo = resumoPagamentos(listaId);
-  if (resumo.valorCentavos > 0 && resumo.totalAvulsos > 0) {
+  if (resumo.valorCentavos > 0 && resumo.totalPessoas > 0) {
     texto += `\n━━━━━━━━━━━━━━━\n`;
-    texto += `💰 ${formatarReais(resumo.valorCentavos)} por pessoa — ${resumo.pagosAvulsos}/${resumo.totalAvulsos} pagos ✅`;
+    texto += `💰 ${formatarReais(resumo.valorCentavos)} por pessoa — ${resumo.emDia}/${resumo.totalPessoas} em dia ✅`;
   }
 
   // Inadimplentes do grupo ficam visíveis em toda lista
@@ -428,20 +432,28 @@ function resumoPagamentos(listaId) {
   const lista = getLista(listaId);
   const entradas = listarCombinada(listaId);
   const pagos = entradas.filter((e) => e.pago);
-  // Mensalista paga por mês, não por semana — as contagens de cobrança da
-  // lista consideram só os avulsos (a marca ➕ dele ainda soma no arrecadado)
-  const avulsos = entradas.filter((e) => !e.mensalista);
   const valorCentavos = lista?.valor_centavos || 0;
+
+  // "Em dia" é o que importa na cobrança: avulso conta pelo ✅ da semana,
+  // mensalista conta pelo MÊS pago (a semana dele já está na mensalidade;
+  // o ➕ é só extra). Mensalista devendo o mês aparece como "(mês)".
+  const numerosMesPago = new Set(
+    listarMensalistas(lista?.chat_id).filter((m) => m.pago_mes).map((m) => m.numero)
+  );
+  const estaEmDia = (e) => (e.mensalista ? numerosMesPago.has(e.numero) : Boolean(e.pago));
+
   return {
     totalPessoas: entradas.length,
-    totalAvulsos: avulsos.length,
+    mensalistasNaLista: entradas.filter((e) => e.mensalista).length,
+    emDia: entradas.filter(estaEmDia).length,
     pagos: pagos.length,
-    pagosAvulsos: avulsos.filter((e) => e.pago).length,
     nomesPagos: pagos.map((e) => e.nome),
-    pendentes: avulsos.filter((e) => !e.pago).map((e) => e.nome),
+    pendentes: entradas
+      .filter((e) => !estaEmDia(e))
+      .map((e) => (e.mensalista ? `${e.nome} (mês)` : e.nome)),
     valorCentavos,
-    // Soma dos snapshots — o fallback pro valor atual cobre marcas antigas
-    // de antes da coluna valor_pago_centavos existir
+    // Dinheiro da LISTA (avulsos + extras ➕ de mensalista), pelos snapshots —
+    // mensalidade é caixa separado, aparece no #mensalistasde
     arrecadadoCentavos: pagos.reduce((soma, e) => soma + (e.valor_pago_centavos || valorCentavos), 0),
   };
 }

@@ -1,0 +1,6 @@
+Coloque aqui a imagem "agiota-pago.png" (qualquer meme seu) — o bot manda
+ela como FIGURINHA no grupo quando um admin dá #quitado em alguém.
+
+Formato: PNG ou JPG, de preferência quadrada (512x512 fica ótimo como sticker).
+Também dá pra apontar outro caminho com a variável de ambiente FIGURINHA_QUITADO.
+Sem a imagem, o bot manda só o texto "pagou o agiota. 🤝" — nada quebra.

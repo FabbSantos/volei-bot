@@ -330,6 +330,13 @@ function start(client) {
         numero,
         nomeGrupo,
         reply: (texto) => client.sendText(message.from, texto),
+        enviarFigurinha: async (caminho) => {
+          try {
+            await client.sendImageAsSticker(message.from, caminho);
+          } catch (err) {
+            console.warn(`[figurinha] falha ao enviar: ${err.message}`);
+          }
+        },
         ehAdmin: () => ehAdminDoGrupo(client, message.from, numero),
         // Quem enviou a mensagem que está sendo respondida (ex: o comprovante)
         remetenteCitado: async () => {
