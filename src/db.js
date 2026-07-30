@@ -94,6 +94,7 @@ migrarColunas('grupos', {
   valor_padrao_centavos: 'INTEGER NOT NULL DEFAULT 0',
   limite_mensalistas: `INTEGER NOT NULL DEFAULT ${LIMITE_MENSALISTAS}`,
   valor_mes_centavos: 'INTEGER NOT NULL DEFAULT 0', // mensalidade padrão do grupo
+  mes_processado: 'TEXT', // último mês em que a virada de mensalistas rodou
 });
 migrarColunas('listas', {
   valor_centavos: 'INTEGER NOT NULL DEFAULT 0',
@@ -482,10 +483,36 @@ function mesAtual() {
   return `${ano}-${mes}`;
 }
 
+// Virada do mês (preguiçosa — roda na primeira operação de mensalistas do
+// mês): os NÃO-fixos saem do quadro e as vagas mensais reabrem pra disputa.
+// Fixo tem vaga cativa: fica no quadro, só volta a "pendente" até pagar.
+function processarViradaDoMes(chatId) {
+  const grupo = getGrupo(chatId);
+  if (!grupo) return;
+  const mes = mesAtual();
+  if (grupo.mes_processado === mes) return;
+
+  db.prepare('UPDATE grupos SET mes_processado = ? WHERE chat_id = ?').run(mes, chatId);
+  // Primeiro contato do grupo com o sistema de mês: só registra, sem remover
+  if (!grupo.mes_processado) return;
+
+  const naoFixos = db.prepare(
+    'SELECT * FROM mensalistas WHERE chat_id = ? AND fixo = 0'
+  ).all(chatId);
+  for (const m of naoFixos) {
+    db.prepare('DELETE FROM mensalidades WHERE mensalista_id = ?').run(m.id);
+    db.prepare('DELETE FROM mensalistas WHERE id = ?').run(m.id);
+  }
+  if (naoFixos.length > 0) {
+    console.log(`[mensalistas] virada pra ${mes} em ${chatId}: ${naoFixos.length} não-fixo(s) saíram do quadro`);
+  }
+}
+
 // Roster do grupo com o status do mês corrente (pago_mes = ✅ do "Mensal").
 // Fixos primeiro, depois por ordem de chegada — a mesma ordem da lista semanal.
 function listarMensalistas(chatId) {
   if (!chatId) return [];
+  processarViradaDoMes(chatId);
   return db.prepare(`
     SELECT m.*, (mm.id IS NOT NULL) AS pago_mes, mm.valor_centavos AS valor_mes_pago
     FROM mensalistas m
