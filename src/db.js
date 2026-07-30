@@ -8,6 +8,7 @@ db.pragma('journal_mode = WAL');
 // Padrões — cada grupo pode ter o seu, ajustado via #ativargrupo no privado do admin
 const LIMITE_PRINCIPAL = 18;
 const LIMITE_ESPERA = 6;
+const LIMITE_MENSALISTAS = 12; // vagas de mensalista por grupo (fixos inclusos)
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS grupos (
@@ -41,7 +42,37 @@ db.exec(`
     timestamp TEXT NOT NULL,
     pago INTEGER NOT NULL DEFAULT 0,
     valor_pago_centavos INTEGER NOT NULL DEFAULT 0, -- snapshot na hora do #pago: mudar o valor da lista depois não reescreve o caixa
+    mensalista INTEGER NOT NULL DEFAULT 0, -- entrada semeada automaticamente pro mensalista no topo da lista
     FOREIGN KEY (lista_id) REFERENCES listas(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS mensalistas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id TEXT NOT NULL,
+    nome TEXT NOT NULL,
+    numero TEXT NOT NULL,
+    fixo INTEGER NOT NULL DEFAULT 0, -- vaga cativa: não disputa as vagas de mensalista
+    criado_em TEXT NOT NULL,
+    UNIQUE(chat_id, numero)
+  );
+
+  CREATE TABLE IF NOT EXISTS mensalidades (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    mensalista_id INTEGER NOT NULL,
+    mes TEXT NOT NULL,              -- 'AAAA-MM' no fuso de Brasília — vira sozinho todo dia 1º
+    valor_centavos INTEGER NOT NULL DEFAULT 0,
+    pago_em TEXT NOT NULL,
+    UNIQUE(mensalista_id, mes),
+    FOREIGN KEY (mensalista_id) REFERENCES mensalistas(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS inadimplentes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id TEXT NOT NULL,
+    nome TEXT NOT NULL,
+    numero TEXT,                    -- quando conhecido, bloqueia a entrada em listas novas
+    valor_centavos INTEGER NOT NULL DEFAULT 0, -- quanto deve (0 = não informado)
+    criado_em TEXT NOT NULL
   );
 `);
 
@@ -60,11 +91,14 @@ migrarColunas('grupos', {
   limite_espera: `INTEGER NOT NULL DEFAULT ${LIMITE_ESPERA}`,
   eh_admin: 'INTEGER NOT NULL DEFAULT 0',
   valor_padrao_centavos: 'INTEGER NOT NULL DEFAULT 0',
+  limite_mensalistas: `INTEGER NOT NULL DEFAULT ${LIMITE_MENSALISTAS}`,
+  valor_mes_centavos: 'INTEGER NOT NULL DEFAULT 0', // mensalidade padrão do grupo
 });
 migrarColunas('listas', { valor_centavos: 'INTEGER NOT NULL DEFAULT 0' });
 migrarColunas('entradas', {
   pago: 'INTEGER NOT NULL DEFAULT 0',
   valor_pago_centavos: 'INTEGER NOT NULL DEFAULT 0',
+  mensalista: 'INTEGER NOT NULL DEFAULT 0',
 });
 
 // ---- dinheiro: tudo em centavos (INTEGER) pra não sofrer com float
@@ -127,7 +161,7 @@ function promoverEsperaEnquantoCouber(listaId) {
   const promovidos = [];
   while (contarPorTipo(listaId, 'principal') < limites.principal) {
     const proximo = db.prepare(
-      "SELECT * FROM entradas WHERE lista_id = ? AND tipo = 'espera' ORDER BY timestamp ASC LIMIT 1"
+      "SELECT * FROM entradas WHERE lista_id = ? AND tipo = 'espera' ORDER BY timestamp ASC, id ASC LIMIT 1"
     ).get(listaId);
     if (!proximo) break;
     db.prepare("UPDATE entradas SET tipo = 'principal' WHERE id = ?").run(proximo.id);
@@ -182,8 +216,19 @@ function criarLista(chatId, dataJogo) {
   const info = db.prepare(
     'INSERT INTO listas (chat_id, data_jogo, status, criada_em, valor_centavos) VALUES (?, ?, ?, ?, ?)'
   ).run(chatId, dataJogo, 'aberta', new Date().toISOString(), valorCentavos);
+  const listaId = info.lastInsertRowid;
 
-  return { ja_existia: false, lista: { id: info.lastInsertRowid, chat_id: chatId, data_jogo: dataJogo, status: 'aberta', valor_centavos: valorCentavos } };
+  // Mensalistas entram automaticamente no topo de toda lista nova — fixos
+  // primeiro, depois por ordem de chegada. Inadimplente não é semeado.
+  for (const m of listarMensalistas(chatId)) {
+    const resultado = adicionarEntrada(listaId, m.nome, m.numero);
+    if (!resultado.erro) {
+      db.prepare('UPDATE entradas SET mensalista = 1 WHERE lista_id = ? AND numero = ?')
+        .run(listaId, m.numero);
+    }
+  }
+
+  return { ja_existia: false, lista: { id: listaId, chat_id: chatId, data_jogo: dataJogo, status: 'aberta', valor_centavos: valorCentavos } };
 }
 
 function getLista(listaId) {
@@ -250,6 +295,12 @@ function adicionarEntrada(listaId, nome, numero) {
     return { erro: 'ja_esta_na_lista' };
   }
 
+  // Inadimplente não entra em lista nova até um admin dar #quitado
+  const listaDona = getLista(listaId);
+  if (listaDona && ehInadimplente(listaDona.chat_id, numero, nome)) {
+    return { erro: 'inadimplente' };
+  }
+
   const timestamp = new Date().toISOString();
   const limites = getLimitesDaLista(listaId);
 
@@ -286,21 +337,35 @@ function adicionarEntrada(listaId, nome, numero) {
 }
 
 function montarListaFormatada(listaId, dataJogo) {
+  const lista = getLista(listaId);
   const limites = getLimitesDaLista(listaId);
-  const marcaPago = (p) => (p.pago ? ' ✅' : '');
+
+  // Mensalista mostra o ✅ do MÊS ao lado do rótulo "Mensal"; a marca semanal
+  // dele (#pago — ex: diferença da sexta de 3h) aparece como ➕.
+  // Avulso mostra o ✅ da semana, como sempre.
+  const numerosMesPago = new Set(
+    listarMensalistas(lista?.chat_id).filter((m) => m.pago_mes).map((m) => m.numero)
+  );
+  const rotulo = (p) => {
+    if (p.mensalista) {
+      return `${p.nome} — Mensal${numerosMesPago.has(p.numero) ? ' ✅' : ''}${p.pago ? ' ➕' : ''}`;
+    }
+    return `${p.nome}${p.pago ? ' ✅' : ''}`;
+  };
+
   const principal = db.prepare(
-    "SELECT nome, pago FROM entradas WHERE lista_id = ? AND tipo = 'principal' ORDER BY timestamp ASC"
+    "SELECT nome, pago, numero, mensalista FROM entradas WHERE lista_id = ? AND tipo = 'principal' ORDER BY timestamp ASC, id ASC"
   ).all(listaId);
 
   let texto = `📋 *Lista do vôlei — ${dataJogo}*\n`;
   texto += `━━━━━━━━━━━━━━━\n`;
   texto += `🟢 *PRINCIPAL* (${principal.length}/${limites.principal})\n`;
   texto += principal.length
-    ? principal.map((p, i) => `${i + 1}. ${p.nome}${marcaPago(p)}`).join('\n')
+    ? principal.map((p, i) => `${i + 1}. ${rotulo(p)}`).join('\n')
     : '_(vazia)_';
 
   const espera = db.prepare(
-    "SELECT nome, pago FROM entradas WHERE lista_id = ? AND tipo = 'espera' ORDER BY timestamp ASC"
+    "SELECT nome, pago, numero, mensalista FROM entradas WHERE lista_id = ? AND tipo = 'espera' ORDER BY timestamp ASC, id ASC"
   ).all(listaId);
   // Grupo sem espera (--0) não mostra a seção, a não ser que alguém tenha
   // sobrado nela (ex: lista foi encolhida depois de cheia)
@@ -308,16 +373,26 @@ function montarListaFormatada(listaId, dataJogo) {
     texto += `\n━━━━━━━━━━━━━━━\n`;
     texto += `🟡 *ESPERA* (${espera.length}/${limites.espera})\n`;
     texto += espera.length
-      ? espera.map((p, idx) => `${principal.length + idx + 1}. ${p.nome}${marcaPago(p)}`).join('\n')
+      ? espera.map((p, idx) => `${principal.length + idx + 1}. ${rotulo(p)}`).join('\n')
       : '_(vazia)_';
   }
 
   // Total arrecadado fica só na visão dos admins (#pagosde) — no grupo
-  // mostra apenas o valor por pessoa e quantos já pagaram
+  // mostra apenas o valor por pessoa e quantos avulsos já pagaram
   const resumo = resumoPagamentos(listaId);
-  if (resumo.valorCentavos > 0) {
+  if (resumo.valorCentavos > 0 && resumo.totalAvulsos > 0) {
     texto += `\n━━━━━━━━━━━━━━━\n`;
-    texto += `💰 ${formatarReais(resumo.valorCentavos)} por pessoa — ${resumo.pagos}/${resumo.totalPessoas} pagos ✅`;
+    texto += `💰 ${formatarReais(resumo.valorCentavos)} por pessoa — ${resumo.pagosAvulsos}/${resumo.totalAvulsos} pagos ✅`;
+  }
+
+  // Inadimplentes do grupo ficam visíveis em toda lista
+  const inadimplentes = listarInadimplentes(lista?.chat_id);
+  if (inadimplentes.length > 0) {
+    texto += `\n━━━━━━━━━━━━━━━\n`;
+    texto += `⛔ *INADIMPLENTES*\n`;
+    texto += inadimplentes
+      .map((i) => `• ${i.nome}${i.valor_centavos > 0 ? ` (${formatarReais(i.valor_centavos)})` : ''}`)
+      .join('\n');
   }
 
   return texto;
@@ -353,12 +428,17 @@ function resumoPagamentos(listaId) {
   const lista = getLista(listaId);
   const entradas = listarCombinada(listaId);
   const pagos = entradas.filter((e) => e.pago);
+  // Mensalista paga por mês, não por semana — as contagens de cobrança da
+  // lista consideram só os avulsos (a marca ➕ dele ainda soma no arrecadado)
+  const avulsos = entradas.filter((e) => !e.mensalista);
   const valorCentavos = lista?.valor_centavos || 0;
   return {
     totalPessoas: entradas.length,
+    totalAvulsos: avulsos.length,
     pagos: pagos.length,
+    pagosAvulsos: avulsos.filter((e) => e.pago).length,
     nomesPagos: pagos.map((e) => e.nome),
-    pendentes: entradas.filter((e) => !e.pago).map((e) => e.nome),
+    pendentes: avulsos.filter((e) => !e.pago).map((e) => e.nome),
     valorCentavos,
     // Soma dos snapshots — o fallback pro valor atual cobre marcas antigas
     // de antes da coluna valor_pago_centavos existir
@@ -373,6 +453,172 @@ function setarValorLista(listaId, centavos) {
 function setarValorPadraoGrupo(chatId, centavos) {
   const info = db.prepare('UPDATE grupos SET valor_padrao_centavos = ? WHERE chat_id = ?').run(centavos, chatId);
   return info.changes > 0;
+}
+
+// ---- mensalistas
+
+// 'AAAA-MM' no fuso de Brasília: o container roda em UTC e a virada do mês
+// tem que acontecer à meia-noite local, não às 21h
+function mesAtual() {
+  const partes = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    year: 'numeric',
+    month: '2-digit',
+  }).formatToParts(new Date());
+  const ano = partes.find((p) => p.type === 'year').value;
+  const mes = partes.find((p) => p.type === 'month').value;
+  return `${ano}-${mes}`;
+}
+
+// Roster do grupo com o status do mês corrente (pago_mes = ✅ do "Mensal").
+// Fixos primeiro, depois por ordem de chegada — a mesma ordem da lista semanal.
+function listarMensalistas(chatId) {
+  if (!chatId) return [];
+  return db.prepare(`
+    SELECT m.*, (mm.id IS NOT NULL) AS pago_mes, mm.valor_centavos AS valor_mes_pago
+    FROM mensalistas m
+    LEFT JOIN mensalidades mm ON mm.mensalista_id = m.id AND mm.mes = ?
+    WHERE m.chat_id = ?
+    ORDER BY m.fixo DESC, m.criado_em ASC, m.id ASC
+  `).all(mesAtual(), chatId);
+}
+
+function acharMensalistaPorNumero(chatId, numero) {
+  const todos = listarMensalistas(chatId);
+  const usuario = String(numero || '').split('@')[0];
+  return todos.find((m) => m.numero === numero)
+    || todos.find((m) => String(m.numero).split('@')[0] === usuario);
+}
+
+function adicionarMensalista(chatId, nome, numero) {
+  if (acharMensalistaPorNumero(chatId, numero)) return { erro: 'ja_e_mensalista' };
+  const grupo = getGrupo(chatId);
+  const limite = grupo?.limite_mensalistas ?? LIMITE_MENSALISTAS;
+  const total = listarMensalistas(chatId).length;
+  if (total >= limite) return { erro: 'sem_vaga', limite };
+  db.prepare(
+    'INSERT INTO mensalistas (chat_id, nome, numero, fixo, criado_em) VALUES (?, ?, ?, 0, ?)'
+  ).run(chatId, nome, numero, new Date().toISOString());
+  return { posicao: total + 1, limite };
+}
+
+function removerMensalistaPorPosicao(chatId, posicao) {
+  const alvo = listarMensalistas(chatId)[posicao - 1];
+  if (!alvo) return { erro: 'posicao_invalida' };
+  db.prepare('DELETE FROM mensalidades WHERE mensalista_id = ?').run(alvo.id);
+  db.prepare('DELETE FROM mensalistas WHERE id = ?').run(alvo.id);
+  return { nome: alvo.nome };
+}
+
+function alternarFixoPorPosicao(chatId, posicao) {
+  const alvo = listarMensalistas(chatId)[posicao - 1];
+  if (!alvo) return { erro: 'posicao_invalida' };
+  const novoFixo = alvo.fixo ? 0 : 1;
+  db.prepare('UPDATE mensalistas SET fixo = ? WHERE id = ?').run(novoFixo, alvo.id);
+  return { nome: alvo.nome, fixo: Boolean(novoFixo) };
+}
+
+// pago=true grava/atualiza a mensalidade do mês corrente (com snapshot do
+// valor); pago=false apaga — a pessoa volta a "pendente" no mês
+function marcarMesPagoPorPosicao(chatId, posicao, pago, valorCentavos) {
+  const alvo = listarMensalistas(chatId)[posicao - 1];
+  if (!alvo) return { erro: 'posicao_invalida' };
+  const mes = mesAtual();
+  if (pago) {
+    db.prepare(`
+      INSERT INTO mensalidades (mensalista_id, mes, valor_centavos, pago_em) VALUES (?, ?, ?, ?)
+      ON CONFLICT(mensalista_id, mes) DO UPDATE SET valor_centavos = excluded.valor_centavos
+    `).run(alvo.id, mes, valorCentavos || 0, new Date().toISOString());
+  } else {
+    db.prepare('DELETE FROM mensalidades WHERE mensalista_id = ? AND mes = ?').run(alvo.id, mes);
+  }
+  return { nome: alvo.nome };
+}
+
+function setarValorMes(chatId, centavos) {
+  const info = db.prepare('UPDATE grupos SET valor_mes_centavos = ? WHERE chat_id = ?').run(centavos, chatId);
+  return info.changes > 0;
+}
+
+function setarLimiteMensalistas(chatId, limite) {
+  const info = db.prepare('UPDATE grupos SET limite_mensalistas = ? WHERE chat_id = ?').run(limite, chatId);
+  return info.changes > 0;
+}
+
+function resumoMensalistas(chatId) {
+  const grupo = getGrupo(chatId);
+  const todos = listarMensalistas(chatId);
+  const pagos = todos.filter((m) => m.pago_mes);
+  return {
+    mes: mesAtual(),
+    total: todos.length,
+    limite: grupo?.limite_mensalistas ?? LIMITE_MENSALISTAS,
+    valorMesCentavos: grupo?.valor_mes_centavos || 0,
+    pagos: pagos.length,
+    pendentes: todos.filter((m) => !m.pago_mes).map((m) => m.nome),
+    arrecadadoMesCentavos: pagos.reduce((soma, m) => soma + (m.valor_mes_pago || 0), 0),
+  };
+}
+
+function montarMensalistasFormatado(chatId) {
+  const resumo = resumoMensalistas(chatId);
+  const todos = listarMensalistas(chatId);
+  const [ano, mes] = resumo.mes.split('-');
+
+  let texto = `🗓 *Mensalistas — ${mes}/${ano}* (${resumo.total}/${resumo.limite})\n`;
+  texto += `━━━━━━━━━━━━━━━\n`;
+  texto += todos.length
+    ? todos.map((m, i) => `${i + 1}. ${m.nome}${m.fixo ? ' 📌' : ''}${m.pago_mes ? ' ✅' : ''}`).join('\n')
+    : '_(nenhum ainda — manda #mensalista pra entrar)_';
+  if (resumo.valorMesCentavos > 0) {
+    texto += `\n━━━━━━━━━━━━━━━\n`;
+    texto += `💰 Mensalidade: ${formatarReais(resumo.valorMesCentavos)} — ${resumo.pagos}/${resumo.total} pagos`;
+  }
+  texto += `\n_📌 fixo · ✅ mês pago_`;
+  return texto;
+}
+
+// ---- inadimplentes
+
+function listarInadimplentes(chatId) {
+  if (!chatId) return [];
+  return db.prepare(
+    'SELECT * FROM inadimplentes WHERE chat_id = ? ORDER BY criado_em ASC, id ASC'
+  ).all(chatId);
+}
+
+// Casa por número (com o fallback @c.us/@lid) ou por nome normalizado —
+// inadimplente marcado só por nome também bloqueia
+function ehInadimplente(chatId, numero, nome) {
+  const lista = listarInadimplentes(chatId);
+  const usuario = String(numero || '').split('@')[0];
+  return lista.find((i) =>
+    (i.numero && (i.numero === numero || (usuario && String(i.numero).split('@')[0] === usuario)))
+    || (nome && normalizarTexto(i.nome) === normalizarTexto(nome))
+  );
+}
+
+function adicionarInadimplente(chatId, { nome, numero, valorCentavos }) {
+  if (ehInadimplente(chatId, numero, nome)) return { erro: 'ja_esta' };
+  db.prepare(
+    'INSERT INTO inadimplentes (chat_id, nome, numero, valor_centavos, criado_em) VALUES (?, ?, ?, ?, ?)'
+  ).run(chatId, nome, numero || null, valorCentavos || 0, new Date().toISOString());
+  return { nome };
+}
+
+// termo: posição na listagem de inadimplentes ou nome (acento-insensível)
+function quitarInadimplente(chatId, termo) {
+  const lista = listarInadimplentes(chatId);
+  let alvo;
+  if (/^\d+$/.test(termo)) {
+    alvo = lista[parseInt(termo, 10) - 1];
+  } else {
+    alvo = lista.find((i) => normalizarTexto(i.nome) === normalizarTexto(termo))
+      || lista.find((i) => normalizarTexto(i.nome).includes(normalizarTexto(termo)));
+  }
+  if (!alvo) return { erro: 'nao_achado' };
+  db.prepare('DELETE FROM inadimplentes WHERE id = ?').run(alvo.id);
+  return { nome: alvo.nome };
 }
 
 // ---- grupo de admins e busca de grupo por termo (comandos remotos)
@@ -401,15 +647,20 @@ function buscarGrupos(termo) {
   ).all().filter((g) => normalizarTexto(g.nome).includes(alvo));
 }
 
-// Lista combinada (principal seguido de espera), na ordem de exibição/numeração
+// Lista combinada (principal seguido de espera), na ordem de exibição/numeração.
+// id como desempate: entradas semeadas em lote podem cair no mesmo milissegundo
 function listarCombinada(listaId) {
   const principal = db.prepare(
-    "SELECT * FROM entradas WHERE lista_id = ? AND tipo = 'principal' ORDER BY timestamp ASC"
+    "SELECT * FROM entradas WHERE lista_id = ? AND tipo = 'principal' ORDER BY timestamp ASC, id ASC"
   ).all(listaId);
   const espera = db.prepare(
-    "SELECT * FROM entradas WHERE lista_id = ? AND tipo = 'espera' ORDER BY timestamp ASC"
+    "SELECT * FROM entradas WHERE lista_id = ? AND tipo = 'espera' ORDER BY timestamp ASC, id ASC"
   ).all(listaId);
   return [...principal, ...espera];
+}
+
+function getEntradaPorPosicao(listaId, posicao) {
+  return listarCombinada(listaId)[posicao - 1];
 }
 
 // Remove pela posição exibida em #mostralista (1-18 principal, 19+ espera).
@@ -465,6 +716,22 @@ module.exports = {
   buscarGrupos,
   paraCentavos,
   formatarReais,
+  getEntradaPorPosicao,
+  mesAtual,
+  listarMensalistas,
+  adicionarMensalista,
+  removerMensalistaPorPosicao,
+  alternarFixoPorPosicao,
+  marcarMesPagoPorPosicao,
+  setarValorMes,
+  setarLimiteMensalistas,
+  resumoMensalistas,
+  montarMensalistasFormatado,
+  listarInadimplentes,
+  ehInadimplente,
+  adicionarInadimplente,
+  quitarInadimplente,
   LIMITE_PRINCIPAL,
   LIMITE_ESPERA,
+  LIMITE_MENSALISTAS,
 };

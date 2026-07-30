@@ -15,6 +15,18 @@ const REGEX_NAOPAGO = /^#naopago(?:\s+(\d{1,3}))?$/i;
 const REGEX_VALOR = /^#valor(?:\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?))?$/i;
 // [aã]: o corretor do celular escreve "padrão" com acento
 const REGEX_VALOR_PADRAO = /^#valorpadr[aã]o\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?)$/i;
+// Mensalistas — vaga garantida no topo de toda lista, paga por mês
+const CMD_MENSALISTAS = '#mensalistas';
+const REGEX_MENSALISTA = /^#mensalista(?:\s+(.+))?$/i;
+const REGEX_PAGO_MES = /^#pagomes\s+(\d{1,3})(?:\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?))?$/i;
+const REGEX_NAOPAGO_MES = /^#naopagomes\s+(\d{1,3})$/i;
+const REGEX_FIXO = /^#fixo\s+(\d{1,3})$/i;
+const REGEX_REMOVER_MENSALISTA = /^#removermensalista\s+(\d{1,3})$/i;
+const REGEX_VALOR_MES = /^#valormes\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?)$/i;
+const REGEX_VAGAS_MENSALISTAS = /^#vagasmensalistas\s+(\d{1,3})$/i;
+// Inadimplentes — exibidos na lista e bloqueados de entrar até o #quitado
+const REGEX_INADIMPLENTE = /^#inadimplente\s+(.+?)(?:\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?))?$/i;
+const REGEX_QUITADO = /^#quitado\s+(.+)$/i;
 // Comandos de teste — só funcionam se TEST_MODE=true no .env/Railway.
 // Pensados pra validar o fluxo de lotação/espera sem precisar de 22 pessoas reais.
 const REGEX_TESTAR_ENCHER = /^#testarencher\s+(\d+)$/i;
@@ -31,13 +43,26 @@ const TEXTO_AJUDA = `🏐 *Comandos do bot*
 *#remover N* — remove quem está na posição N (ex: #remover 5)
 *#encerrarlista* — fecha a lista, para de aceitar nomes
 *#valor* — mostra o valor por pessoa da lista atual
+*#mensalista* — vira candidato a mensalista (vaga garantida no topo das listas)
+*#mensalistas* — mostra o quadro de mensalistas do mês
 *#comandos* — mostra essa ajuda
 
 💰 *Só pra admins do grupo:*
 *#pago N* — marca ✅ de quem está na posição N (ou responde o comprovante com *#pago*)
 *#naopago N* — desmarca (ou respondendo a mensagem com *#naopago*)
 *#valor 25* — define o valor por pessoa da lista atual (aceita 25,50)
-*#valorpadrao 25* — valor padrão pras próximas listas do grupo`;
+*#valorpadrao 25* — valor padrão pras próximas listas do grupo
+
+🗓 *Mensalistas (admins):*
+*#pagomes N* — marca o mês pago do mensalista N (valor opcional: #pagomes 3 53)
+*#naopagomes N* — desmarca o mês
+*#fixo N* — liga/desliga vaga cativa (📌) do mensalista N
+*#removermensalista N* — tira a pessoa do quadro
+*#valormes 53* — mensalidade padrão · *#vagasmensalistas 12* — total de vagas
+
+⛔ *Inadimplentes (admins):*
+*#inadimplente N* — marca quem está na posição N da lista (ou #inadimplente Nome 17)
+*#quitado Nome* — tira da lista de inadimplentes (ou #quitado N)`;
 
 const TEXTO_AJUDA_TESTE = `\n\n🧪 *Comandos de teste (TEST_MODE ligado)*
 *#testarencher N* — adiciona N pessoas fake na lista (ex: #testarencher 15)
@@ -53,8 +78,18 @@ function correspondeAlgumComando(texto) {
     REGEX_NAOPAGO.test(texto) ||
     REGEX_VALOR.test(texto) ||
     REGEX_VALOR_PADRAO.test(texto) ||
+    REGEX_MENSALISTA.test(texto) ||
+    REGEX_PAGO_MES.test(texto) ||
+    REGEX_NAOPAGO_MES.test(texto) ||
+    REGEX_FIXO.test(texto) ||
+    REGEX_REMOVER_MENSALISTA.test(texto) ||
+    REGEX_VALOR_MES.test(texto) ||
+    REGEX_VAGAS_MENSALISTAS.test(texto) ||
+    REGEX_INADIMPLENTE.test(texto) ||
+    REGEX_QUITADO.test(texto) ||
     textoLower === CMD_MOSTRAR ||
     textoLower === CMD_ENCERRAR ||
+    textoLower === CMD_MENSALISTAS ||
     textoLower === CMD_AJUDA
   );
   const comandoTeste = TEST_MODE && (
@@ -108,6 +143,9 @@ async function processarMensagem(msg) {
 
     if (resultado.erro === 'ja_esta_na_lista') {
       return msg.reply(`${nome}, você já tá na lista! 😉`);
+    }
+    if (resultado.erro === 'inadimplente') {
+      return msg.reply(`⛔ ${nome}, você está na lista de inadimplentes — acerta com um admin antes de entrar.`);
     }
     if (resultado.erro === 'tudo_lotado') {
       return msg.reply(`${nome}, infelizmente já lotou tudo hoje 🏐`);
@@ -269,6 +307,148 @@ async function processarMensagem(msg) {
     return msg.reply(`💰 Valor desta lista: *${db.formatarReais(centavos)}* por pessoa.`);
   }
 
+  // ---- mensalistas
+
+  if (texto.toLowerCase() === CMD_MENSALISTAS) {
+    return msg.reply(db.montarMensalistasFormatado(chatId));
+  }
+
+  const matchMensalista = texto.match(REGEX_MENSALISTA);
+  if (matchMensalista) {
+    const nome = matchMensalista[1]?.trim() || msg.pushname || msg.numero;
+    if (db.ehInadimplente(chatId, msg.numero, nome)) {
+      return msg.reply(`⛔ ${nome}, você está na lista de inadimplentes — acerta com um admin antes.`);
+    }
+    const resultado = db.adicionarMensalista(chatId, nome, msg.numero);
+    if (resultado.erro === 'ja_e_mensalista') {
+      return msg.reply(`${nome}, você já está no quadro de mensalistas! 😉`);
+    }
+    if (resultado.erro === 'sem_vaga') {
+      return msg.reply(`As ${resultado.limite} vagas de mensalista já estão preenchidas 😕`);
+    }
+    await msg.reply(`🗓 ${nome} é candidato a mensalista (vaga ${resultado.posicao}/${resultado.limite})! O ✅ vem quando o mês for pago.`);
+    return msg.reply(db.montarMensalistasFormatado(chatId));
+  }
+
+  const matchPagoMes = texto.match(REGEX_PAGO_MES);
+  const matchNaoPagoMes = matchPagoMes ? null : texto.match(REGEX_NAOPAGO_MES);
+  if (matchPagoMes || matchNaoPagoMes) {
+    if (!(await msg.ehAdmin())) {
+      return msg.reply('🔒 Só admin do grupo pode marcar mensalidade.');
+    }
+    const marcar = Boolean(matchPagoMes);
+    const posicao = parseInt((matchPagoMes || matchNaoPagoMes)[1], 10);
+    const grupo = db.getGrupo(chatId);
+    // Valor explícito > mensalidade padrão do grupo — vira o snapshot do mês
+    const valor = marcar
+      ? (matchPagoMes[2] ? db.paraCentavos(matchPagoMes[2]) : (grupo?.valor_mes_centavos || 0))
+      : 0;
+    const resultado = db.marcarMesPagoPorPosicao(chatId, posicao, marcar, valor);
+    if (resultado.erro) {
+      return msg.reply(`Não achei mensalista na posição ${posicao}. Confere com *#mensalistas*.`);
+    }
+    await msg.reply(marcar ? `🗓 ${resultado.nome} pagou o mês! ✅` : `↩️ Mensalidade de ${resultado.nome} desmarcada.`);
+    return msg.reply(db.montarMensalistasFormatado(chatId));
+  }
+
+  const matchFixo = texto.match(REGEX_FIXO);
+  if (matchFixo) {
+    if (!(await msg.ehAdmin())) {
+      return msg.reply('🔒 Só admin do grupo pode definir fixos.');
+    }
+    const resultado = db.alternarFixoPorPosicao(chatId, parseInt(matchFixo[1], 10));
+    if (resultado.erro) {
+      return msg.reply(`Não achei mensalista na posição ${matchFixo[1]}. Confere com *#mensalistas*.`);
+    }
+    await msg.reply(resultado.fixo
+      ? `📌 ${resultado.nome} agora é fixo — vaga cativa de mensalista.`
+      : `${resultado.nome} deixou de ser fixo.`);
+    return msg.reply(db.montarMensalistasFormatado(chatId));
+  }
+
+  const matchRemoverMensalista = texto.match(REGEX_REMOVER_MENSALISTA);
+  if (matchRemoverMensalista) {
+    if (!(await msg.ehAdmin())) {
+      return msg.reply('🔒 Só admin do grupo pode remover mensalista.');
+    }
+    const resultado = db.removerMensalistaPorPosicao(chatId, parseInt(matchRemoverMensalista[1], 10));
+    if (resultado.erro) {
+      return msg.reply(`Não achei mensalista na posição ${matchRemoverMensalista[1]}. Confere com *#mensalistas*.`);
+    }
+    await msg.reply(`❌ ${resultado.nome} saiu do quadro de mensalistas.`);
+    return msg.reply(db.montarMensalistasFormatado(chatId));
+  }
+
+  const matchValorMes = texto.match(REGEX_VALOR_MES);
+  if (matchValorMes) {
+    if (!(await msg.ehAdmin())) {
+      return msg.reply('🔒 Só admin do grupo pode definir a mensalidade.');
+    }
+    const centavos = db.paraCentavos(matchValorMes[1]);
+    db.setarValorMes(chatId, centavos);
+    return msg.reply(centavos === 0
+      ? '💰 Mensalidade removida.'
+      : `💰 Mensalidade do grupo: *${db.formatarReais(centavos)}* (usada como padrão no #pagomes).`);
+  }
+
+  const matchVagasMensalistas = texto.match(REGEX_VAGAS_MENSALISTAS);
+  if (matchVagasMensalistas) {
+    if (!(await msg.ehAdmin())) {
+      return msg.reply('🔒 Só admin do grupo pode mudar as vagas.');
+    }
+    const vagas = parseInt(matchVagasMensalistas[1], 10);
+    if (vagas < 1) {
+      return msg.reply('O número de vagas precisa ser pelo menos 1.');
+    }
+    db.setarLimiteMensalistas(chatId, vagas);
+    return msg.reply(`🗓 Vagas de mensalista: *${vagas}*.`);
+  }
+
+  // ---- inadimplentes
+
+  const matchInadimplente = texto.match(REGEX_INADIMPLENTE);
+  if (matchInadimplente) {
+    if (!(await msg.ehAdmin())) {
+      return msg.reply('🔒 Só admin do grupo pode marcar inadimplente.');
+    }
+    const alvoTexto = matchInadimplente[1].trim();
+    const valor = matchInadimplente[2] ? db.paraCentavos(matchInadimplente[2]) : 0;
+
+    let nome = alvoTexto;
+    let numero = null;
+    // Número curto = posição na lista atual (pega nome + contato de lá);
+    // texto = marca só pelo nome
+    if (/^\d{1,3}$/.test(alvoTexto)) {
+      const lista = db.getListaMaisRecente(chatId);
+      const entrada = lista && db.getEntradaPorPosicao(lista.id, parseInt(alvoTexto, 10));
+      if (!entrada) {
+        return msg.reply(`Não achei ninguém na posição ${alvoTexto}. Confere com *#mostralista* ou usa *#inadimplente Nome*.`);
+      }
+      nome = entrada.nome;
+      numero = entrada.numero;
+    }
+
+    const resultado = db.adicionarInadimplente(chatId, { nome, numero, valorCentavos: valor });
+    if (resultado.erro === 'ja_esta') {
+      return msg.reply(`${nome} já está na lista de inadimplentes.`);
+    }
+    return msg.reply(
+      `⛔ ${nome} entrou na lista de inadimplentes${valor > 0 ? ` (deve ${db.formatarReais(valor)})` : ''}. Não entra em lista nova até um admin dar *#quitado ${nome}*.`
+    );
+  }
+
+  const matchQuitado = texto.match(REGEX_QUITADO);
+  if (matchQuitado) {
+    if (!(await msg.ehAdmin())) {
+      return msg.reply('🔒 Só admin do grupo pode quitar inadimplente.');
+    }
+    const resultado = db.quitarInadimplente(chatId, matchQuitado[1].trim());
+    if (resultado.erro) {
+      return msg.reply('Não achei essa pessoa na lista de inadimplentes.');
+    }
+    return msg.reply(`✅ ${resultado.nome} quitou — fora da lista de inadimplentes!`);
+  }
+
   if (TEST_MODE) {
     // Gate de admin: TEST_MODE é global do bot, e #testarlimpar apaga
     // entradas com pagamento marcado — não pode ficar aberto ao grupo
@@ -323,7 +503,7 @@ async function processarMensagem(msg) {
 
   // Variação malformada de comando conhecido (ex: "#pago 3 4", "#valor25",
   // "#pago João") não pode morrer em silêncio — o admin acharia que funcionou
-  if (/^#(pago|naopago|valor|valorpadr[aã]o|remover|mostralista|encerrarlista|lista|comandos|testarencher|testarlimpar)\b/i.test(texto)) {
+  if (/^#(pago|naopago|valor|valorpadr[aã]o|valormes|remover|mostralista|encerrarlista|lista|comandos|mensalistas?|pagomes|naopagomes|fixo|removermensalista|vagasmensalistas|inadimplente|quitado|testarencher|testarlimpar)\b/i.test(texto)) {
     return msg.reply('Não entendi o formato 🤔 Manda *#comandos* pra ver como usar cada um.');
   }
 }

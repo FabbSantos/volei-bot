@@ -10,6 +10,7 @@ const CMD_AJUDA_ADMIN = '#admin';
 const REGEX_LISTA_DE = /^#listade\s+(.+)$/i;
 const REGEX_PAGOS_DE = /^#pagosde\s+(.+)$/i;
 const REGEX_ADMINS_DE = /^#adminsde\s+(.+)$/i;
+const REGEX_MENSALISTAS_DE = /^#mensalistasde\s+(.+)$/i;
 const REGEX_VALOR_DE = /^#valorde\s+(.+?)\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?)$/i;
 const REGEX_VALOR_LISTA_DE = /^#valorlistade\s+(.+?)\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?)$/i;
 const REGEX_GRUPO_ADMIN = /^#grupoadmin\s+(\S+)(?:\s+(off))?$/i;
@@ -24,6 +25,7 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 📡 *Consulta/gestão remota (<grupo> = pedaço do nome ou chat_id):*
 *#listade <grupo>* — lista atual do grupo
 *#pagosde <grupo>* — quem pagou, quem falta e quanto arrecadou
+*#mensalistasde <grupo>* — quadro de mensalistas do mês + arrecadação
 *#adminsde <grupo>* — admins do grupo no WhatsApp (são eles que marcam #pago lá)
 *#valorde <grupo> 25* — valor padrão por pessoa (vale pras próximas listas)
 *#valorlistade <grupo> 30* — valor só da lista aberta agora (ex: sexta de 3h)
@@ -142,6 +144,18 @@ async function processarComandoAdmin(msg) {
     return msg.reply(resposta);
   }
 
+  const matchMensalistasDe = texto.match(REGEX_MENSALISTAS_DE);
+  if (matchMensalistasDe) {
+    const r = resolverGrupo(matchMensalistasDe[1]);
+    if (r.mensagem) return msg.reply(r.mensagem);
+    const resumo = db.resumoMensalistas(r.grupo.chat_id);
+    let resposta = `🏐 *${r.grupo.nome || r.grupo.chat_id}*\n\n${db.montarMensalistasFormatado(r.grupo.chat_id)}`;
+    if (resumo.arrecadadoMesCentavos > 0) {
+      resposta += `\n💵 Arrecadado no mês: *${db.formatarReais(resumo.arrecadadoMesCentavos)}*`;
+    }
+    return msg.reply(resposta);
+  }
+
   const matchAdminsDe = texto.match(REGEX_ADMINS_DE);
   if (matchAdminsDe) {
     const r = resolverGrupo(matchAdminsDe[1]);
@@ -233,7 +247,7 @@ async function processarComandoAdmin(msg) {
   // Qualquer variação dos comandos acima que não casou é sintaxe errada
   // (ex: "18 -6", "#listade" sem grupo, "#listargrupos x") — responde com o
   // uso em vez de ficar mudo e deixar o admin achando que funcionou
-  if (/^#(ativargrupo|desativargrupo|listade|pagosde|adminsde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
+  if (/^#(ativargrupo|desativargrupo|listade|pagosde|adminsde|mensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
     return msg.reply(
       `Não entendi o formato 🤔 Exemplos:\n*#ativargrupo <chat_id> 18 --6*\n*#listade quinta* · *#pagosde quinta* · *#valorde quinta 25*\nManda *#admin* pra ver a sintaxe de tudo.`
     );
@@ -241,7 +255,7 @@ async function processarComandoAdmin(msg) {
 
   // Comando do grupo de pelada digitado no contexto admin (ex: responder um
   // comprovante encaminhado com #pago) — aponta o equivalente remoto
-  if (/^#(pago|naopago|valor|valorpadr[aã]o|mostralista|remover|encerrarlista|lista|comandos)\b/i.test(texto)) {
+  if (/^#(pago|naopago|valor|valorpadr[aã]o|valormes|mostralista|remover|encerrarlista|lista|comandos|mensalistas?|pagomes|naopagomes|fixo|removermensalista|vagasmensalistas|inadimplente|quitado)\b/i.test(texto)) {
     return msg.reply(
       `Esse comando funciona dentro do grupo da pelada. Aqui os equivalentes são remotos: *#listade <grupo>*, *#pagosde <grupo>*, *#valorlistade <grupo> 30*... Manda *#admin* pra ver tudo.`
     );
