@@ -144,20 +144,45 @@ async function listarAdminsDoGrupo(client, chatId) {
   return ids;
 }
 
+const cacheMembros = new Map(); // chatId -> { ids, expira } — membros do grupo de admins
+
+async function listarMembrosDoGrupo(client, chatId) {
+  const agora = Date.now();
+  const cache = cacheMembros.get(chatId);
+  if (cache && cache.expira > agora) return cache.ids;
+
+  const membros = await client.getGroupMembers(chatId);
+  const ids = (membros || []).map((c) => widParaString(c?.id ?? c)).filter(Boolean);
+  cacheMembros.set(chatId, { ids, expira: agora + CACHE_ADMINS_TTL_MS });
+  return ids;
+}
+
 async function ehAdminDoGrupo(client, chatId, numero) {
   if (ADMIN_NUMBER && numero === ADMIN_NUMBER) return true; // admin do bot pode tudo
   if (!numero) return false;
+
+  // Fallback comparando só a parte antes do @ — cobre divergência de sufixo
+  // (@c.us vs @lid) entre o remetente e as listas em alguns grupos
+  const usuario = String(numero).split('@')[0];
+  const bateCom = (ids) => ids.includes(numero) || ids.some((id) => id.split('@')[0] === usuario);
+
   try {
-    const ids = await listarAdminsDoGrupo(client, chatId);
-    if (ids.includes(numero)) return true;
-    // Fallback: compara só a parte antes do @ — cobre divergência de sufixo
-    // (@c.us vs @lid) entre o remetente e a lista de admins em alguns grupos
-    const usuario = String(numero).split('@')[0];
-    return ids.some((id) => id.split('@')[0] === usuario);
+    if (bateCom(await listarAdminsDoGrupo(client, chatId))) return true;
   } catch (err) {
     console.warn(`[admins] falha ao consultar admins de ${chatId}: ${err.message}`);
-    return false; // na dúvida, nega — melhor que liberar pagamento pra todo mundo
   }
+
+  // "Admin geral": quem está no grupo de admins manda em qualquer grupo de
+  // pelada — quem controla é a membresia daquele grupo
+  for (const grupoAdmin of db.listarGruposAdmin()) {
+    try {
+      if (bateCom(await listarMembrosDoGrupo(client, grupoAdmin))) return true;
+    } catch (err) {
+      console.warn(`[admins] falha ao consultar membros de ${grupoAdmin}: ${err.message}`);
+    }
+  }
+
+  return false; // na dúvida, nega — melhor que liberar pagamento pra todo mundo
 }
 
 function start(client) {

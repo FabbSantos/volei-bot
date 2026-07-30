@@ -7,7 +7,9 @@ const REGEX_ENTRAR = /^#lista(?:\s+(.+))?$/i;
 const CMD_MOSTRAR = '#mostralista';
 const CMD_ENCERRAR = '#encerrarlista';
 const CMD_AJUDA = '#comandos';
-const REGEX_REMOVER = /^#remover\s+(\d+)$/i;
+// #remover (sozinho ou com o próprio nome) = sair da lista, aberto a todos;
+// #remover N / #remover NomeDeOutro = só admins
+const REGEX_REMOVER = /^#remover(?:\s+(.+))?$/i;
 // Pagamento — restritos a admins DO GRUPO no WhatsApp (+ o admin do bot).
 // #pago/#naopago sem número funcionam respondendo a mensagem da pessoa (ex: o comprovante).
 const REGEX_PAGO = /^#pago(?:\s+(\d{1,3}))?$/i;
@@ -40,14 +42,15 @@ const TEXTO_AJUDA = `🏐 *Comandos do bot*
 *#lista* — entra na lista ativa usando seu nome do WhatsApp
 *#lista Nome* — entra na lista com um nome específico (ex: #lista João)
 *#mostralista* — mostra a lista atual
-*#remover N* — remove quem está na posição N (ex: #remover 5)
+*#remover* — sai da lista (também tira quem você adicionou com #lista Nome)
 *#encerrarlista* — fecha a lista, para de aceitar nomes
 *#valor* — mostra o valor por pessoa da lista atual
 *#mensalista* — vira candidato a mensalista (vaga garantida no topo das listas)
 *#mensalistas* — mostra o quadro de mensalistas do mês
 *#comandos* — mostra essa ajuda
 
-💰 *Só pra admins do grupo:*
+💰 *Só pra admins (do grupo ou do grupo de admins):*
+*#remover N* — remove quem está na posição N (ou #remover Nome)
 *#pago N* — marca ✅ de quem está na posição N (ou responde o comprovante com *#pago*)
 *#naopago N* — desmarca (ou respondendo a mensagem com *#naopago*)
 *#valor 25* — define o valor por pessoa da lista atual (aceita 25,50)
@@ -200,17 +203,52 @@ async function processarMensagem(msg) {
     if (!lista) {
       return msg.reply('Nenhuma lista aberta no momento.');
     }
-    const posicao = parseInt(matchRemover[1], 10);
-    const resultado = db.removerPorPosicao(lista.id, posicao);
 
-    if (resultado.erro === 'posicao_invalida') {
-      return msg.reply(`Não achei ninguém na posição ${posicao}. Confere com *#mostralista*.`);
+    const argumento = matchRemover[1]?.trim();
+    let resultado;
+
+    if (!argumento) {
+      // #remover sozinho: sai da lista — acha pela pessoa que pediu, então
+      // funciona também pra quem entrou com "#lista Nome"
+      resultado = db.removerPorNumero(lista.id, msg.numero);
+      if (resultado.erro === 'nao_esta_na_lista') {
+        return msg.reply('Você não está na lista atual.');
+      }
+    } else if (/^\d+$/.test(argumento)) {
+      // #remover N: tirar os outros é coisa de admin
+      if (!(await msg.ehAdmin())) {
+        return msg.reply('🔒 Só admin pode remover os outros. Pra sair da lista, manda *#remover* sozinho.');
+      }
+      resultado = db.removerPorPosicao(lista.id, parseInt(argumento, 10));
+      if (resultado.erro === 'posicao_invalida') {
+        return msg.reply(`Não achei ninguém na posição ${argumento}. Confere com *#mostralista*.`);
+      }
+    } else {
+      // #remover Nome: remove se a entrada estiver pendurada no SEU número
+      // (você mesmo, ou alguém que você adicionou com "#lista Nome");
+      // admin remove qualquer um pelo nome
+      const candidatos = db.acharEntradasPorNome(lista.id, argumento);
+      if (candidatos.length === 0) {
+        return msg.reply(`Não achei "${argumento}" na lista. Confere com *#mostralista*.`);
+      }
+      const usuario = String(msg.numero || '').split('@')[0];
+      const meu = candidatos.find((e) => String(e.numero).split('@')[0] === usuario);
+      if (meu) {
+        resultado = db.removerEntrada(lista.id, meu);
+      } else if (await msg.ehAdmin()) {
+        if (candidatos.length > 1) {
+          return msg.reply(`Tem ${candidatos.length} pessoas chamadas "${argumento}" — usa *#remover N* pela posição.`);
+        }
+        resultado = db.removerEntrada(lista.id, candidatos[0]);
+      } else {
+        return msg.reply(`🔒 "${argumento}" não foi adicionado(a) pelo seu número — só admin pode remover os outros.`);
+      }
     }
 
     const avisoPago = resultado.removidoTinhaPago
       ? ' ⚠️ Atenção: essa pessoa já tinha pago ✅!'
       : '';
-    await msg.reply(`❌ ${resultado.removido} removido(a) da posição ${posicao}.${avisoPago}`);
+    await msg.reply(`❌ ${resultado.removido} saiu da lista.${avisoPago}`);
     for (const promovido of resultado.promovidos || []) {
       await msg.reply(`⬆️ ${promovido} subiu da espera pra lista principal!`);
     }

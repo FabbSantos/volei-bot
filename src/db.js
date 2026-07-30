@@ -632,6 +632,12 @@ function marcarGrupoAdmin(chatId, ehAdmin) {
   return info.changes > 0;
 }
 
+// chat_ids dos grupos de admins — membro deles é "admin geral" e tem
+// permissão de admin em qualquer grupo de pelada
+function listarGruposAdmin() {
+  return db.prepare('SELECT chat_id FROM grupos WHERE eh_admin = 1').all().map((g) => g.chat_id);
+}
+
 // Compara ignorando acento e caixa — "volei" tem que achar "Vôlei de Quinta"
 function normalizarTexto(texto) {
   // NFD separa a letra do acento; \p{M} apaga as marcas combinantes
@@ -667,16 +673,7 @@ function getEntradaPorPosicao(listaId, posicao) {
   return listarCombinada(listaId)[posicao - 1];
 }
 
-// Remove pela posição exibida em #mostralista (1-18 principal, 19+ espera).
-// Se remover da principal, promove automaticamente o primeiro da espera.
-function removerPorPosicao(listaId, posicao) {
-  const combinada = listarCombinada(listaId);
-  const alvo = combinada[posicao - 1]; // posicao é 1-indexed
-
-  if (!alvo) {
-    return { erro: 'posicao_invalida' };
-  }
-
+function removerEntrada(listaId, alvo) {
   db.prepare('DELETE FROM entradas WHERE id = ?').run(alvo.id);
 
   // Sobe da espera enquanto couber na principal — normalmente 1, mas pode ser
@@ -687,6 +684,29 @@ function removerPorPosicao(listaId, posicao) {
   // Sinaliza se apagamos um ✅ junto — o grupo precisa saber que a pessoa
   // removida já tinha pago, senão o rastro do dinheiro some em silêncio
   return { removido: alvo.nome, removidoTinhaPago: Boolean(alvo.pago), promovidos };
+}
+
+// Remove pela posição exibida em #mostralista (1-18 principal, 19+ espera).
+// Se remover da principal, promove automaticamente o primeiro da espera.
+function removerPorPosicao(listaId, posicao) {
+  const alvo = listarCombinada(listaId)[posicao - 1]; // posicao é 1-indexed
+  if (!alvo) return { erro: 'posicao_invalida' };
+  return removerEntrada(listaId, alvo);
+}
+
+// Auto-remoção (#remover sem argumento): acha a entrada pelo número de quem
+// pediu — cobre também quem entrou com "#lista Nome", porque a entrada fica
+// pendurada no número de quem digitou
+function removerPorNumero(listaId, numero) {
+  const alvo = acharEntradaPorNumero(listaId, numero);
+  if (!alvo) return { erro: 'nao_esta_na_lista' };
+  return removerEntrada(listaId, alvo);
+}
+
+// Entradas cujo nome bate (ignorando acento/caixa) — pro "#remover Nome"
+function acharEntradasPorNome(listaId, nome) {
+  const alvo = normalizarTexto(nome).trim();
+  return listarCombinada(listaId).filter((e) => normalizarTexto(e.nome).trim() === alvo);
 }
 
 function historico(chatId) {
@@ -710,7 +730,11 @@ module.exports = {
   limparEntradas,
   montarListaFormatada,
   removerPorPosicao,
+  removerPorNumero,
+  removerEntrada,
+  acharEntradasPorNome,
   historico,
+  listarGruposAdmin,
   marcarPagoPorPosicao,
   marcarPagoPorNumero,
   resumoPagamentos,
