@@ -142,9 +142,38 @@ async function listarAdminsDoGrupo(client, chatId) {
   if (cache && cache.expira > agora) return cache.ids;
 
   const wids = await client.getGroupAdmins(chatId);
-  const ids = (wids || []).map(widParaString).filter(Boolean);
-  cacheAdmins.set(chatId, { ids, expira: agora + CACHE_ADMINS_TTL_MS });
-  return ids;
+  // Resolve @lid -> número real, senão a comparação com o remetente falha
+  const ids = await Promise.all(
+    (wids || []).map((w) => lidParaNumero(client, w))
+  );
+  const idsValidos = ids.filter(Boolean);
+  cacheAdmins.set(chatId, { ids: idsValidos, expira: agora + CACHE_ADMINS_TTL_MS });
+  return idsValidos;
+}
+
+// O WhatsApp novo endereça contatos como @lid (ID opaco de privacidade), sem
+// relação numérica com o telefone. O wa-js mapeia LID -> número real; cacheia
+// pra não consultar a página a cada mensagem.
+const cacheLidNumero = new Map(); // '...@lid' -> '...@c.us'
+
+async function lidParaNumero(client, id) {
+  const jid = widParaString(id);
+  if (!jid || !jid.endsWith('@lid')) return jid;
+  if (cacheLidNumero.has(jid)) return cacheLidNumero.get(jid);
+  try {
+    const entrada = await client.page.evaluate(
+      (x) => WPP.contact.getPnLidEntry(x),
+      jid
+    );
+    const numero = entrada?.phoneNumber?._serialized;
+    if (numero) {
+      cacheLidNumero.set(jid, numero);
+      return numero;
+    }
+  } catch (err) {
+    console.warn(`[lid] falha ao resolver ${jid}: ${err.message}`);
+  }
+  return jid; // sem mapeamento, segue com o lid mesmo
 }
 
 const cacheMembros = new Map(); // chatId -> { ids, expira } — membros do grupo de admins
@@ -155,9 +184,12 @@ async function listarMembrosDoGrupo(client, chatId) {
   if (cache && cache.expira > agora) return cache.ids;
 
   const membros = await client.getGroupMembers(chatId);
-  const ids = (membros || []).map((c) => widParaString(c?.id ?? c)).filter(Boolean);
-  cacheMembros.set(chatId, { ids, expira: agora + CACHE_ADMINS_TTL_MS });
-  return ids;
+  const ids = await Promise.all(
+    (membros || []).map((c) => lidParaNumero(client, c?.id ?? c))
+  );
+  const idsValidos = ids.filter(Boolean);
+  cacheMembros.set(chatId, { ids: idsValidos, expira: agora + CACHE_ADMINS_TTL_MS });
+  return idsValidos;
 }
 
 // Compara com o ADMIN_NUMBER tolerando sufixo diferente (@c.us vs @lid) —
@@ -206,7 +238,7 @@ function start(client) {
       if (!ehGrupo) {
         // Mensagem privada: só processa se vier do número admin configurado.
         // Isso permite ativar/desativar grupos sem precisar estar neles.
-        const remetente = widParaString(message.from);
+        const remetente = await lidParaNumero(client, message.from);
         if (ehAdminDoBot(remetente)) {
           await processarComandoAdmin({
             body: message.body,
@@ -226,7 +258,18 @@ function start(client) {
 
       // Grupo de admins: comandos remotos de gestão, não tem lista própria.
       // Qualquer membro dele pode comandar — quem controla é a membresia do grupo.
-      const grupo = db.registrarGrupoSeNovo(message.from, message.chat?.name || null);
+      let nomeGrupo = message.chat?.name || null;
+      if (!nomeGrupo) {
+        // A mensagem nem sempre traz o nome do grupo — busca no chat pra não
+        // ficar "(sem nome)" pra sempre (os comandos remotos acham por nome)
+        try {
+          const chat = await client.getChatById(message.from);
+          nomeGrupo = chat?.name || chat?.contact?.name || chat?.formattedTitle || null;
+        } catch (err) {
+          console.warn(`[grupos] falha ao buscar nome de ${message.from}: ${err.message}`);
+        }
+      }
+      const grupo = db.registrarGrupoSeNovo(message.from, nomeGrupo);
       if (grupo.eh_admin) {
         await processarComandoAdmin({
           body: message.body,
@@ -240,14 +283,19 @@ function start(client) {
       // Se quiser restringir a um grupo específico, descomente:
       // if (NOME_GRUPO_ALVO && message.chat?.name !== NOME_GRUPO_ALVO) return;
 
-      const numero = widParaString(message.author || message.sender?.id || message.from); // remetente individual dentro do grupo
+      // Remetente individual dentro do grupo, com @lid resolvido pro número
+      // real — senão dedup, #pago via comprovante e permissão quebram
+      const numero = await lidParaNumero(
+        client,
+        message.author || message.sender?.id || message.from
+      );
 
       const msg = {
         body: message.body,
         pushname: message.notifyName || message.sender?.pushname,
         chatId: message.from, // JID do grupo — usado pra isolar cada lista por grupo
         numero,
-        nomeGrupo: message.chat?.name || null,
+        nomeGrupo,
         reply: (texto) => client.sendText(message.from, texto),
         ehAdmin: () => ehAdminDoGrupo(client, message.from, numero),
         // Quem enviou a mensagem que está sendo respondida (ex: o comprovante)
@@ -255,7 +303,7 @@ function start(client) {
           if (!message.quotedMsgId) return null;
           try {
             const citada = await client.getMessageById(message.quotedMsgId);
-            return widParaString(citada?.author || citada?.sender?.id || citada?.from);
+            return await lidParaNumero(client, citada?.author || citada?.sender?.id || citada?.from);
           } catch (err) {
             console.warn(`[citada] falha ao buscar mensagem citada: ${err.message}`);
             return null;
