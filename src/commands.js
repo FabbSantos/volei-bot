@@ -324,7 +324,11 @@ async function processarMensagem(msg) {
       return msg.reply(`${nome}, você já está no quadro de mensalistas! 😉`);
     }
     if (resultado.erro === 'sem_vaga') {
-      return msg.reply(`As ${resultado.limite} vagas de mensalista já estão preenchidas 😕`);
+      // Mostra a conta: fixos ocupam vaga do total (ex: 12 = 5 fixas + 7 mensais)
+      const fixos = db.listarMensalistas(chatId).filter((m) => m.fixo).length;
+      return msg.reply(
+        `As ${resultado.limite} vagas de mensalista já estão preenchidas (${fixos} fixas + ${resultado.limite - fixos} mensais) 😕`
+      );
     }
     await msg.reply(`🗓 ${nome} é candidato a mensalista (vaga ${resultado.posicao}/${resultado.limite})! O ✅ vem quando o mês for pago.`);
     return msg.reply(db.montarMensalistasFormatado(chatId));

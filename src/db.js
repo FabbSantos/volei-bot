@@ -574,6 +574,10 @@ function montarMensalistasFormatado(chatId) {
     texto += `\n━━━━━━━━━━━━━━━\n`;
     texto += `💰 Mensalidade: ${formatarReais(resumo.valorMesCentavos)} — ${resumo.pagos}/${resumo.total} pagos`;
   }
+  // Deixa a conta das vagas explícita: fixos ocupam vaga do total
+  const fixos = todos.filter((m) => m.fixo).length;
+  const livres = Math.max(0, resumo.limite - resumo.total);
+  texto += `\n${fixos} fixa(s) + ${resumo.total - fixos} mensais · ${livres} vaga(s) livre(s)`;
   texto += `\n_📌 fixo · ✅ mês pago_`;
   return texto;
 }
