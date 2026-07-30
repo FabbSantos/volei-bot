@@ -1,20 +1,40 @@
 # Bot de Lista de Vôlei
 
-Bot de WhatsApp (via WPPConnect) que organiza lista de presença pro vôlei,
-com lista principal de 18 vagas + 1 lista de espera de 4 pessoas,
-com histórico persistente em SQLite.
+Bot de WhatsApp (via WPPConnect) que organiza lista de presença pro vôlei —
+lista principal + espera (18 + 6 por padrão, dimensionável por grupo), com
+pagamentos (✅ por pessoa), mensalistas com vaga garantida, lista de
+inadimplentes e histórico persistente em SQLite.
 
-## Comandos
+**Permissões:** comandos que mudam dinheiro/lista dos outros exigem "admin" —
+que é: admin do próprio grupo no WhatsApp (consultado ao vivo), qualquer
+membro do grupo de admins (ver abaixo) ou o dono do bot (`ADMIN_NUMBER`).
+
+## Comandos no grupo da pelada
 
 | Comando | O que faz |
 |---|---|
-| `#listaDD/MM` | Abre a lista pro dia (ex: `#lista05/07`) |
-| `#lista` | Entra na lista ativa (pega seu nome do WhatsApp automaticamente) |
-| `#lista Nome` | Entra na lista com um nome específico, em vez do nome do WhatsApp |
-| `#mostralista` | Mostra o estado atual da lista e das esperas |
-| `#remover N` | Remove quem está na posição N (ex: `#remover 5`). Se for da principal, promove automaticamente o primeiro da espera |
-| `#encerrarlista` | Fecha a lista, para de aceitar novos nomes |
+| `#listaDD/MM` | Abre a lista pro dia (ex: `#lista05/07`); nasce com os mensalistas no topo |
+| `#lista` / `#lista Nome` | Entra na lista ativa (com o nome do WhatsApp ou um específico) |
+| `#mostralista` | Mostra a lista: principal, espera, pagamentos e inadimplentes |
+| `#remover` | Sai da lista (tira a própria entrada; cobre quem entrou com `#lista Nome`) |
+| `#remover N` / `#remover Nome` | *(admin)* Remove outra pessoa; o primeiro da espera sobe sozinho |
+| `#encerrarlista` | Trava nomes (os pagamentos continuam funcionando) |
+| `#valor` | Consulta o valor por pessoa da lista |
+| `#pago N` | *(admin)* Marca ✅ — ou responde a mensagem do comprovante com `#pago` |
+| `#naopago N` | *(admin)* Desmarca |
+| `#valor 25` / `#valorpadrao 25` | *(admin)* Valor da lista atual / padrão das próximas |
+| `#mensalista` | Entra como candidato a mensalista (vaga garantida no topo das listas) |
+| `#mensalistas` | Quadro do mês (📌 fixo, ✅ mês pago, vagas livres) |
+| `#pagomes N` / `#naopagomes N` | *(admin)* Marca/desmarca a mensalidade do mês |
+| `#fixo N` | *(admin)* Liga/desliga vaga cativa 📌 |
+| `#removermensalista N` | *(admin)* Tira do quadro |
+| `#valormes 53` / `#vagasmensalistas 12` | *(admin)* Mensalidade padrão / total de vagas (fixos inclusos) |
+| `#inadimplente N [valor]` | *(admin)* Marca inadimplente (aparece na lista e fica bloqueado de entrar) |
+| `#quitado Nome` | *(admin)* Tira da lista de inadimplentes |
 | `#comandos` | Mostra a ajuda com todos os comandos |
+
+O mês dos mensalistas vira sozinho à meia-noite do dia 1º (horário de
+Brasília) — todo mundo volta a "pendente" até pagar, sem perder a vaga.
 
 ## Modo de teste (feature flag)
 
@@ -48,29 +68,39 @@ Pra liberar, você manda um comando **no privado, direto pro número do bot**
 `ADMIN_NUMBER` no `.env` (formato `5521999999999@c.us`) — só esse número
 tem permissão de rodar comandos de admin.
 
-Comandos de admin (só funcionam em DM com o bot):
+Comandos de admin (no privado com o bot, e também no **grupo de admins** —
+um grupo do WhatsApp que você define com `#grupoadmin <chat_id>` no privado;
+qualquer membro dele vira "admin geral" de todos os grupos):
 
 | Comando | O que faz |
 |---|---|
-| `#listargrupos` | Lista todos os grupos cadastrados, com status e `chat_id` |
-| `#ativargrupo <chat_id>` | Libera um grupo pra usar o bot |
+| `#listargrupos` | Todos os grupos, com status, tamanho, valor e `chat_id` |
+| `#ativargrupo <chat_id> [18] [--6]` | Libera (e dimensiona) um grupo; repetir só redimensiona |
 | `#desativargrupo <chat_id>` | Bloqueia um grupo (ex: inadimplência) |
+| `#grupoadmin <chat_id> [off]` | *(só no privado)* Define/desfaz o grupo de admins |
+| `#listade` `#pagosde` `#mensalistasde` `#adminsde <grupo>` | Consultas remotas (por pedaço do nome ou chat_id) |
+| `#valorde` `#valorlistade <grupo> <valor>` | Valor padrão / da lista aberta, à distância |
+| `#pagomesde` `#naopagomesde` `#fixode` `#removermensalistade <grupo> N` | Gestão remota de mensalistas |
+| `#mensalistade <grupo> Nome` / `#valormesde` / `#vagasmensalistasde` | Idem: cadastro, mensalidade e vagas |
 | `#admin` | Mostra a ajuda dos comandos de admin |
 
 Fluxo típico pra um grupo novo:
 1. Alguém no grupo manda qualquer mensagem com `#` (o bot avisa que não
    tá liberado)
 2. Você manda `#listargrupos` no privado, copia o `chat_id` do grupo
-3. Manda `#ativargrupo <chat_id>` — pronto, o grupo já pode usar
+3. Manda `#ativargrupo <chat_id> 18 --6` — pronto, o grupo já pode usar
 
 ## Como funciona a fila
 
-1. Alguém manda `#lista05/07` → cria a lista pro dia 05/07 (fica "aberta")
+1. Alguém manda `#lista05/07` → cria a lista pro dia 05/07 (fica "aberta"),
+   já com os mensalistas do grupo no topo (fixos primeiro)
 2. Cada `#lista` subsequente entra na fila, na ordem que a mensagem chegou
-3. Ao bater 18 pessoas → bot avisa que a lista encheu e começa a lista de espera
-4. Espera bate 4 → bot avisa que lotou tudo e para de aceitar
-5. `#encerrarlista` a qualquer momento fecha pra novos nomes (útil se não lotar)
-6. As listas antigas ficam salvas no banco (histórico), nada é resetado sozinho
+3. Ao bater o limite da principal → bot avisa que encheu e começa a espera
+4. Espera enche → bot avisa que lotou tudo e para de aceitar
+5. `#encerrarlista` a qualquer momento trava os nomes (pagamento continua)
+6. Se a lista for **aumentada** depois de cheia, quem estava na espera sobe
+   primeiro, em ordem de chegada — ninguém fura fila
+7. As listas antigas ficam salvas no banco (histórico), nada é resetado sozinho
 
 ## Instalação local
 
@@ -117,9 +147,11 @@ Só compensa se o Railway não atender.
 ## Alertas de falha (Telegram)
 
 O bot tenta reconectar sozinho quando a sessão do WhatsApp cai (estados tipo
-`CONFLICT`, `CLOSED`, `DISCONNECTED`, `UNPAIRED`), com um retry a cada 15s.
-Se **2 tentativas seguidas falharem**, ele dispara um alerta no Telegram —
-não fica tentando pra sempre em silêncio.
+`CONFLICT`, `CLOSED`, `DISCONNECTED`, `UNPAIRED`), com backoff exponencial
+(15s → 5min). Se **2 tentativas seguidas falharem**, dispara um alerta no
+Telegram; depois de **10 falhas seguidas**, encerra o processo pro host subir
+um container limpo — retry infinito acumula processos zumbis do Chrome até
+esgotar os PIDs do container.
 
 Pra configurar o alerta:
 
