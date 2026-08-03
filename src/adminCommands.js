@@ -1,4 +1,5 @@
 const db = require('./db');
+const { TEXTO_AJUDA_COMUM, TEXTO_AJUDA_ADMIN_GRUPO } = require('./commands');
 
 // #ativargrupo <chat_id> [vagas] [--espera] — ex: #ativargrupo 123@g.us 18 --6
 // Os números são opcionais: sem eles, ativa mantendo o tamanho já configurado.
@@ -374,6 +375,13 @@ async function processarComandoAdmin(msg) {
     return msg.reply(TEXTO_AJUDA_ADMIN);
   }
 
+  // #comandos no contexto admin = ajuda completa, em duas mensagens:
+  // o que existe no grupo da pelada e o arsenal remoto daqui
+  if (texto.toLowerCase() === '#comandos') {
+    await msg.reply(`${TEXTO_AJUDA_COMUM}${TEXTO_AJUDA_ADMIN_GRUPO}`);
+    return msg.reply(TEXTO_AJUDA_ADMIN);
+  }
+
   // Qualquer variação dos comandos acima que não casou é sintaxe errada
   // (ex: "18 -6", "#listade" sem grupo, "#listargrupos x") — responde com o
   // uso em vez de ficar mudo e deixar o admin achando que funcionou
@@ -385,7 +393,7 @@ async function processarComandoAdmin(msg) {
 
   // Comando do grupo de pelada digitado no contexto admin (ex: responder um
   // comprovante encaminhado com #pago) — aponta o equivalente remoto
-  if (/^#(pago|naopago|valor|valorpadr[aã]o|valormes|mostralista|remover|encerrarlista|lista|comandos|mensalistas?|pagomes|naopagomes|fixo|removermensalista|vagasmensalistas|inadimplente|quitado)\b/i.test(texto)) {
+  if (/^#(pago|naopago|valor|valorpadr[aã]o|valormes|mostralista|remover|encerrarlista|lista|mensalistas?|pagomes|naopagomes|fixo|removermensalista|vagasmensalistas|inadimplente|quitado)\b/i.test(texto)) {
     return msg.reply(
       `Esse comando funciona dentro do grupo da pelada. Aqui os equivalentes são remotos: *#listade <grupo>*, *#pagosde <grupo>*, *#valorlistade <grupo> 30*... Manda *#admin* pra ver tudo.`
     );

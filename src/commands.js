@@ -594,4 +594,4 @@ async function processarMensagem(msg) {
   }
 }
 
-module.exports = { processarMensagem };
+module.exports = { processarMensagem, TEXTO_AJUDA_COMUM, TEXTO_AJUDA_ADMIN_GRUPO };
