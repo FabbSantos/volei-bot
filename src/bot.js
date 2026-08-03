@@ -102,6 +102,9 @@ function iniciarSessao() {
       // apaga o pareamento e obriga a escanear o QR de novo
       folderNameToken: process.env.TOKENS_DIR || 'tokens',
       puppeteerOptions: {
+        // A rajada de mensagens da reconexão enfileira chamadas na página e o
+        // timeout padrão (180s) estoura ("Runtime.callFunctionOn timed out")
+        protocolTimeout: 480_000,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -262,9 +265,16 @@ async function ehAdminDoGrupo(client, chatId, numero) {
 }
 
 function start(client) {
+  // Na reconexão o WhatsApp despeja o histórico offline como onMessage novo.
+  // Processar isso responderia comando velho e afogaria a página do WhatsApp
+  // em consultas (foi o que estourou o protocolTimeout) — só vale mensagem
+  // que chegar de agora (com 60s de folga) em diante.
+  const iniciadoEm = Math.floor(Date.now() / 1000) - 60;
+
   client.onMessage(async (message) => {
     try {
       if (!message.body) return;
+      if (message.t && message.t < iniciadoEm) return; // histórico da reconexão
 
       const ehGrupo = message.isGroupMsg || (message.from || '').endsWith('@g.us');
 
@@ -292,9 +302,10 @@ function start(client) {
       // Grupo de admins: comandos remotos de gestão, não tem lista própria.
       // Qualquer membro dele pode comandar — quem controla é a membresia do grupo.
       let nomeGrupo = message.chat?.name || null;
-      if (!nomeGrupo) {
-        // A mensagem nem sempre traz o nome do grupo — busca no chat pra não
-        // ficar "(sem nome)" pra sempre (os comandos remotos acham por nome)
+      const grupoConhecido = db.getGrupo(message.from);
+      if (!nomeGrupo && !grupoConhecido?.nome) {
+        // Só consulta o chat quando ainda não temos o nome — fazer isso a cada
+        // mensagem afogava a página do WhatsApp e estourava o protocolTimeout
         try {
           const chat = await client.getChatById(message.from);
           nomeGrupo = chat?.name || chat?.contact?.name || chat?.formattedTitle || null;

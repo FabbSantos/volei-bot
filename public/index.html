@@ -24,7 +24,9 @@ async function atualizar() {
     const statusData = await statusRes.json();
     document.getElementById('status').textContent = 'Status: ' + statusData.status;
 
-    if (statusData.status === 'CONNECTED' || statusData.status === 'inChat') {
+    // Estados que significam "logado e funcionando" — o wppconnect varia o nome
+    const conectado = ['CONNECTED', 'inChat', 'isLogged', 'qrReadSuccess', 'successChat', 'MAIN'];
+    if (conectado.includes(statusData.status)) {
       document.getElementById('conteudo').innerHTML = '<p>✅ Conectado! Pode fechar essa página.</p>';
       return;
     }
