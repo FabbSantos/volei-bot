@@ -293,9 +293,13 @@ async function processarComandoAdmin(msg) {
     // fato e entra automático nas próximas listas
     if (marcar && msg.enviarPara) {
       try {
+        // Fixo já tem vaga cativa — o anúncio dele é só a quitação do mês;
+        // pro não-fixo, o ✅ é o que confirma a vaga de mensalista
         await msg.enviarPara(
           r.grupo.chat_id,
-          `🗓 *${resultado.nome}* pagou o mês e tá confirmado(a) como mensalista! ✅ Vaga garantida nas listas a partir de agora.`
+          resultado.fixo
+            ? `🗓 *${resultado.nome}* (fixo 📌) pagou o mês! ✅`
+            : `🗓 *${resultado.nome}* pagou o mês e tá confirmado(a) como mensalista! ✅ Vaga garantida nas listas a partir de agora.`
         );
         // Figurinha do agiota junto com o anúncio, se a imagem existir
         const figurinha = acharFigurinhaQuitado();

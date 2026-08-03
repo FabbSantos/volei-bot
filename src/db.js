@@ -616,7 +616,7 @@ function marcarMesPagoPorPosicao(chatId, posicao, pago, valorCentavos) {
   } else {
     db.prepare('DELETE FROM mensalidades WHERE mensalista_id = ? AND mes = ?').run(alvo.id, mes);
   }
-  return { nome: alvo.nome };
+  return { nome: alvo.nome, fixo: Boolean(alvo.fixo) };
 }
 
 function setarValorMes(chatId, centavos) {
