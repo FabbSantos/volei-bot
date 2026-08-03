@@ -12,7 +12,10 @@ const PORT = process.env.PORT || 3000;
 const NOME_GRUPO_ALVO = process.env.NOME_GRUPO_ALVO || null; // opcional: filtrar por nome do grupo
 const ADMIN_NUMBER = process.env.ADMIN_NUMBER || null; // ex: 5521999999999@c.us — seu número, pra comandos de admin no privado
 
-const ESTADOS_DESCONEXAO = ['CONFLICT', 'CLOSED', 'DISCONNECTED', 'DEPRECATED_VERSION', 'UNPAIRED', 'UNPAIRED_IDLE'];
+// browserClose = o Chrome morreu com o processo vivo; autocloseCalled = o
+// wppconnect desistiu de esperar o QR — nos dois casos, sem reconectar aqui
+// o bot ficaria zumbi (de pé, mas surdo)
+const ESTADOS_DESCONEXAO = ['CONFLICT', 'CLOSED', 'DISCONNECTED', 'DEPRECATED_VERSION', 'UNPAIRED', 'UNPAIRED_IDLE', 'browserClose', 'autocloseCalled', 'serverClose'];
 const DELAY_BASE_MS = 15_000;
 const DELAY_MAX_MS = 5 * 60_000; // teto de 5min entre tentativas, pra não martelar o host
 const TENTATIVAS_ANTES_DE_NOTIFICAR = 2;
