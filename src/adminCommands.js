@@ -47,7 +47,7 @@ function expandirPosicoes(texto) {
   return [...posicoes].sort((a, b) => a - b);
 }
 const REGEX_FIXO_DE = /^#fixode\s+(.+?)\s+(\d{1,3})$/i;
-const REGEX_REMOVER_MENSALISTA_DE = /^#removermensalistade\s+(.+?)\s+(\d{1,3})$/i;
+const REGEX_REMOVER_MENSALISTA_DE = /^#removermensalistade\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$/i;
 const REGEX_VALOR_MES_DE = /^#valormesde\s+(.+?)\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?)$/i;
 const REGEX_VAGAS_MENSALISTAS_DE = /^#vagasmensalistasde\s+(.+?)\s+(\d{1,3})$/i;
 const REGEX_VALOR_DE = /^#valorde\s+(.+?)\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?)$/i;
@@ -77,7 +77,7 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 *#naopagode <grupo> 3* — desmarca o ✅ da lista
 *#fixode <grupo> 3* — liga/desliga a vaga cativa (📌)
 *#mensalistade <grupo> Nome* — cadastra candidato (melhor a pessoa mandar #mensalista no grupo: aí o WhatsApp dela fica vinculado)
-*#removermensalistade <grupo> 3* — tira do quadro
+*#removermensalistade <grupo> 3* — tira do quadro (aceita faixa: 6-9 ou 6,8)
 *#valormesde <grupo> 53* — mensalidade · *#vagasmensalistasde <grupo> 12* — vagas
 *#valorde <grupo> 25* — valor padrão por pessoa (vale pras próximas listas)
 *#valorlistade <grupo> 30* — valor só da lista aberta agora (ex: sexta de 3h)
@@ -422,13 +422,30 @@ async function processarComandoAdmin(msg) {
     if (aviso) return msg.reply(aviso);
     const r = resolverGrupo(matchRemoverMensalistaDe[1]);
     if (r.mensagem) return msg.reply(r.mensagem);
-    const resultado = db.removerMensalistaPorPosicao(r.grupo.chat_id, parseInt(matchRemoverMensalistaDe[2], 10));
-    if (resultado.erro) {
-      return msg.reply(`Não achei mensalista na posição ${matchRemoverMensalistaDe[2]} de *${r.grupo.nome || r.grupo.chat_id}*.`);
+    // De baixo pra cima: cada remoção desloca as posições seguintes, então
+    // processar em ordem decrescente mantém as posições restantes válidas
+    const posicoes = expandirPosicoes(matchRemoverMensalistaDe[2]).sort((a, b) => b - a);
+    const removidos = [];
+    const promovidos = [];
+    const naoAchadas = [];
+    for (const posicao of posicoes) {
+      const resultado = db.removerMensalistaPorPosicao(r.grupo.chat_id, posicao);
+      if (resultado.erro) naoAchadas.push(posicao);
+      else {
+        removidos.unshift(resultado.nome); // exibe em ordem crescente de posição
+        if (resultado.promovido) promovidos.push(resultado.promovido);
+      }
     }
-    await msg.reply(`❌ ${resultado.nome} saiu do quadro de mensalistas.`);
-    if (resultado.promovido) {
-      await msg.reply(`⬆️ ${resultado.promovido} subiu da espera pra vaga mensal — falta o pagamento pra confirmar.`);
+    if (removidos.length === 0) {
+      return msg.reply(`Não achei mensalista nessa(s) posição(ões) em *${r.grupo.nome || r.grupo.chat_id}*.`);
+    }
+
+    const resumoErros = naoAchadas.length > 0 ? ` ⚠️ Posições não encontradas: ${naoAchadas.reverse().join(', ')}.` : '';
+    await msg.reply(removidos.length === 1
+      ? `❌ ${removidos[0]} saiu do quadro de mensalistas.${resumoErros}`
+      : `❌ Saíram do quadro: ${removidos.join(', ')}.${resumoErros}`);
+    for (const promovido of promovidos) {
+      await msg.reply(`⬆️ ${promovido} subiu da espera pra vaga mensal — falta o pagamento pra confirmar.`);
     }
     return msg.reply(db.montarMensalistasFormatado(r.grupo.chat_id));
   }
