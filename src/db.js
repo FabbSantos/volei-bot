@@ -207,16 +207,17 @@ function listarGrupos() {
   return db.prepare('SELECT * FROM grupos ORDER BY primeira_mensagem_em DESC').all();
 }
 
-function criarLista(chatId, dataJogo, nome = null) {
+function criarLista(chatId, dataJogo, nome = null, valorCriacao = null) {
   const existente = db.prepare(
     'SELECT * FROM listas WHERE chat_id = ? AND data_jogo = ?'
   ).get(chatId, dataJogo);
   if (existente) return { ja_existia: true, lista: existente };
 
-  // Copia o valor padrão do grupo — mudar o padrão depois não mexe em lista
-  // já aberta (pra isso existe o #valor, que altera só a lista atual)
+  // Valor explícito na criação (ex: sexta de 3h mais cara) vence o padrão do
+  // grupo; sem ele, copia o padrão — e mudar o padrão depois não mexe em
+  // lista já aberta (pra isso existe o #valor, que altera só a lista atual)
   const grupo = getGrupo(chatId);
-  const valorCentavos = grupo?.valor_padrao_centavos || 0;
+  const valorCentavos = valorCriacao != null ? valorCriacao : (grupo?.valor_padrao_centavos || 0);
 
   const info = db.prepare(
     'INSERT INTO listas (chat_id, data_jogo, status, criada_em, valor_centavos, nome) VALUES (?, ?, ?, ?, ?, ?)'

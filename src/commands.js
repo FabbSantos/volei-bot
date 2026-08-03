@@ -17,9 +17,10 @@ function acharFigurinhaQuitado() {
   return achado ? path.join(pasta, achado) : null;
 }
 
-// Regex pro comando de abertura: #lista05/07, #lista 05/07, e com nome
-// opcional: "#lista30/07 Volei Riachuelo"
-const REGEX_ABRIR = /^#lista\s?(\d{1,2}\/\d{1,2})(?:\s+(.+))?$/i;
+// Regex pro comando de abertura: #lista05/07, #lista 05/07, e com valor e/ou
+// nome opcionais: "#lista07/08 17 Sexta 3h" (valor precisa vir logo após a
+// data; nome é o resto)
+const REGEX_ABRIR = /^#lista\s?(\d{1,2}\/\d{1,2})(?:\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?))?(?:\s+(.+))?$/i;
 // #lista sozinho, ou #lista Nome Sobrenome (nome explícito opcional)
 const REGEX_ENTRAR = /^#lista(?:\s+(.+))?$/i;
 const CMD_MOSTRAR = '#mostralista';
@@ -70,7 +71,7 @@ const TEXTO_AJUDA_COMUM = `🏐 *Comandos do bot*
 const TEXTO_AJUDA_ADMIN_GRUPO = `
 
 💰 *Só pra admins (do grupo ou do grupo de admins):*
-*#listaDD/MM* — abre a lista pro dia; com nome opcional: #lista30/07 Volei Riachuelo
+*#listaDD/MM* — abre a lista pro dia; valor e nome opcionais: #lista07/08 17 Sexta 3h
 *#encerrarlista* — fecha a lista, para de aceitar nomes
 *#remover N* — remove quem está na posição N (ou #remover Nome)
 *#pago N* — marca ✅ de quem está na posição N (ou responde o comprovante com *#pago*)
@@ -151,13 +152,15 @@ async function processarMensagem(msg) {
       return msg.reply('🔒 Só admin pode abrir lista.');
     }
     const dataJogo = matchAbrir[1];
-    const nomeLista = matchAbrir[2]?.trim() || null;
-    const { ja_existia } = db.criarLista(chatId, dataJogo, nomeLista);
+    const valorCriacao = matchAbrir[2] ? db.paraCentavos(matchAbrir[2]) : null;
+    const nomeLista = matchAbrir[3]?.trim() || null;
+    const { ja_existia } = db.criarLista(chatId, dataJogo, nomeLista, valorCriacao);
     if (ja_existia) {
       return msg.reply(`Já existe uma lista pro dia ${dataJogo}. Manda *#mostralista* pra ver.`);
     }
+    const notaValor = valorCriacao != null ? ` — ${db.formatarReais(valorCriacao)} por pessoa` : '';
     return msg.reply(
-      `✅ Lista ${nomeLista ? `*${nomeLista}* ` : ''}aberta pro dia *${dataJogo}*! Manda *#lista* pra entrar.`
+      `✅ Lista ${nomeLista ? `*${nomeLista}* ` : ''}aberta pro dia *${dataJogo}*${notaValor}! Manda *#lista* pra entrar.`
     );
   }
 

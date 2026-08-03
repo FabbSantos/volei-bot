@@ -9,6 +9,9 @@ const CMD_LISTAR = '#listargrupos';
 const CMD_AJUDA_ADMIN = '#admin';
 // Comandos remotos: <grupo> pode ser um pedaço do nome ou o chat_id exato
 const REGEX_LISTA_DE = /^#listade\s+(.+)$/i;
+// #abrirlistade <grupo> DD/MM [valor] [nome] — abre a lista da pelada daqui,
+// já anunciando no grupo dela (ex: #abrirlistade riachuelo 07/08 17 Sexta 3h)
+const REGEX_ABRIR_LISTA_DE = /^#abrirlistade\s+(.+?)\s+(\d{1,2}\/\d{1,2})(?:\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?))?(?:\s+(.+))?$/i;
 const REGEX_PAGOS_DE = /^#pagosde\s+(.+)$/i;
 const REGEX_ADMINS_DE = /^#adminsde\s+(.+)$/i;
 const REGEX_MENSALISTAS_DE = /^#mensalistasde\s+(.+)$/i;
@@ -33,6 +36,7 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 *#desativargrupo <chat_id>* — bloqueia um grupo (ex: inadimplência)
 
 📡 *Consulta/gestão remota (<grupo> = pedaço do nome ou chat_id):*
+*#abrirlistade <grupo> 07/08 17 Sexta 3h* — abre a lista de lá (valor e nome opcionais) e anuncia no grupo
 *#listade <grupo>* — lista atual do grupo
 *#pagosde <grupo>* — quem pagou, quem falta e quanto arrecadou
 *#mensalistasde <grupo>* — quadro de mensalistas do mês + arrecadação
@@ -121,6 +125,39 @@ async function processarComandoAdmin(msg) {
     return msg.reply(sucesso
       ? `⛔ Grupo ${chatId} desativado. Comandos de lista vão parar de responder lá.`
       : `Não achei nenhum grupo com esse chat_id. Confere com *#listargrupos*.`);
+  }
+
+  const matchAbrirListaDe = texto.match(REGEX_ABRIR_LISTA_DE);
+  if (matchAbrirListaDe) {
+    const r = resolverGrupo(matchAbrirListaDe[1]);
+    if (r.mensagem) return msg.reply(r.mensagem);
+    const dataJogo = matchAbrirListaDe[2];
+    const valorCriacao = matchAbrirListaDe[3] ? db.paraCentavos(matchAbrirListaDe[3]) : null;
+    const nomeLista = matchAbrirListaDe[4]?.trim() || null;
+    const nomeGrupo = r.grupo.nome || r.grupo.chat_id;
+
+    const { ja_existia, lista } = db.criarLista(r.grupo.chat_id, dataJogo, nomeLista, valorCriacao);
+    if (ja_existia) {
+      return msg.reply(`Já existe lista pro dia ${dataJogo} em *${nomeGrupo}*. Vê com *#listade*.`);
+    }
+
+    // Anuncia direto no grupo da pelada — senão ninguém fica sabendo que abriu
+    const anuncio = `✅ Lista ${nomeLista ? `*${nomeLista}* ` : ''}aberta pro dia *${dataJogo}*${
+      valorCriacao != null ? ` — ${db.formatarReais(valorCriacao)} por pessoa` : ''
+    }! Manda *#lista* pra entrar.\n\n${db.montarListaFormatada(lista.id, lista.data_jogo)}`;
+    let avisoEntrega = '';
+    if (msg.enviarPara) {
+      try {
+        await msg.enviarPara(r.grupo.chat_id, anuncio);
+      } catch (err) {
+        avisoEntrega = `\n⚠️ Não consegui anunciar no grupo (${err.message}) — avisa lá manualmente.`;
+      }
+    }
+    return msg.reply(
+      `✅ Lista ${nomeLista ? `*${nomeLista}* ` : ''}de *${dataJogo}* aberta em *${nomeGrupo}*${
+        valorCriacao != null ? ` — ${db.formatarReais(valorCriacao)}/pessoa` : ''
+      }, com os mensalistas no topo. Anunciada lá no grupo.${avisoEntrega}`
+    );
   }
 
   const matchListaDe = texto.match(REGEX_LISTA_DE);
@@ -385,7 +422,7 @@ async function processarComandoAdmin(msg) {
   // Qualquer variação dos comandos acima que não casou é sintaxe errada
   // (ex: "18 -6", "#listade" sem grupo, "#listargrupos x") — responde com o
   // uso em vez de ficar mudo e deixar o admin achando que funcionou
-  if (/^#(ativargrupo|desativargrupo|listade|pagosde|adminsde|mensalistasde|mensalistade|pagomesde|naopagomesde|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
+  if (/^#(ativargrupo|desativargrupo|abrirlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|pagomesde|naopagomesde|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
     return msg.reply(
       `Não entendi o formato 🤔 Exemplos:\n*#ativargrupo <chat_id> 18 --6*\n*#listade quinta* · *#pagosde quinta* · *#valorde quinta 25*\nManda *#admin* pra ver a sintaxe de tudo.`
     );

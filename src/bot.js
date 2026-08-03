@@ -290,6 +290,7 @@ function start(client) {
             body: message.body,
             origem: 'privado',
             reply: (texto) => client.sendText(message.from, texto),
+            enviarPara: (chatId, texto) => client.sendText(chatId, texto),
             getAdminsDoGrupo: (chatId) => listarAdminsDoGrupo(client, chatId),
           });
         } else {
@@ -322,6 +323,7 @@ function start(client) {
           body: message.body,
           origem: 'grupoadmin',
           reply: (texto) => client.sendText(message.from, texto),
+          enviarPara: (chatId, texto) => client.sendText(chatId, texto),
           getAdminsDoGrupo: (chatId) => listarAdminsDoGrupo(client, chatId),
         });
         return;
