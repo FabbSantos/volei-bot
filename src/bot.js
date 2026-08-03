@@ -291,6 +291,7 @@ function start(client) {
             origem: 'privado',
             reply: (texto) => client.sendText(message.from, texto),
             enviarPara: (chatId, texto) => client.sendText(chatId, texto),
+            enviarFigurinhaPara: (chatId, caminho) => client.sendImageAsSticker(chatId, caminho),
             getAdminsDoGrupo: (chatId) => listarAdminsDoGrupo(client, chatId),
           });
         } else {
@@ -324,6 +325,7 @@ function start(client) {
           origem: 'grupoadmin',
           reply: (texto) => client.sendText(message.from, texto),
           enviarPara: (chatId, texto) => client.sendText(chatId, texto),
+          enviarFigurinhaPara: (chatId, caminho) => client.sendImageAsSticker(chatId, caminho),
           getAdminsDoGrupo: (chatId) => listarAdminsDoGrupo(client, chatId),
         });
         return;

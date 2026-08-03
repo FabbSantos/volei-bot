@@ -17,6 +17,14 @@ function acharFigurinhaQuitado() {
   return achado ? path.join(pasta, achado) : null;
 }
 
+// Figurinha do agiota em TODO pagamento marcado — semanal, mensal ou quitação
+async function celebrarPagamento(msg) {
+  const figurinha = acharFigurinhaQuitado();
+  if (msg.enviarFigurinha && figurinha && fs.existsSync(figurinha)) {
+    await msg.enviarFigurinha(figurinha);
+  }
+}
+
 // Regex pro comando de abertura: #lista05/07, #lista 05/07, e com valor e/ou
 // nome opcionais: "#lista07/08 17 Sexta 3h" (valor precisa vir logo após a
 // data; nome é o resto)
@@ -331,6 +339,7 @@ async function processarMensagem(msg) {
     }
 
     await msg.reply(marcar ? `💰 ${resultado.nome} pagou! ✅` : `↩️ Pagamento de ${resultado.nome} desmarcado.`);
+    if (marcar) await celebrarPagamento(msg);
     return msg.reply(db.montarListaFormatada(lista.id, lista.data_jogo));
   }
 
@@ -389,6 +398,10 @@ async function processarMensagem(msg) {
   const matchMensalista = texto.match(REGEX_MENSALISTA);
   if (matchMensalista) {
     const nome = matchMensalista[1]?.trim() || msg.pushname || msg.numero;
+    // Inscrição só com a pré-lista aberta (os admins abrem no 1º dia útil)
+    if (!grupo.pre_lista_aberta) {
+      return msg.reply('🗓 As inscrições de mensalista estão fechadas no momento. Os admins abrem no começo do mês — fica ligado no grupo!');
+    }
     if (db.ehInadimplente(chatId, msg.numero, nome)) {
       return msg.reply(`⛔ ${nome}, você está na lista de inadimplentes — acerta com um admin antes.`);
     }
@@ -396,14 +409,11 @@ async function processarMensagem(msg) {
     if (resultado.erro === 'ja_e_mensalista') {
       return msg.reply(`${nome}, você já está no quadro de mensalistas! 😉`);
     }
-    if (resultado.erro === 'sem_vaga') {
-      // Mostra a conta: fixos ocupam vaga do total (ex: 12 = 5 fixas + 7 mensais)
-      const fixos = db.listarMensalistas(chatId).filter((m) => m.fixo).length;
-      return msg.reply(
-        `As ${resultado.limite} vagas de mensalista já estão preenchidas (${fixos} fixas + ${resultado.limite - fixos} mensais) 😕`
-      );
+    if (resultado.espera) {
+      await msg.reply(`⏳ Vagas mensais preenchidas — ${nome} entrou na *espera* dos mensalistas (posição ${resultado.posicao}). Se abrir vaga, você sobe.`);
+    } else {
+      await msg.reply(`🗓 ${nome} garantiu a vaga ${resultado.posicao}/${resultado.limite} da pré-lista! Agora é só acertar o pagamento com os admins — o ✅ confirma você como mensalista.`);
     }
-    await msg.reply(`🗓 ${nome} é candidato a mensalista (vaga ${resultado.posicao}/${resultado.limite})! O ✅ vem quando o mês for pago.`);
     return msg.reply(db.montarMensalistasFormatado(chatId));
   }
 
@@ -425,6 +435,7 @@ async function processarMensagem(msg) {
       return msg.reply(`Não achei mensalista na posição ${posicao}. Confere com *#mensalistas*.`);
     }
     await msg.reply(marcar ? `🗓 ${resultado.nome} pagou o mês! ✅` : `↩️ Mensalidade de ${resultado.nome} desmarcada.`);
+    if (marcar) await celebrarPagamento(msg);
     return msg.reply(db.montarMensalistasFormatado(chatId));
   }
 
@@ -453,6 +464,9 @@ async function processarMensagem(msg) {
       return msg.reply(`Não achei mensalista na posição ${matchRemoverMensalista[1]}. Confere com *#mensalistas*.`);
     }
     await msg.reply(`❌ ${resultado.nome} saiu do quadro de mensalistas.`);
+    if (resultado.promovido) {
+      await msg.reply(`⬆️ ${resultado.promovido} subiu da espera pra vaga mensal — falta o pagamento pra confirmar.`);
+    }
     return msg.reply(db.montarMensalistasFormatado(chatId));
   }
 
@@ -524,11 +538,7 @@ async function processarMensagem(msg) {
       return msg.reply('Não achei essa pessoa na lista de inadimplentes.');
     }
     await msg.reply(`✅ ${resultado.nome} pagou o agiota. 🤝`);
-    // Figurinha comemorativa, se a imagem existir no deploy
-    const figurinha = acharFigurinhaQuitado();
-    if (msg.enviarFigurinha && figurinha && fs.existsSync(figurinha)) {
-      await msg.enviarFigurinha(figurinha);
-    }
+    await celebrarPagamento(msg);
     return;
   }
 
@@ -597,4 +607,4 @@ async function processarMensagem(msg) {
   }
 }
 
-module.exports = { processarMensagem, TEXTO_AJUDA_COMUM, TEXTO_AJUDA_ADMIN_GRUPO };
+module.exports = { processarMensagem, TEXTO_AJUDA_COMUM, TEXTO_AJUDA_ADMIN_GRUPO, acharFigurinhaQuitado };

@@ -95,10 +95,14 @@ migrarColunas('grupos', {
   limite_mensalistas: `INTEGER NOT NULL DEFAULT ${LIMITE_MENSALISTAS}`,
   valor_mes_centavos: 'INTEGER NOT NULL DEFAULT 0', // mensalidade padrão do grupo
   mes_processado: 'TEXT', // último mês em que a virada de mensalistas rodou
+  pre_lista_aberta: 'INTEGER NOT NULL DEFAULT 0', // inscrições de mensalista abertas?
 });
 migrarColunas('listas', {
   valor_centavos: 'INTEGER NOT NULL DEFAULT 0',
   nome: 'TEXT',
+});
+migrarColunas('mensalistas', {
+  espera: 'INTEGER NOT NULL DEFAULT 0', // candidato além das vagas: fila de espera
 });
 migrarColunas('entradas', {
   pago: 'INTEGER NOT NULL DEFAULT 0',
@@ -224,9 +228,10 @@ function criarLista(chatId, dataJogo, nome = null, valorCriacao = null) {
   ).run(chatId, dataJogo, 'aberta', new Date().toISOString(), valorCentavos, nome);
   const listaId = info.lastInsertRowid;
 
-  // Mensalistas entram automaticamente no topo de toda lista nova — fixos
-  // primeiro, depois por ordem de chegada. Inadimplente não é semeado.
-  for (const m of listarMensalistas(chatId)) {
+  // Mensalistas EFETIVOS entram automaticamente no topo de toda lista nova:
+  // fixos sempre; não-fixo só depois de pagar o mês (inscrito na pré-lista é
+  // candidato, não mensalista). Espera e inadimplente não são semeados.
+  for (const m of listarMensalistas(chatId).filter((m) => !m.espera && (m.fixo || m.pago_mes))) {
     const resultado = adicionarEntrada(listaId, m.nome, m.numero);
     if (!resultado.erro) {
       db.prepare('UPDATE entradas SET mensalista = 1 WHERE lista_id = ? AND numero = ?')
@@ -497,6 +502,15 @@ function processarViradaDoMes(chatId) {
   // Primeiro contato do grupo com o sistema de mês: só registra, sem remover
   if (!grupo.mes_processado) return;
 
+  const removidos = removerMensalistasNaoFixos(chatId);
+  if (removidos > 0) {
+    console.log(`[mensalistas] virada pra ${mes} em ${chatId}: ${removidos} não-fixo(s) saíram do quadro`);
+  }
+}
+
+// Tira todos os não-fixos do quadro (com o histórico de mensalidade deles) e
+// fecha as inscrições — é o miolo da virada do mês e do #reiniciarmensalistasde
+function removerMensalistasNaoFixos(chatId) {
   const naoFixos = db.prepare(
     'SELECT * FROM mensalistas WHERE chat_id = ? AND fixo = 0'
   ).all(chatId);
@@ -504,13 +518,24 @@ function processarViradaDoMes(chatId) {
     db.prepare('DELETE FROM mensalidades WHERE mensalista_id = ?').run(m.id);
     db.prepare('DELETE FROM mensalistas WHERE id = ?').run(m.id);
   }
-  if (naoFixos.length > 0) {
-    console.log(`[mensalistas] virada pra ${mes} em ${chatId}: ${naoFixos.length} não-fixo(s) saíram do quadro`);
-  }
+  db.prepare('UPDATE grupos SET pre_lista_aberta = 0 WHERE chat_id = ?').run(chatId);
+  return naoFixos.length;
+}
+
+function reiniciarMensalistas(chatId) {
+  processarViradaDoMes(chatId); // não deixa a virada pendente mascarar o reinício
+  return { removidos: removerMensalistasNaoFixos(chatId) };
+}
+
+// Abre/fecha as inscrições da pré-lista de mensalistas (as vagas mensais)
+function abrirPreLista(chatId, abrir) {
+  const info = db.prepare('UPDATE grupos SET pre_lista_aberta = ? WHERE chat_id = ?').run(abrir ? 1 : 0, chatId);
+  return info.changes > 0;
 }
 
 // Roster do grupo com o status do mês corrente (pago_mes = ✅ do "Mensal").
-// Fixos primeiro, depois por ordem de chegada — a mesma ordem da lista semanal.
+// Titulares primeiro (fixos no topo), espera no fim — a numeração dos comandos
+// (#pagomes N, #fixo N...) segue essa ordem.
 function listarMensalistas(chatId) {
   if (!chatId) return [];
   processarViradaDoMes(chatId);
@@ -519,7 +544,7 @@ function listarMensalistas(chatId) {
     FROM mensalistas m
     LEFT JOIN mensalidades mm ON mm.mensalista_id = m.id AND mm.mes = ?
     WHERE m.chat_id = ?
-    ORDER BY m.fixo DESC, m.criado_em ASC, m.id ASC
+    ORDER BY m.espera ASC, m.fixo DESC, m.criado_em ASC, m.id ASC
   `).all(mesAtual(), chatId);
 }
 
@@ -530,16 +555,23 @@ function acharMensalistaPorNumero(chatId, numero) {
     || todos.find((m) => String(m.numero).split('@')[0] === usuario);
 }
 
+// Vagas cheias não recusam mais: o excedente entra na fila de ESPERA dos
+// mensalistas (sem limite) e sobe quando um titular sai
 function adicionarMensalista(chatId, nome, numero) {
   if (acharMensalistaPorNumero(chatId, numero)) return { erro: 'ja_e_mensalista' };
   const grupo = getGrupo(chatId);
   const limite = grupo?.limite_mensalistas ?? LIMITE_MENSALISTAS;
-  const total = listarMensalistas(chatId).length;
-  if (total >= limite) return { erro: 'sem_vaga', limite };
+  const todos = listarMensalistas(chatId);
+  const titulares = todos.filter((m) => !m.espera).length;
+  const vaiPraEspera = titulares >= limite;
   db.prepare(
-    'INSERT INTO mensalistas (chat_id, nome, numero, fixo, criado_em) VALUES (?, ?, ?, 0, ?)'
-  ).run(chatId, nome, numero, new Date().toISOString());
-  return { posicao: total + 1, limite };
+    'INSERT INTO mensalistas (chat_id, nome, numero, fixo, espera, criado_em) VALUES (?, ?, ?, 0, ?, ?)'
+  ).run(chatId, nome, numero, vaiPraEspera ? 1 : 0, new Date().toISOString());
+  return {
+    posicao: vaiPraEspera ? todos.length + 1 : titulares + 1,
+    limite,
+    espera: vaiPraEspera,
+  };
 }
 
 function removerMensalistaPorPosicao(chatId, posicao) {
@@ -547,7 +579,19 @@ function removerMensalistaPorPosicao(chatId, posicao) {
   if (!alvo) return { erro: 'posicao_invalida' };
   db.prepare('DELETE FROM mensalidades WHERE mensalista_id = ?').run(alvo.id);
   db.prepare('DELETE FROM mensalistas WHERE id = ?').run(alvo.id);
-  return { nome: alvo.nome };
+
+  // Saiu um titular → o primeiro da espera assume a vaga mensal
+  let promovido = null;
+  if (!alvo.espera) {
+    const proximo = db.prepare(
+      'SELECT * FROM mensalistas WHERE chat_id = ? AND espera = 1 ORDER BY criado_em ASC, id ASC LIMIT 1'
+    ).get(chatId);
+    if (proximo) {
+      db.prepare('UPDATE mensalistas SET espera = 0 WHERE id = ?').run(proximo.id);
+      promovido = proximo.nome;
+    }
+  }
+  return { nome: alvo.nome, promovido };
 }
 
 function alternarFixoPorPosicao(chatId, posicao) {
@@ -588,14 +632,17 @@ function setarLimiteMensalistas(chatId, limite) {
 function resumoMensalistas(chatId) {
   const grupo = getGrupo(chatId);
   const todos = listarMensalistas(chatId);
-  const pagos = todos.filter((m) => m.pago_mes);
+  const titulares = todos.filter((m) => !m.espera);
+  const pagos = titulares.filter((m) => m.pago_mes);
   return {
     mes: mesAtual(),
-    total: todos.length,
+    total: titulares.length,
+    espera: todos.length - titulares.length,
     limite: grupo?.limite_mensalistas ?? LIMITE_MENSALISTAS,
+    preListaAberta: Boolean(grupo?.pre_lista_aberta),
     valorMesCentavos: grupo?.valor_mes_centavos || 0,
     pagos: pagos.length,
-    pendentes: todos.filter((m) => !m.pago_mes).map((m) => m.nome),
+    pendentes: titulares.filter((m) => !m.pago_mes).map((m) => m.nome),
     arrecadadoMesCentavos: pagos.reduce((soma, m) => soma + (m.valor_mes_pago || 0), 0),
   };
 }
@@ -603,13 +650,21 @@ function resumoMensalistas(chatId) {
 function montarMensalistasFormatado(chatId) {
   const resumo = resumoMensalistas(chatId);
   const todos = listarMensalistas(chatId);
+  const titulares = todos.filter((m) => !m.espera);
+  const naEspera = todos.filter((m) => m.espera);
   const [ano, mes] = resumo.mes.split('-');
+  const linha = (m, i) => `${i + 1}. ${m.nome}${m.fixo ? ' 📌' : ''}${m.pago_mes ? ' ✅' : ''}`;
 
-  let texto = `🗓 *Mensalistas — ${mes}/${ano}* (${resumo.total}/${resumo.limite})\n`;
+  let texto = `🗓 *Mensalistas — ${mes}/${ano}* (${resumo.total}/${resumo.limite}) · inscrições ${resumo.preListaAberta ? 'abertas' : 'fechadas'}\n`;
   texto += `━━━━━━━━━━━━━━━\n`;
-  texto += todos.length
-    ? todos.map((m, i) => `${i + 1}. ${m.nome}${m.fixo ? ' 📌' : ''}${m.pago_mes ? ' ✅' : ''}`).join('\n')
+  texto += titulares.length
+    ? titulares.map(linha).join('\n')
     : '_(nenhum ainda — manda #mensalista pra entrar)_';
+  if (naEspera.length > 0) {
+    texto += `\n━━━━━━━━━━━━━━━\n`;
+    texto += `⏳ *ESPERA*\n`;
+    texto += naEspera.map((m, idx) => linha(m, titulares.length + idx)).join('\n');
+  }
   if (resumo.valorMesCentavos > 0) {
     texto += `\n━━━━━━━━━━━━━━━\n`;
     texto += `💰 Mensalidade: ${formatarReais(resumo.valorMesCentavos)} — ${resumo.pagos}/${resumo.total} pagos`;
@@ -789,6 +844,8 @@ module.exports = {
   listarMensalistas,
   adicionarMensalista,
   removerMensalistaPorPosicao,
+  abrirPreLista,
+  reiniciarMensalistas,
   alternarFixoPorPosicao,
   marcarMesPagoPorPosicao,
   setarValorMes,

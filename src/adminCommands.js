@@ -1,5 +1,6 @@
+const fs = require('fs');
 const db = require('./db');
-const { TEXTO_AJUDA_COMUM, TEXTO_AJUDA_ADMIN_GRUPO } = require('./commands');
+const { TEXTO_AJUDA_COMUM, TEXTO_AJUDA_ADMIN_GRUPO, acharFigurinhaQuitado } = require('./commands');
 
 // #ativargrupo <chat_id> [vagas] [--espera] — ex: #ativargrupo 123@g.us 18 --6
 // Os números são opcionais: sem eles, ativa mantendo o tamanho já configurado.
@@ -15,6 +16,10 @@ const REGEX_ABRIR_LISTA_DE = /^#abrirlistade\s+(.+?)\s+(\d{1,2}\/\d{1,2})(?:\s+(
 const REGEX_PAGOS_DE = /^#pagosde\s+(.+)$/i;
 const REGEX_ADMINS_DE = /^#adminsde\s+(.+)$/i;
 const REGEX_MENSALISTAS_DE = /^#mensalistasde\s+(.+)$/i;
+// Pré-lista de mensalistas: abre/fecha as inscrições do mês e reinício manual
+const REGEX_ABRIR_MENSALISTAS_DE = /^#abrirmensalistasde\s+(.+)$/i;
+const REGEX_FECHAR_MENSALISTAS_DE = /^#fecharmensalistasde\s+(.+)$/i;
+const REGEX_REINICIAR_MENSALISTAS_DE = /^#reiniciarmensalistasde\s+(.+)$/i;
 // Gestão remota de mensalistas — mexe no quadro de um grupo sem poluir o
 // grupo da pelada com comando; o efeito aparece lá na próxima lista
 const REGEX_MENSALISTA_DE = /^#mensalistade\s+(.+?)\s+([^\d\s].*)$/i; // grupo + nome
@@ -43,6 +48,8 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 *#adminsde <grupo>* — admins do grupo no WhatsApp (são eles que marcam #pago lá)
 
 🗓 *Gestão de mensalistas daqui mesmo:*
+*#abrirmensalistasde <grupo>* / *#fecharmensalistasde <grupo>* — abre/fecha as inscrições do mês (anuncia no grupo)
+*#reiniciarmensalistasde <grupo>* — zera os não-fixos e fecha as inscrições
 *#pagomesde <grupo> 3* — marca o mês do mensalista 3 (valor opcional no fim)
 *#naopagomesde <grupo> 3* — desmarca o mês
 *#fixode <grupo> 3* — liga/desliga a vaga cativa (📌)
@@ -229,6 +236,43 @@ async function processarComandoAdmin(msg) {
     return null;
   }
 
+  const matchAbrirMensalistas = texto.match(REGEX_ABRIR_MENSALISTAS_DE);
+  const matchFecharMensalistas = matchAbrirMensalistas ? null : texto.match(REGEX_FECHAR_MENSALISTAS_DE);
+  if (matchAbrirMensalistas || matchFecharMensalistas) {
+    const abrir = Boolean(matchAbrirMensalistas);
+    const r = resolverGrupo((matchAbrirMensalistas || matchFecharMensalistas)[1]);
+    if (r.mensagem) return msg.reply(r.mensagem);
+    const nomeGrupo = r.grupo.nome || r.grupo.chat_id;
+    db.abrirPreLista(r.grupo.chat_id, abrir);
+
+    const resumo = db.resumoMensalistas(r.grupo.chat_id);
+    const vagas = Math.max(0, resumo.limite - resumo.total);
+    const anuncio = abrir
+      ? `🗓 *Inscrições de mensalista abertas!* ${vagas} vaga(s) + fila de espera.\n\nManda *#mensalista* pra garantir a tua. Pagamento até o 5º dia útil com os admins — o ✅ é o que confirma a vaga.`
+      : `🗓 *Inscrições de mensalista encerradas.* Quem garantiu, garantiu — agora é acertar o pagamento com os admins.`;
+    let aviso = '';
+    if (msg.enviarPara) {
+      try {
+        await msg.enviarPara(r.grupo.chat_id, anuncio);
+      } catch (err) {
+        aviso = `\n⚠️ Não consegui anunciar no grupo (${err.message}).`;
+      }
+    }
+    await msg.reply(`🗓 Inscrições de *${nomeGrupo}* ${abrir ? 'abertas' : 'fechadas'} e anunciadas no grupo.${aviso}`);
+    return msg.reply(db.montarMensalistasFormatado(r.grupo.chat_id));
+  }
+
+  const matchReiniciarMensalistas = texto.match(REGEX_REINICIAR_MENSALISTAS_DE);
+  if (matchReiniciarMensalistas) {
+    const r = resolverGrupo(matchReiniciarMensalistas[1]);
+    if (r.mensagem) return msg.reply(r.mensagem);
+    const { removidos } = db.reiniciarMensalistas(r.grupo.chat_id);
+    await msg.reply(
+      `♻️ Quadro de mensalistas de *${r.grupo.nome || r.grupo.chat_id}* reiniciado: ${removidos} não-fixo(s) removido(s), inscrições fechadas. Fixos mantidos (pendentes até pagar). Abre a rodada nova com *#abrirmensalistasde*.`
+    );
+    return msg.reply(db.montarMensalistasFormatado(r.grupo.chat_id));
+  }
+
   const matchPagoMesDe = texto.match(REGEX_PAGO_MES_DE);
   const matchNaoPagoMesDe = matchPagoMesDe ? null : texto.match(REGEX_NAOPAGO_MES_DE);
   if (matchPagoMesDe || matchNaoPagoMesDe) {
@@ -245,7 +289,24 @@ async function processarComandoAdmin(msg) {
     if (resultado.erro) {
       return msg.reply(`Não achei mensalista na posição ${m[2]} de *${r.grupo.nome || r.grupo.chat_id}*. Confere com *#mensalistasde*.`);
     }
-    await msg.reply(marcar ? `🗓 ${resultado.nome} pagou o mês! ✅` : `↩️ Mensalidade de ${resultado.nome} desmarcada.`);
+    // Pagamento confirmado é notícia pro grupo: a pessoa virou mensalista de
+    // fato e entra automático nas próximas listas
+    if (marcar && msg.enviarPara) {
+      try {
+        await msg.enviarPara(
+          r.grupo.chat_id,
+          `🗓 *${resultado.nome}* pagou o mês e tá confirmado(a) como mensalista! ✅ Vaga garantida nas listas a partir de agora.`
+        );
+        // Figurinha do agiota junto com o anúncio, se a imagem existir
+        const figurinha = acharFigurinhaQuitado();
+        if (msg.enviarFigurinhaPara && figurinha && fs.existsSync(figurinha)) {
+          await msg.enviarFigurinhaPara(r.grupo.chat_id, figurinha);
+        }
+      } catch (err) {
+        await msg.reply(`⚠️ Não consegui anunciar no grupo (${err.message}).`);
+      }
+    }
+    await msg.reply(marcar ? `🗓 ${resultado.nome} pagou o mês! ✅ (anunciado no grupo)` : `↩️ Mensalidade de ${resultado.nome} desmarcada.`);
     return msg.reply(db.montarMensalistasFormatado(r.grupo.chat_id));
   }
 
@@ -276,6 +337,9 @@ async function processarComandoAdmin(msg) {
       return msg.reply(`Não achei mensalista na posição ${matchRemoverMensalistaDe[2]} de *${r.grupo.nome || r.grupo.chat_id}*.`);
     }
     await msg.reply(`❌ ${resultado.nome} saiu do quadro de mensalistas.`);
+    if (resultado.promovido) {
+      await msg.reply(`⬆️ ${resultado.promovido} subiu da espera pra vaga mensal — falta o pagamento pra confirmar.`);
+    }
     return msg.reply(db.montarMensalistasFormatado(r.grupo.chat_id));
   }
 
@@ -291,10 +355,9 @@ async function processarComandoAdmin(msg) {
       return msg.reply(`${nome} já está no quadro de *${r.grupo.nome || r.grupo.chat_id}*.`);
     }
     const resultado = db.adicionarMensalista(r.grupo.chat_id, nome, `manual-${Date.now()}@bot`);
-    if (resultado.erro === 'sem_vaga') {
-      return msg.reply(`As ${resultado.limite} vagas de mensalista de *${r.grupo.nome || r.grupo.chat_id}* já estão preenchidas.`);
-    }
-    await msg.reply(`🗓 ${nome} entrou no quadro (vaga ${resultado.posicao}/${resultado.limite}). Obs: sem vínculo com o WhatsApp dele — se a pessoa mandar *#mensalista* no grupo, remove este e deixa o dela.`);
+    await msg.reply(resultado.espera
+      ? `⏳ Vagas cheias — ${nome} entrou na espera dos mensalistas (posição ${resultado.posicao}).`
+      : `🗓 ${nome} entrou no quadro (vaga ${resultado.posicao}/${resultado.limite}). Obs: sem vínculo com o WhatsApp dele — se a pessoa mandar *#mensalista* no grupo, remove este e deixa o dela.`);
     return msg.reply(db.montarMensalistasFormatado(r.grupo.chat_id));
   }
 
@@ -422,7 +485,7 @@ async function processarComandoAdmin(msg) {
   // Qualquer variação dos comandos acima que não casou é sintaxe errada
   // (ex: "18 -6", "#listade" sem grupo, "#listargrupos x") — responde com o
   // uso em vez de ficar mudo e deixar o admin achando que funcionou
-  if (/^#(ativargrupo|desativargrupo|abrirlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|pagomesde|naopagomesde|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
+  if (/^#(ativargrupo|desativargrupo|abrirlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
     return msg.reply(
       `Não entendi o formato 🤔 Exemplos:\n*#ativargrupo <chat_id> 18 --6*\n*#listade quinta* · *#pagosde quinta* · *#valorde quinta 25*\nManda *#admin* pra ver a sintaxe de tudo.`
     );
