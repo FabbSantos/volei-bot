@@ -23,8 +23,29 @@ const REGEX_REINICIAR_MENSALISTAS_DE = /^#reiniciarmensalistasde\s+(.+)$/i;
 // Gestão remota de mensalistas — mexe no quadro de um grupo sem poluir o
 // grupo da pelada com comando; o efeito aparece lá na próxima lista
 const REGEX_MENSALISTA_DE = /^#mensalistade\s+(.+?)\s+([^\d\s].*)$/i; // grupo + nome
-const REGEX_PAGO_MES_DE = /^#pagomesde\s+(.+?)\s+(\d{1,3})(?:\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?))?$/i;
-const REGEX_NAOPAGO_MES_DE = /^#naopagomesde\s+(.+?)\s+(\d{1,3})$/i;
+// Posições aceitam lote: "3", "1-5" ou "1,3,7" — um comando, um anúncio
+const REGEX_PAGO_MES_DE = /^#pagomesde\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)(?:\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?))?$/i;
+const REGEX_NAOPAGO_MES_DE = /^#naopagomesde\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$/i;
+// Pagamento da lista SEMANAL marcado daqui (equivalente remoto do #pago N)
+const REGEX_PAGO_DE = /^#pagode\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$/i;
+const REGEX_NAOPAGO_DE = /^#naopagode\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$/i;
+
+// "1-5", "1,3,7" ou "2" → [1, 2, 3, 4, 5] (máx. 50 posições)
+function expandirPosicoes(texto) {
+  const posicoes = new Set();
+  for (const parte of String(texto).split(',')) {
+    const p = parte.trim();
+    const faixa = p.match(/^(\d{1,3})\s*-\s*(\d{1,3})$/);
+    if (faixa) {
+      const inicio = Math.min(parseInt(faixa[1], 10), parseInt(faixa[2], 10));
+      const fim = Math.max(parseInt(faixa[1], 10), parseInt(faixa[2], 10));
+      for (let i = inicio; i <= fim && posicoes.size < 50; i++) posicoes.add(i);
+    } else if (/^\d{1,3}$/.test(p)) {
+      posicoes.add(parseInt(p, 10));
+    }
+  }
+  return [...posicoes].sort((a, b) => a - b);
+}
 const REGEX_FIXO_DE = /^#fixode\s+(.+?)\s+(\d{1,3})$/i;
 const REGEX_REMOVER_MENSALISTA_DE = /^#removermensalistade\s+(.+?)\s+(\d{1,3})$/i;
 const REGEX_VALOR_MES_DE = /^#valormesde\s+(.+?)\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?)$/i;
@@ -50,8 +71,10 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 🗓 *Gestão de mensalistas daqui mesmo:*
 *#abrirmensalistasde <grupo>* / *#fecharmensalistasde <grupo>* — abre/fecha as inscrições do mês (anuncia no grupo)
 *#reiniciarmensalistasde <grupo>* — zera os não-fixos e fecha as inscrições
-*#pagomesde <grupo> 3* — marca o mês do mensalista 3 (valor opcional no fim)
-*#naopagomesde <grupo> 3* — desmarca o mês
+*#pagomesde <grupo> 1-5* — marca o mês (aceita 3, 1-5 ou 1,3,7; valor opcional no fim); anuncia no grupo
+*#naopagomesde <grupo> 3* — desmarca o mês (aceita faixa também)
+*#pagode <grupo> 1-3* — marca o ✅ da LISTA semanal daqui (aceita faixa); anuncia no grupo
+*#naopagode <grupo> 3* — desmarca o ✅ da lista
 *#fixode <grupo> 3* — liga/desliga a vaga cativa (📌)
 *#mensalistade <grupo> Nome* — cadastra candidato (melhor a pessoa mandar #mensalista no grupo: aí o WhatsApp dela fica vinculado)
 *#removermensalistade <grupo> 3* — tira do quadro
@@ -285,23 +308,31 @@ async function processarComandoAdmin(msg) {
     const valor = marcar
       ? (m[3] ? db.paraCentavos(m[3]) : (r.grupo.valor_mes_centavos || 0))
       : 0;
-    const resultado = db.marcarMesPagoPorPosicao(r.grupo.chat_id, parseInt(m[2], 10), marcar, valor);
-    if (resultado.erro) {
-      return msg.reply(`Não achei mensalista na posição ${m[2]} de *${r.grupo.nome || r.grupo.chat_id}*. Confere com *#mensalistasde*.`);
+
+    const marcados = [];
+    const naoAchadas = [];
+    for (const posicao of expandirPosicoes(m[2])) {
+      const resultado = db.marcarMesPagoPorPosicao(r.grupo.chat_id, posicao, marcar, valor);
+      if (resultado.erro) naoAchadas.push(posicao);
+      else marcados.push(resultado);
     }
-    // Pagamento confirmado é notícia pro grupo: a pessoa virou mensalista de
-    // fato e entra automático nas próximas listas
+    if (marcados.length === 0) {
+      return msg.reply(`Não achei mensalista nessa(s) posição(ões) em *${r.grupo.nome || r.grupo.chat_id}*. Confere com *#mensalistasde*.`);
+    }
+
+    // Pagamento confirmado é notícia pro grupo — em lote, um anúncio só.
+    // Fixo já tem vaga cativa (anúncio é só a quitação); pro não-fixo o ✅
+    // é o que confirma a vaga de mensalista.
     if (marcar && msg.enviarPara) {
       try {
-        // Fixo já tem vaga cativa — o anúncio dele é só a quitação do mês;
-        // pro não-fixo, o ✅ é o que confirma a vaga de mensalista
-        await msg.enviarPara(
-          r.grupo.chat_id,
-          resultado.fixo
-            ? `🗓 *${resultado.nome}* (fixo 📌) pagou o mês! ✅`
-            : `🗓 *${resultado.nome}* pagou o mês e tá confirmado(a) como mensalista! ✅ Vaga garantida nas listas a partir de agora.`
-        );
-        // Figurinha do agiota junto com o anúncio, se a imagem existir
+        const nomes = marcados.map((x) => `*${x.nome}*${x.fixo ? ' 📌' : ''}`).join(', ');
+        const temNaoFixo = marcados.some((x) => !x.fixo);
+        const anuncio = marcados.length === 1
+          ? (marcados[0].fixo
+            ? `🗓 *${marcados[0].nome}* (fixo 📌) pagou o mês! ✅`
+            : `🗓 *${marcados[0].nome}* pagou o mês e tá confirmado(a) como mensalista! ✅ Vaga garantida nas listas a partir de agora.`)
+          : `🗓 *Pagaram o mês:* ${nomes} ✅${temNaoFixo ? '\nMensalistas confirmados — vaga garantida nas próximas listas!' : ''}`;
+        await msg.enviarPara(r.grupo.chat_id, anuncio);
         const figurinha = acharFigurinhaQuitado();
         if (msg.enviarFigurinhaPara && figurinha && fs.existsSync(figurinha)) {
           await msg.enviarFigurinhaPara(r.grupo.chat_id, figurinha);
@@ -310,8 +341,63 @@ async function processarComandoAdmin(msg) {
         await msg.reply(`⚠️ Não consegui anunciar no grupo (${err.message}).`);
       }
     }
-    await msg.reply(marcar ? `🗓 ${resultado.nome} pagou o mês! ✅ (anunciado no grupo)` : `↩️ Mensalidade de ${resultado.nome} desmarcada.`);
+
+    const resumoErros = naoAchadas.length > 0 ? ` ⚠️ Posições não encontradas: ${naoAchadas.join(', ')}.` : '';
+    await msg.reply(marcar
+      ? (marcados.length === 1
+        ? `🗓 ${marcados[0].nome} pagou o mês! ✅ (anunciado no grupo)${resumoErros}`
+        : `🗓 ${marcados.length} mensalidades marcadas ✅ (anunciado no grupo).${resumoErros}`)
+      : (marcados.length === 1
+        ? `↩️ Mensalidade de ${marcados[0].nome} desmarcada.${resumoErros}`
+        : `↩️ ${marcados.length} mensalidades desmarcadas.${resumoErros}`));
     return msg.reply(db.montarMensalistasFormatado(r.grupo.chat_id));
+  }
+
+  const matchPagoDe = texto.match(REGEX_PAGO_DE);
+  const matchNaoPagoDe = matchPagoDe ? null : texto.match(REGEX_NAOPAGO_DE);
+  if (matchPagoDe || matchNaoPagoDe) {
+    const m = matchPagoDe || matchNaoPagoDe;
+    const marcar = Boolean(matchPagoDe);
+    const aviso = grupoEngoliuPosicao(m[1], m[2], `#pagode ${m[1]} ${m[2]} 3`);
+    if (aviso) return msg.reply(aviso);
+    const r = resolverGrupo(m[1]);
+    if (r.mensagem) return msg.reply(r.mensagem);
+    const lista = db.getListaMaisRecente(r.grupo.chat_id);
+    if (!lista) {
+      return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* ainda não tem lista.`);
+    }
+
+    const marcados = [];
+    const naoAchadas = [];
+    for (const posicao of expandirPosicoes(m[2])) {
+      const resultado = db.marcarPagoPorPosicao(lista.id, posicao, marcar);
+      if (resultado.erro) naoAchadas.push(posicao);
+      else marcados.push(resultado);
+    }
+    if (marcados.length === 0) {
+      return msg.reply(`Não achei ninguém nessa(s) posição(ões) na lista ${lista.data_jogo}. Confere com *#listade*.`);
+    }
+
+    if (marcar && msg.enviarPara) {
+      try {
+        await msg.enviarPara(
+          r.grupo.chat_id,
+          `💰 Pagamento confirmado: ${marcados.map((x) => `*${x.nome}*`).join(', ')} ✅`
+        );
+        const figurinha = acharFigurinhaQuitado();
+        if (msg.enviarFigurinhaPara && figurinha && fs.existsSync(figurinha)) {
+          await msg.enviarFigurinhaPara(r.grupo.chat_id, figurinha);
+        }
+      } catch (err) {
+        await msg.reply(`⚠️ Não consegui anunciar no grupo (${err.message}).`);
+      }
+    }
+
+    const resumoErros = naoAchadas.length > 0 ? ` ⚠️ Posições não encontradas: ${naoAchadas.join(', ')}.` : '';
+    await msg.reply(marcar
+      ? `💰 ${marcados.length} pagamento(s) marcados ✅ (anunciado no grupo).${resumoErros}`
+      : `↩️ ${marcados.length} pagamento(s) desmarcados.${resumoErros}`);
+    return msg.reply(db.montarListaFormatada(lista.id, lista.data_jogo));
   }
 
   const matchFixoDe = texto.match(REGEX_FIXO_DE);
@@ -489,7 +575,7 @@ async function processarComandoAdmin(msg) {
   // Qualquer variação dos comandos acima que não casou é sintaxe errada
   // (ex: "18 -6", "#listade" sem grupo, "#listargrupos x") — responde com o
   // uso em vez de ficar mudo e deixar o admin achando que funcionou
-  if (/^#(ativargrupo|desativargrupo|abrirlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
+  if (/^#(ativargrupo|desativargrupo|abrirlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
     return msg.reply(
       `Não entendi o formato 🤔 Exemplos:\n*#ativargrupo <chat_id> 18 --6*\n*#listade quinta* · *#pagosde quinta* · *#valorde quinta 25*\nManda *#admin* pra ver a sintaxe de tudo.`
     );
