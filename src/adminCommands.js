@@ -30,16 +30,19 @@ const REGEX_NAOPAGO_MES_DE = /^#naopagomesde\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1
 const REGEX_PAGO_DE = /^#pagode\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$/i;
 const REGEX_NAOPAGO_DE = /^#naopagode\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$/i;
 
-// "1-5", "1,3,7" ou "2" → [1, 2, 3, 4, 5] (máx. 50 posições)
+// "1-5", "1,3,7" ou "2" → [1, 2, 3, 4, 5] — máx. 50 posições por comando,
+// valendo pra faixa, avulsas e mistura (repetida conta uma vez só)
 function expandirPosicoes(texto) {
   const posicoes = new Set();
+  const cheio = () => posicoes.size >= 50;
   for (const parte of String(texto).split(',')) {
+    if (cheio()) break;
     const p = parte.trim();
     const faixa = p.match(/^(\d{1,3})\s*-\s*(\d{1,3})$/);
     if (faixa) {
       const inicio = Math.min(parseInt(faixa[1], 10), parseInt(faixa[2], 10));
       const fim = Math.max(parseInt(faixa[1], 10), parseInt(faixa[2], 10));
-      for (let i = inicio; i <= fim && posicoes.size < 50; i++) posicoes.add(i);
+      for (let i = inicio; i <= fim && !cheio(); i++) posicoes.add(i);
     } else if (/^\d{1,3}$/.test(p)) {
       posicoes.add(parseInt(p, 10));
     }
