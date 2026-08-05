@@ -100,6 +100,7 @@ migrarColunas('grupos', {
 migrarColunas('listas', {
   valor_centavos: 'INTEGER NOT NULL DEFAULT 0',
   nome: 'TEXT',
+  lembrete_em: 'TEXT', // dia (YYYY-MM-DD) do último lembrete de pagamento enviado
 });
 migrarColunas('mensalistas', {
   espera: 'INTEGER NOT NULL DEFAULT 0', // candidato além das vagas: fila de espera
@@ -480,6 +481,21 @@ function setarValorLista(listaId, centavos) {
   db.prepare('UPDATE listas SET valor_centavos = ? WHERE id = ?').run(centavos, listaId);
 }
 
+// Listas abertas de grupos de pelada ativos que ainda não receberam o
+// lembrete de pagamento de hoje (o carimbo garante 1 por dia, por lista)
+function listasParaLembrete(hoje) {
+  return db.prepare(`
+    SELECT l.* FROM listas l
+    JOIN grupos g ON g.chat_id = l.chat_id
+    WHERE l.status = 'aberta' AND g.ativo = 1 AND g.eh_admin = 0
+      AND (l.lembrete_em IS NULL OR l.lembrete_em <> ?)
+  `).all(hoje);
+}
+
+function marcarLembreteEnviado(listaId, hoje) {
+  db.prepare('UPDATE listas SET lembrete_em = ? WHERE id = ?').run(hoje, listaId);
+}
+
 function setarValorPadraoGrupo(chatId, centavos) {
   const info = db.prepare('UPDATE grupos SET valor_padrao_centavos = ? WHERE chat_id = ?').run(centavos, chatId);
   return info.changes > 0;
@@ -847,6 +863,8 @@ module.exports = {
   resumoPagamentos,
   setarValorLista,
   setarValorPadraoGrupo,
+  listasParaLembrete,
+  marcarLembreteEnviado,
   marcarGrupoAdmin,
   buscarGrupos,
   paraCentavos,

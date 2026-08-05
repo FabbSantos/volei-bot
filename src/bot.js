@@ -192,6 +192,58 @@ function agendarReconexao(motivo) {
 
 iniciarSessao();
 
+// ---- lembrete diário de pagamento ------------------------------------------
+// Uma vez por dia (a partir de LEMBRETE_HORA, horário de Brasília), toda lista
+// ABERTA que ainda tem devedor recebe o recado do agiota no grupo. O carimbo
+// lembrete_em na lista garante no máximo um por dia, mesmo com deploy/restart.
+const LEMBRETE_HORA = parseInt(process.env.LEMBRETE_HORA || '10', 10);
+const TZ_BRASILIA = 'America/Sao_Paulo';
+
+function agoraBrasilia() {
+  const agora = new Date();
+  return {
+    dia: agora.toLocaleDateString('en-CA', { timeZone: TZ_BRASILIA }), // YYYY-MM-DD
+    hora: parseInt(agora.toLocaleString('en-US', { timeZone: TZ_BRASILIA, hour: '2-digit', hour12: false }), 10),
+  };
+}
+
+function montarLembrete(pendentes) {
+  return (
+    `⏰ *Recado do agiota* 🏐\n\n` +
+    `Quem ainda não pagou a pelada da semana tem até *sexta, 12h* pra acertar — ` +
+    `depois disso sai da lista e a espera assume a vaga.\n` +
+    `Quem subir da espera tem até *sexta, 17h* pra pagar.\n\n` +
+    `⏳ Na mira do agiota: ${pendentes.join(', ')}\n\n` +
+    `Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. 🤝`
+  );
+}
+
+async function enviarLembretesDePagamento() {
+  const client = clienteAtual;
+  if (!client) return; // desconectado — tenta de novo no próximo ciclo
+
+  const { dia, hora } = agoraBrasilia();
+  if (hora < LEMBRETE_HORA) return;
+
+  for (const lista of db.listasParaLembrete(dia)) {
+    const resumo = db.resumoPagamentos(lista.id);
+    // Sem devedor não tem recado — e sem carimbo: se alguém entrar devendo
+    // ainda hoje, o lembrete sai no próximo ciclo
+    if (resumo.pendentes.length === 0) continue;
+    try {
+      await client.sendText(lista.chat_id, montarLembrete(resumo.pendentes));
+      db.marcarLembreteEnviado(lista.id, dia);
+      console.log(`[lembrete] enviado pra lista ${lista.data_jogo} de ${lista.chat_id} (${resumo.pendentes.length} devendo)`);
+    } catch (err) {
+      console.warn(`[lembrete] falha ao enviar pra ${lista.chat_id}: ${err.message}`);
+    }
+  }
+}
+
+setInterval(() => {
+  enviarLembretesDePagamento().catch((err) => console.warn(`[lembrete] erro: ${err.message}`));
+}, 30 * 60_000);
+
 // O wppconnect devolve ids como Wid (objeto) ou string, dependendo da chamada —
 // normaliza tudo pra string tipo "5521999999999@c.us"
 function widParaString(wid) {
