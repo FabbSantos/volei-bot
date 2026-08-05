@@ -403,9 +403,9 @@ function montarListaFormatada(listaId, dataJogo) {
   // Total arrecadado fica só na visão dos admins (#pagosde) — no grupo
   // mostra o valor por pessoa e quantos estão em dia (mensalista conta pelo mês)
   const resumo = resumoPagamentos(listaId);
-  if (resumo.valorCentavos > 0 && resumo.totalPessoas > 0) {
+  if (resumo.valorCentavos > 0 && resumo.totalCobrados > 0) {
     texto += `\n━━━━━━━━━━━━━━━\n`;
-    texto += `💰 ${formatarReais(resumo.valorCentavos)} por pessoa — ${resumo.emDia}/${resumo.totalPessoas} em dia ✅`;
+    texto += `💰 ${formatarReais(resumo.valorCentavos)} por pessoa — ${resumo.emDia}/${resumo.totalCobrados} em dia ✅`;
   }
 
   // Inadimplentes do grupo ficam visíveis em toda lista
@@ -450,6 +450,9 @@ function marcarPagoPorNumero(listaId, numero, pago) {
 function resumoPagamentos(listaId) {
   const lista = getLista(listaId);
   const entradas = listarCombinada(listaId);
+  // Cobrança é só de quem tem VAGA: a espera não deve nada até subir,
+  // então fica fora do "em dia" e da mira do agiota
+  const principal = entradas.filter((e) => e.tipo === 'principal');
   const pagos = entradas.filter((e) => e.pago);
   const valorCentavos = lista?.valor_centavos || 0;
 
@@ -463,11 +466,12 @@ function resumoPagamentos(listaId) {
 
   return {
     totalPessoas: entradas.length,
+    totalCobrados: principal.length,
     mensalistasNaLista: entradas.filter((e) => e.mensalista).length,
-    emDia: entradas.filter(estaEmDia).length,
+    emDia: principal.filter(estaEmDia).length,
     pagos: pagos.length,
     nomesPagos: pagos.map((e) => e.nome),
-    pendentes: entradas
+    pendentes: principal
       .filter((e) => !estaEmDia(e))
       .map((e) => (e.mensalista ? `${e.nome} (mês)` : e.nome)),
     valorCentavos,

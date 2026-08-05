@@ -327,7 +327,7 @@ async function processarComandoAdmin(msg) {
 
     let resposta = `💰 *Pagamentos — ${r.grupo.nome || r.grupo.chat_id}*\n`;
     resposta += `📋 ${tituloLista}${marcaEncerrada}\n`;
-    resposta += `\n✅ ${resumo.emDia}/${resumo.totalPessoas} em dia`;
+    resposta += `\n✅ ${resumo.emDia}/${resumo.totalCobrados} em dia (espera não deve ainda)`;
     if (resumo.mensalistasNaLista > 0) {
       resposta += `\n🗓 ${resumo.mensalistasNaLista} mensalista(s) — contam pelo mês pago`;
     }
@@ -340,7 +340,7 @@ async function processarComandoAdmin(msg) {
     resposta += `\n`;
     if (resumo.pendentes.length > 0) {
       resposta += `\n⏳ Faltam: ${resumo.pendentes.join(', ')}`;
-    } else if (resumo.totalPessoas > 0) {
+    } else if (resumo.totalCobrados > 0) {
       resposta += `\n🎉 Todo mundo em dia!`;
     }
     return msg.reply(resposta);

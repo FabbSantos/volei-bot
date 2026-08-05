@@ -2,10 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const db = require('./db');
 
-// Figurinha comemorativa do #quitado — qualquer assets/agiota-pago.(png|jpg|
-// jpeg|webp) serve; ou aponta outro arquivo via env FIGURINHA_QUITADO
-function acharFigurinhaQuitado() {
-  if (process.env.FIGURINHA_QUITADO) return process.env.FIGURINHA_QUITADO;
+// Acha uma figurinha na pasta assets pelo nome-base, em qualquer formato de
+// imagem — ex: acharFigurinha('agiota-pago') pega assets/agiota-pago.jpg
+function acharFigurinha(nomeBase) {
   const pasta = path.join(__dirname, '..', 'assets');
   let arquivos;
   try {
@@ -13,8 +12,15 @@ function acharFigurinhaQuitado() {
   } catch {
     return null;
   }
-  const achado = arquivos.find((a) => /^agiota-pago\.(png|jpe?g|webp)$/i.test(a));
+  const padrao = new RegExp(`^${nomeBase}\\.(png|jpe?g|webp)$`, 'i');
+  const achado = arquivos.find((a) => padrao.test(a));
   return achado ? path.join(pasta, achado) : null;
+}
+
+// Figurinha comemorativa dos pagamentos — env FIGURINHA_QUITADO ganha do padrão
+function acharFigurinhaQuitado() {
+  if (process.env.FIGURINHA_QUITADO) return process.env.FIGURINHA_QUITADO;
+  return acharFigurinha('agiota-pago');
 }
 
 // Figurinha do agiota em TODO pagamento marcado — semanal, mensal ou quitação
@@ -623,4 +629,4 @@ async function processarMensagem(msg) {
   }
 }
 
-module.exports = { processarMensagem, TEXTO_AJUDA_COMUM, TEXTO_AJUDA_ADMIN_GRUPO, acharFigurinhaQuitado };
+module.exports = { processarMensagem, TEXTO_AJUDA_COMUM, TEXTO_AJUDA_ADMIN_GRUPO, acharFigurinha, acharFigurinhaQuitado };

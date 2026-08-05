@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const wppconnect = require('@wppconnect-team/wppconnect');
 const db = require('./db');
-const { processarMensagem } = require('./commands');
+const { processarMensagem, acharFigurinha } = require('./commands');
 const { processarComandoAdmin } = require('./adminCommands');
 const { notificarFalha } = require('./notify');
 
@@ -232,6 +232,15 @@ async function enviarLembretesDePagamento() {
     if (resumo.pendentes.length === 0) continue;
     try {
       await client.sendText(lista.chat_id, montarLembrete(resumo.pendentes));
+      // Figurinha "cadê meu pix" na sequência, se a imagem existir nos assets
+      const figurinha = acharFigurinha('cade-meu-pix');
+      if (figurinha && fs.existsSync(figurinha)) {
+        try {
+          await client.sendImageAsSticker(lista.chat_id, figurinha);
+        } catch (err) {
+          console.warn(`[lembrete] figurinha falhou: ${err.message}`);
+        }
+      }
       db.marcarLembreteEnviado(lista.id, dia);
       console.log(`[lembrete] enviado pra lista ${lista.data_jogo} de ${lista.chat_id} (${resumo.pendentes.length} devendo)`);
     } catch (err) {

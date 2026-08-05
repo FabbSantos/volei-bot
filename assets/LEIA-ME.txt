@@ -3,5 +3,8 @@ ela como FIGURINHA no grupo quando um admin dá #quitado em alguém.
 
 Formato: agiota-pago.png, .jpg, .jpeg ou .webp — qualquer um serve.
 De preferência quadrada (512x512 fica ótimo como sticker).
+
+Segunda figurinha: "cade-meu-pix" (mesmas extensões) — sai junto com o
+recado diário de cobrança nos grupos com lista aberta e gente devendo.
 Também dá pra apontar outro caminho com a variável de ambiente FIGURINHA_QUITADO.
 Sem a imagem, o bot manda só o texto "pagou o agiota. 🤝" — nada quebra.
