@@ -76,17 +76,40 @@ function limparLocksDoChrome(dir) {
   }
 }
 
-function iniciarSessao() {
+// Só pode existir UM cliente por vez: dois clientes na mesma sessão ficam se
+// derrubando em loop (OPENING → PAIRING → CONNECTED sem fim) e nenhum responde.
+// A geração invalida eventos de clientes aposentados; o close() derruba o
+// navegador antigo antes de abrir outro.
+let clienteAtual = null;
+let geracaoAtual = 0;
+
+async function iniciarSessao() {
+  const geracao = ++geracaoAtual;
+
+  const anterior = clienteAtual;
+  clienteAtual = null;
+  if (anterior) {
+    try {
+      await anterior.close();
+      console.log('[browser] cliente antigo fechado antes de reconectar');
+    } catch (err) {
+      console.warn(`[browser] falha ao fechar cliente antigo: ${err.message}`);
+    }
+  }
+  if (geracao !== geracaoAtual) return; // outra reconexão passou na frente
+
   limparLocksDoChrome(process.env.TOKENS_DIR || 'tokens');
   wppconnect
     .create({
       session: 'volei-bot',
       catchQR: (base64Qrimg, asciiQR, attempts) => {
+        if (geracao !== geracaoAtual) return; // evento de cliente aposentado
         console.log(`QR code gerado (tentativa ${attempts})`);
         ultimoQrBase64 = base64Qrimg;
         statusConexao = 'aguardando_qr';
       },
       statusFind: (statusSession) => {
+        if (geracao !== geracaoAtual) return; // evento de cliente aposentado
         console.log('Status da sessão:', statusSession);
         statusConexao = statusSession;
 
@@ -116,8 +139,17 @@ function iniciarSessao() {
         ],
       },
     })
-    .then((client) => start(client))
+    .then((client) => {
+      if (geracao !== geracaoAtual) {
+        // Uma reconexão mais nova assumiu enquanto este cliente subia
+        client.close().catch(() => {});
+        return;
+      }
+      clienteAtual = client;
+      start(client);
+    })
     .catch((erro) => {
+      if (geracao !== geracaoAtual) return;
       console.error('Erro ao iniciar WPPConnect:', erro);
       agendarReconexao(`erro ao iniciar: ${erro.message}`);
     });
