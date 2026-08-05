@@ -12,6 +12,9 @@ const CMD_AJUDA_ADMIN = '#admin';
 const REGEX_LISTA_DE = /^#listade\s+(.+)$/i;
 const REGEX_CANCELAR_LISTA_DE = /^#cancelarlistade\s+(.+)$/i;
 const REGEX_ENCERRAR_LISTA_DE = /^#encerrarlistade\s+(.+)$/i;
+// Remove da LISTA semanal à distância (fluxo do "não pagou até 12h, sai
+// pro da espera entrar") — aceita lote: 14, 13-16 ou 13,15
+const REGEX_REMOVER_DE = /^#removerde\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$/i;
 // #abrirlistade <grupo> DD/MM [valor] [nome] — abre a lista da pelada daqui,
 // já anunciando no grupo dela (ex: #abrirlistade riachuelo 07/08 17 Sexta 3h)
 const REGEX_ABRIR_LISTA_DE = /^#abrirlistade\s+(.+?)\s+(\d{1,2}\/\d{1,2})(?:\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?))?(?:\s+(.+))?$/i;
@@ -82,6 +85,7 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 *#naopagomesde <grupo> 3* — desmarca o mês (aceita faixa também)
 *#pagode <grupo> 1-3* — marca o ✅ da LISTA semanal daqui (aceita faixa); anuncia no grupo
 *#naopagode <grupo> 3* — desmarca o ✅ da lista
+*#removerde <grupo> 14* — tira da lista semanal (aceita faixa); a espera sobe e o grupo é avisado
 *#fixode <grupo> 3* — liga/desliga a vaga cativa (📌)
 *#mensalistade <grupo> Nome* — cadastra candidato (melhor a pessoa mandar #mensalista no grupo: aí o WhatsApp dela fica vinculado)
 *#removermensalistade <grupo> 3* — tira do quadro (aceita faixa: 6-9 ou 6,8)
@@ -194,6 +198,58 @@ async function processarComandoAdmin(msg) {
       `✅ Lista ${nomeLista ? `*${nomeLista}* ` : ''}de *${dataJogo}* aberta em *${nomeGrupo}*${
         valorCriacao != null ? ` — ${db.formatarReais(valorCriacao)}/pessoa` : ''
       }, com os mensalistas no topo. Anunciada lá no grupo.${avisoEntrega}`
+    );
+  }
+
+  const matchRemoverDe = texto.match(REGEX_REMOVER_DE);
+  if (matchRemoverDe) {
+    const aviso = grupoEngoliuPosicao(matchRemoverDe[1], matchRemoverDe[2], `#removerde ${matchRemoverDe[1]} ${matchRemoverDe[2]} 14`);
+    if (aviso) return msg.reply(aviso);
+    const r = resolverGrupo(matchRemoverDe[1]);
+    if (r.mensagem) return msg.reply(r.mensagem);
+    const lista = db.getListaAtiva(r.grupo.chat_id);
+    if (!lista) {
+      return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* não tem lista aberta.`);
+    }
+
+    // De baixo pra cima pra remoção não deslocar as posições seguintes
+    const posicoes = expandirPosicoes(matchRemoverDe[2]).sort((a, b) => b - a);
+    const removidos = [];
+    const tinhamPago = [];
+    const promovidos = [];
+    const naoAchadas = [];
+    for (const posicao of posicoes) {
+      const resultado = db.removerPorPosicao(lista.id, posicao);
+      if (resultado.erro) naoAchadas.push(posicao);
+      else {
+        removidos.unshift(resultado.removido);
+        if (resultado.removidoTinhaPago) tinhamPago.push(resultado.removido);
+        promovidos.push(...(resultado.promovidos || []));
+      }
+    }
+    if (removidos.length === 0) {
+      return msg.reply(`Não achei ninguém nessa(s) posição(ões) na lista ${lista.data_jogo}. Confere com *#listade*.`);
+    }
+
+    if (msg.enviarPara) {
+      try {
+        let anuncio = `❌ Saiu(ram) da lista: ${removidos.map((n) => `*${n}*`).join(', ')}.`;
+        if (promovidos.length > 0) {
+          anuncio += `\n⬆️ Da espera pra principal: ${promovidos.map((n) => `*${n}*`).join(', ')}!`;
+        }
+        await msg.enviarPara(r.grupo.chat_id, anuncio);
+        await msg.enviarPara(r.grupo.chat_id, db.montarListaFormatada(lista.id, lista.data_jogo));
+      } catch (err) {
+        await msg.reply(`⚠️ Não consegui anunciar no grupo (${err.message}).`);
+      }
+    }
+
+    const avisos = [
+      naoAchadas.length > 0 ? `⚠️ Posições não encontradas: ${naoAchadas.reverse().join(', ')}.` : '',
+      tinhamPago.length > 0 ? `⚠️ Atenção: ${tinhamPago.join(', ')} já tinha(m) pago ✅!` : '',
+    ].filter(Boolean).join(' ');
+    return msg.reply(
+      `❌ ${removidos.length} removido(s) da lista ${lista.data_jogo} (anunciado no grupo).${avisos ? ` ${avisos}` : ''}`
     );
   }
 
@@ -645,7 +701,7 @@ async function processarComandoAdmin(msg) {
   // Qualquer variação dos comandos acima que não casou é sintaxe errada
   // (ex: "18 -6", "#listade" sem grupo, "#listargrupos x") — responde com o
   // uso em vez de ficar mudo e deixar o admin achando que funcionou
-  if (/^#(ativargrupo|desativargrupo|abrirlistade|encerrarlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
+  if (/^#(ativargrupo|desativargrupo|abrirlistade|encerrarlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
     return msg.reply(
       `Não entendi o formato 🤔 Exemplos:\n*#ativargrupo <chat_id> 18 --6*\n*#listade quinta* · *#pagosde quinta* · *#valorde quinta 25*\nManda *#admin* pra ver a sintaxe de tudo.`
     );
