@@ -266,6 +266,17 @@ function encerrarLista(listaId) {
   db.prepare("UPDATE listas SET status = 'encerrada' WHERE id = ?").run(listaId);
 }
 
+// Cancela (APAGA) a lista mais recente do grupo, com as entradas e os ✅
+// dela — pra lista criada errada ou teste. Apagar de verdade libera
+// recriar a mesma data (UNIQUE chat_id+data_jogo).
+function cancelarLista(chatId) {
+  const lista = getListaMaisRecente(chatId);
+  if (!lista) return { erro: 'sem_lista' };
+  const entradas = db.prepare('DELETE FROM entradas WHERE lista_id = ?').run(lista.id).changes;
+  db.prepare('DELETE FROM listas WHERE id = ?').run(lista.id);
+  return { data_jogo: lista.data_jogo, nome: lista.nome, entradas };
+}
+
 function contarPorTipo(listaId, tipo) {
   const row = db.prepare(
     'SELECT COUNT(*) as total FROM entradas WHERE lista_id = ? AND tipo = ?'
@@ -817,6 +828,7 @@ module.exports = {
   desativarGrupo,
   listarGrupos,
   criarLista,
+  cancelarLista,
   getLista,
   getListaAtiva,
   getListaMaisRecente,

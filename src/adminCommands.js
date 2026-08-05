@@ -10,6 +10,7 @@ const CMD_LISTAR = '#listargrupos';
 const CMD_AJUDA_ADMIN = '#admin';
 // Comandos remotos: <grupo> pode ser um pedaço do nome ou o chat_id exato
 const REGEX_LISTA_DE = /^#listade\s+(.+)$/i;
+const REGEX_CANCELAR_LISTA_DE = /^#cancelarlistade\s+(.+)$/i;
 // #abrirlistade <grupo> DD/MM [valor] [nome] — abre a lista da pelada daqui,
 // já anunciando no grupo dela (ex: #abrirlistade riachuelo 07/08 17 Sexta 3h)
 const REGEX_ABRIR_LISTA_DE = /^#abrirlistade\s+(.+?)\s+(\d{1,2}\/\d{1,2})(?:\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?))?(?:\s+(.+))?$/i;
@@ -66,6 +67,7 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 
 📡 *Consulta/gestão remota (<grupo> = pedaço do nome ou chat_id):*
 *#abrirlistade <grupo> 07/08 17 Sexta 3h* — abre a lista de lá (valor e nome opcionais) e anuncia no grupo
+*#cancelarlistade <grupo>* — APAGA a lista mais recente (criada errada/teste) e anuncia
 *#listade <grupo>* — lista atual do grupo
 *#pagosde <grupo>* — quem pagou, quem falta e quanto arrecadou
 *#mensalistasde <grupo>* — quadro de mensalistas do mês + arrecadação
@@ -190,6 +192,29 @@ async function processarComandoAdmin(msg) {
       `✅ Lista ${nomeLista ? `*${nomeLista}* ` : ''}de *${dataJogo}* aberta em *${nomeGrupo}*${
         valorCriacao != null ? ` — ${db.formatarReais(valorCriacao)}/pessoa` : ''
       }, com os mensalistas no topo. Anunciada lá no grupo.${avisoEntrega}`
+    );
+  }
+
+  const matchCancelarListaDe = texto.match(REGEX_CANCELAR_LISTA_DE);
+  if (matchCancelarListaDe) {
+    const r = resolverGrupo(matchCancelarListaDe[1]);
+    if (r.mensagem) return msg.reply(r.mensagem);
+    const resultado = db.cancelarLista(r.grupo.chat_id);
+    if (resultado.erro === 'sem_lista') {
+      return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* não tem lista pra cancelar.`);
+    }
+    if (msg.enviarPara) {
+      try {
+        await msg.enviarPara(
+          r.grupo.chat_id,
+          `🚫 A lista ${resultado.nome ? `*${resultado.nome}* ` : ''}de *${resultado.data_jogo}* foi cancelada.`
+        );
+      } catch (err) {
+        await msg.reply(`⚠️ Não consegui anunciar no grupo (${err.message}).`);
+      }
+    }
+    return msg.reply(
+      `🚫 Lista de *${resultado.data_jogo}* de *${r.grupo.nome || r.grupo.chat_id}* cancelada e apagada (${resultado.entradas} entrada(s)). A data ficou livre pra recriar.`
     );
   }
 
@@ -595,7 +620,7 @@ async function processarComandoAdmin(msg) {
   // Qualquer variação dos comandos acima que não casou é sintaxe errada
   // (ex: "18 -6", "#listade" sem grupo, "#listargrupos x") — responde com o
   // uso em vez de ficar mudo e deixar o admin achando que funcionou
-  if (/^#(ativargrupo|desativargrupo|abrirlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
+  if (/^#(ativargrupo|desativargrupo|abrirlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
     return msg.reply(
       `Não entendi o formato 🤔 Exemplos:\n*#ativargrupo <chat_id> 18 --6*\n*#listade quinta* · *#pagosde quinta* · *#valorde quinta 25*\nManda *#admin* pra ver a sintaxe de tudo.`
     );

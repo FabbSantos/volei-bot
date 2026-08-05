@@ -33,6 +33,7 @@ const REGEX_ABRIR = /^#lista\s?(\d{1,2}\/\d{1,2})(?:\s+(?:r\$\s*)?(\d{1,4}(?:[.,
 const REGEX_ENTRAR = /^#lista(?:\s+(.+))?$/i;
 const CMD_MOSTRAR = '#mostralista';
 const CMD_ENCERRAR = '#encerrarlista';
+const CMD_CANCELAR = '#cancelarlista';
 const CMD_AJUDA = '#comandos';
 // #remover (sozinho ou com o próprio nome) = sair da lista, aberto a todos;
 // #remover N / #remover NomeDeOutro = só admins
@@ -81,6 +82,7 @@ const TEXTO_AJUDA_ADMIN_GRUPO = `
 💰 *Só pra admins (do grupo ou do grupo de admins):*
 *#listaDD/MM* — abre a lista pro dia; valor e nome opcionais: #lista07/08 17 Sexta 3h
 *#encerrarlista* — fecha a lista, para de aceitar nomes
+*#cancelarlista* — APAGA a lista mais recente (criada errada/teste); libera a data
 *#remover N* — remove quem está na posição N (ou #remover Nome)
 *#pago N* — marca ✅ de quem está na posição N (ou responde o comprovante com *#pago*)
 *#naopago N* — desmarca (ou respondendo a mensagem com *#naopago*)
@@ -123,6 +125,7 @@ function correspondeAlgumComando(texto) {
     REGEX_QUITADO.test(texto) ||
     textoLower === CMD_MOSTRAR ||
     textoLower === CMD_ENCERRAR ||
+    textoLower === CMD_CANCELAR ||
     textoLower === CMD_MENSALISTAS ||
     textoLower === CMD_AJUDA
   );
@@ -238,6 +241,19 @@ async function processarMensagem(msg) {
     }
     db.encerrarLista(lista.id);
     return msg.reply(`🔒 Lista do dia *${lista.data_jogo}* encerrada. Não aceita mais nomes.`);
+  }
+
+  if (texto.toLowerCase() === CMD_CANCELAR) {
+    if (!(await msg.ehAdmin())) {
+      return msg.reply('🔒 Só admin pode cancelar a lista.');
+    }
+    const resultado = db.cancelarLista(chatId);
+    if (resultado.erro === 'sem_lista') {
+      return msg.reply('Não tem lista pra cancelar.');
+    }
+    return msg.reply(
+      `🚫 Lista ${resultado.nome ? `*${resultado.nome}* ` : ''}de *${resultado.data_jogo}* cancelada e apagada (${resultado.entradas} entrada(s)). A data ficou livre pra recriar.`
+    );
   }
 
   const matchRemover = texto.match(REGEX_REMOVER);
