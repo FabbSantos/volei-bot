@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const wppconnect = require('@wppconnect-team/wppconnect');
 const db = require('./db');
-const { processarMensagem, acharFigurinha } = require('./commands');
+const { processarMensagem, acharFigurinha, montarLembretePagamento } = require('./commands');
 const { processarComandoAdmin } = require('./adminCommands');
 const { notificarFalha } = require('./notify');
 
@@ -207,17 +207,6 @@ function agoraBrasilia() {
   };
 }
 
-function montarLembrete(pendentes) {
-  return (
-    `⏰ *Recado do agiota* 🏐\n\n` +
-    `Quem ainda não pagou a pelada da semana tem até *sexta, 12h* pra acertar — ` +
-    `depois disso sai da lista e a espera assume a vaga.\n` +
-    `Quem subir da espera tem até *sexta, 17h* pra pagar.\n\n` +
-    `⏳ Na mira do agiota: ${pendentes.join(', ')}\n\n` +
-    `Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. 🤝`
-  );
-}
-
 async function enviarLembretesDePagamento() {
   const client = clienteAtual;
   if (!client) return; // desconectado — tenta de novo no próximo ciclo
@@ -231,7 +220,7 @@ async function enviarLembretesDePagamento() {
     // ainda hoje, o lembrete sai no próximo ciclo
     if (resumo.pendentes.length === 0) continue;
     try {
-      await client.sendText(lista.chat_id, montarLembrete(resumo.pendentes));
+      await client.sendText(lista.chat_id, montarLembretePagamento(resumo.pendentes));
       // Figurinha "cadê meu pix" na sequência, se a imagem existir nos assets
       const figurinha = acharFigurinha('cade-meu-pix');
       if (figurinha && fs.existsSync(figurinha)) {

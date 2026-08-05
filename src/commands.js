@@ -23,6 +23,28 @@ function acharFigurinhaQuitado() {
   return acharFigurinha('agiota-pago');
 }
 
+// Textos de cobrança — usados pelo lembrete diário automático (bot.js) e
+// pelos disparos manuais #cobrarde / #cobrarsubiude (adminCommands.js)
+function montarLembretePagamento(pendentes) {
+  return (
+    `⏰ *Recado do agiota* 🏐\n\n` +
+    `Quem ainda não pagou a pelada da semana tem até *sexta, 12h* pra acertar — ` +
+    `depois disso sai da lista e a espera assume a vaga.\n` +
+    `Quem subir da espera tem até *sexta, 17h* pra pagar.\n\n` +
+    `⏳ Na mira do agiota: ${pendentes.join(', ')}\n\n` +
+    `Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. 🤝`
+  );
+}
+
+function montarLembreteSubiu(nomes) {
+  return (
+    `📣 *Atenção, reforços!* 🏐\n\n` +
+    `${nomes.map((n) => `*${n}*`).join(', ')}: vocês subiram da espera pra lista!\n` +
+    `O prazo de vocês é até *sexta, 17h* pra fazer o pagamento — senão a vaga passa pro próximo da espera.\n\n` +
+    `Manda o comprovante aqui que os admins dão o ✅. O agiota tá de olho. 👀`
+  );
+}
+
 // Figurinha do agiota em TODO pagamento marcado — semanal, mensal ou quitação
 async function celebrarPagamento(msg) {
   const figurinha = acharFigurinhaQuitado();
@@ -629,4 +651,12 @@ async function processarMensagem(msg) {
   }
 }
 
-module.exports = { processarMensagem, TEXTO_AJUDA_COMUM, TEXTO_AJUDA_ADMIN_GRUPO, acharFigurinha, acharFigurinhaQuitado };
+module.exports = {
+  processarMensagem,
+  TEXTO_AJUDA_COMUM,
+  TEXTO_AJUDA_ADMIN_GRUPO,
+  acharFigurinha,
+  acharFigurinhaQuitado,
+  montarLembretePagamento,
+  montarLembreteSubiu,
+};

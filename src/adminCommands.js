@@ -1,6 +1,13 @@
 const fs = require('fs');
 const db = require('./db');
-const { TEXTO_AJUDA_COMUM, TEXTO_AJUDA_ADMIN_GRUPO, acharFigurinhaQuitado } = require('./commands');
+const {
+  TEXTO_AJUDA_COMUM,
+  TEXTO_AJUDA_ADMIN_GRUPO,
+  acharFigurinha,
+  acharFigurinhaQuitado,
+  montarLembretePagamento,
+  montarLembreteSubiu,
+} = require('./commands');
 
 // #ativargrupo <chat_id> [vagas] [--espera] — ex: #ativargrupo 123@g.us 18 --6
 // Os números são opcionais: sem eles, ativa mantendo o tamanho já configurado.
@@ -15,6 +22,11 @@ const REGEX_ENCERRAR_LISTA_DE = /^#encerrarlistade\s+(.+)$/i;
 // Remove da LISTA semanal à distância (fluxo do "não pagou até 12h, sai
 // pro da espera entrar") — aceita lote: 14, 13-16 ou 13,15
 const REGEX_REMOVER_DE = /^#removerde\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$/i;
+// Cobrança manual, na hora, sem mexer no lembrete diário automático:
+// #cobrarde = recado geral (mira = principal sem pagar); #cobrarsubiude =
+// só quem subiu da espera (prazo de sexta 17h)
+const REGEX_COBRAR_DE = /^#cobrarde\s+(.+)$/i;
+const REGEX_COBRAR_SUBIU_DE = /^#cobrarsubiude\s+(.+)$/i;
 // #abrirlistade <grupo> DD/MM [valor] [nome] — abre a lista da pelada daqui,
 // já anunciando no grupo dela (ex: #abrirlistade riachuelo 07/08 17 Sexta 3h)
 const REGEX_ABRIR_LISTA_DE = /^#abrirlistade\s+(.+?)\s+(\d{1,2}\/\d{1,2})(?:\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?))?(?:\s+(.+))?$/i;
@@ -86,6 +98,8 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 *#pagode <grupo> 1-3* — marca o ✅ da LISTA semanal daqui (aceita faixa); anuncia no grupo
 *#naopagode <grupo> 3* — desmarca o ✅ da lista
 *#removerde <grupo> 14* — tira da lista semanal (aceita faixa); a espera sobe e o grupo é avisado
+*#cobrarde <grupo>* — solta o recado do agiota agora (mira = principal sem pagar)
+*#cobrarsubiude <grupo>* — cobra só quem subiu da espera (prazo sexta 17h)
 *#fixode <grupo> 3* — liga/desliga a vaga cativa (📌)
 *#mensalistade <grupo> Nome* — cadastra candidato (melhor a pessoa mandar #mensalista no grupo: aí o WhatsApp dela fica vinculado)
 *#removermensalistade <grupo> 3* — tira do quadro (aceita faixa: 6-9 ou 6,8)
@@ -198,6 +212,44 @@ async function processarComandoAdmin(msg) {
       `✅ Lista ${nomeLista ? `*${nomeLista}* ` : ''}de *${dataJogo}* aberta em *${nomeGrupo}*${
         valorCriacao != null ? ` — ${db.formatarReais(valorCriacao)}/pessoa` : ''
       }, com os mensalistas no topo. Anunciada lá no grupo.${avisoEntrega}`
+    );
+  }
+
+  const matchCobrarDe = texto.match(REGEX_COBRAR_DE);
+  const matchCobrarSubiuDe = matchCobrarDe ? null : texto.match(REGEX_COBRAR_SUBIU_DE);
+  if (matchCobrarDe || matchCobrarSubiuDe) {
+    const soPromovidos = Boolean(matchCobrarSubiuDe);
+    const r = resolverGrupo((matchCobrarDe || matchCobrarSubiuDe)[1]);
+    if (r.mensagem) return msg.reply(r.mensagem);
+    const lista = db.getListaAtiva(r.grupo.chat_id);
+    if (!lista) {
+      return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* não tem lista aberta pra cobrar.`);
+    }
+
+    const resumo = db.resumoPagamentos(lista.id);
+    const alvo = soPromovidos ? resumo.promovidosPendentes : resumo.pendentes;
+    if (alvo.length === 0) {
+      return msg.reply(soPromovidos
+        ? `Ninguém que subiu da espera está devendo em *${r.grupo.nome || r.grupo.chat_id}* 🎉`
+        : `Todo mundo em dia na lista ${lista.data_jogo} de *${r.grupo.nome || r.grupo.chat_id}* 🎉 Nada a cobrar.`);
+    }
+
+    try {
+      await msg.enviarPara(
+        r.grupo.chat_id,
+        soPromovidos ? montarLembreteSubiu(alvo) : montarLembretePagamento(alvo)
+      );
+      const figurinha = acharFigurinha('cade-meu-pix');
+      if (msg.enviarFigurinhaPara && figurinha && fs.existsSync(figurinha)) {
+        await msg.enviarFigurinhaPara(r.grupo.chat_id, figurinha);
+      }
+    } catch (err) {
+      return msg.reply(`⚠️ Não consegui mandar no grupo (${err.message}).`);
+    }
+    // Disparo manual não carimba o lembrete_em — o recado diário automático
+    // segue o cronograma dele normalmente
+    return msg.reply(
+      `📣 Cobrança mandada pro grupo (${alvo.length} na mira${soPromovidos ? ', só quem subiu da espera' : ''}). O lembrete diário automático não foi afetado.`
     );
   }
 
@@ -701,7 +753,7 @@ async function processarComandoAdmin(msg) {
   // Qualquer variação dos comandos acima que não casou é sintaxe errada
   // (ex: "18 -6", "#listade" sem grupo, "#listargrupos x") — responde com o
   // uso em vez de ficar mudo e deixar o admin achando que funcionou
-  if (/^#(ativargrupo|desativargrupo|abrirlistade|encerrarlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
+  if (/^#(ativargrupo|desativargrupo|abrirlistade|encerrarlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|cobrarde|cobrarsubiude|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
     return msg.reply(
       `Não entendi o formato 🤔 Exemplos:\n*#ativargrupo <chat_id> 18 --6*\n*#listade quinta* · *#pagosde quinta* · *#valorde quinta 25*\nManda *#admin* pra ver a sintaxe de tudo.`
     );

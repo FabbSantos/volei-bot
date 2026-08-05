@@ -107,6 +107,7 @@ migrarColunas('mensalistas', {
 });
 migrarColunas('entradas', {
   pago: 'INTEGER NOT NULL DEFAULT 0',
+  promovido: 'INTEGER NOT NULL DEFAULT 0', // subiu da espera pra principal (prazo de pagamento diferente)
   valor_pago_centavos: 'INTEGER NOT NULL DEFAULT 0',
   mensalista: 'INTEGER NOT NULL DEFAULT 0',
 });
@@ -174,7 +175,9 @@ function promoverEsperaEnquantoCouber(listaId) {
       "SELECT * FROM entradas WHERE lista_id = ? AND tipo = 'espera' ORDER BY timestamp ASC, id ASC LIMIT 1"
     ).get(listaId);
     if (!proximo) break;
-    db.prepare("UPDATE entradas SET tipo = 'principal' WHERE id = ?").run(proximo.id);
+    // promovido = 1 marca quem veio da espera — o prazo de pagamento deles
+    // é outro (#cobrarsubiude usa isso pra achar quem cobrar)
+    db.prepare("UPDATE entradas SET tipo = 'principal', promovido = 1 WHERE id = ?").run(proximo.id);
     promovidos.push(proximo.nome);
   }
   return promovidos;
@@ -474,6 +477,10 @@ function resumoPagamentos(listaId) {
     pendentes: principal
       .filter((e) => !estaEmDia(e))
       .map((e) => (e.mensalista ? `${e.nome} (mês)` : e.nome)),
+    // Quem subiu da espera e ainda não pagou — prazo próprio (sexta 17h)
+    promovidosPendentes: principal
+      .filter((e) => e.promovido && !estaEmDia(e))
+      .map((e) => e.nome),
     valorCentavos,
     // Dinheiro da LISTA (avulsos + extras ➕ de mensalista), pelos snapshots —
     // mensalidade é caixa separado, aparece no #mensalistasde
