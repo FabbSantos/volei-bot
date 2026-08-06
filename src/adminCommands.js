@@ -29,7 +29,10 @@ const REGEX_COBRAR_DE = /^#cobrarde\s+(.+)$/i;
 const REGEX_COBRAR_SUBIU_DE = /^#cobrarsubiude\s+(.+)$/i;
 // Times equilibrados a partir da lista (draft zigue-zague pelas notas do
 // elenco) e importação única do elenco da planilha antiga
-const REGEX_TIMES_DE = /^#timesde\s+(.+?)(?:\s+([2-6]))?$/i;
+// Prévia por padrão (times só na resposta do admin); "enviar" no fim é o que
+// posta no grupo da pelada — a montagem é determinística, então a prévia e o
+// envio produzem exatamente os mesmos times
+const REGEX_TIMES_DE = /^#timesde\s+(.+?)(?:\s+([2-6]))?(?:\s+(enviar))?$/i;
 const REGEX_IMPORTAR_ELENCO_DE = /^#importarelencode\s+(.+)$/i;
 // #abrirlistade <grupo> DD/MM [valor] [nome] — abre a lista da pelada daqui,
 // já anunciando no grupo dela (ex: #abrirlistade riachuelo 07/08 17 Sexta 3h)
@@ -104,7 +107,7 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 *#removerde <grupo> 14* — tira da lista semanal (aceita faixa); a espera sobe e o grupo é avisado
 *#cobrarde <grupo>* — solta o recado do agiota agora (mira = principal sem pagar)
 *#cobrarsubiude <grupo>* — cobra só quem subiu da espera (prazo sexta 17h)
-*#timesde <grupo> 3* — monta times equilibrados da lista (2 a 6; padrão 3) e anuncia
+*#timesde <grupo> 3* — PRÉVIA dos times equilibrados (só você vê); com "enviar" no fim, posta no grupo
 *#importarelencode <grupo>* — importa o elenco/notas da planilha antiga (uma vez)
 *#fixode <grupo> 3* — liga/desliga a vaga cativa (📌)
 *#mensalistade <grupo> Nome* — cadastra candidato (melhor a pessoa mandar #mensalista no grupo: aí o WhatsApp dela fica vinculado)
@@ -244,24 +247,33 @@ async function processarComandoAdmin(msg) {
       return msg.reply(`Só ${principal.length} pessoa(s) na principal da lista ${lista.data_jogo} — não dá pra montar ${quantidade} times.`);
     }
 
+    const enviar = Boolean(matchTimesDe[3]);
     const times = db.montarTimes(r.grupo.chat_id, quantidade, principal);
     const linhas = times.map((t) =>
       `⚔️ *Time ${t.numero}* (média ${t.media.toFixed(2)})\n` +
       t.jogadores.map((j) => `• ${j.nome}`).join('\n')
     );
     const anuncio = `🏐 *Times da pelada — ${lista.data_jogo}*\nMontados pelas notas do elenco, em draft zigue-zague:\n\n${linhas.join('\n\n')}\n\nBom jogo! 🔥`;
+    const desconhecidos = times.flatMap((t) => t.jogadores).filter((j) => !j.conhecido).map((j) => j.nome);
+    const avisoDesconhecidos = desconhecidos.length > 0
+      ? `\n⚠️ Sem nota no elenco (entraram como medianos): ${desconhecidos.join(', ')} — cadastra e vota no painel.`
+      : '';
+
+    if (!enviar) {
+      // Prévia: só o admin vê; nada vai pro grupo
+      return msg.reply(
+        `${anuncio}\n\n👆 *Prévia — o grupo NÃO recebeu nada.* Gostou? Manda *#timesde ${matchTimesDe[1]} ${quantidade} enviar* que sai igualzinho lá.${avisoDesconhecidos}`
+      );
+    }
+
     try {
       await msg.enviarPara(r.grupo.chat_id, anuncio);
     } catch (err) {
       return msg.reply(`⚠️ Não consegui mandar no grupo (${err.message}).`);
     }
-
-    const desconhecidos = times.flatMap((t) => t.jogadores).filter((j) => !j.conhecido).map((j) => j.nome);
-    let resposta = `⚔️ ${quantidade} times montados e anunciados na lista ${lista.data_jogo} (médias: ${times.map((t) => t.media.toFixed(2)).join(' / ')}).`;
-    if (desconhecidos.length > 0) {
-      resposta += `\n⚠️ Sem nota no elenco (entraram como medianos): ${desconhecidos.join(', ')} — cadastra e vota no painel.`;
-    }
-    return msg.reply(resposta);
+    return msg.reply(
+      `⚔️ ${quantidade} times anunciados na lista ${lista.data_jogo} (médias: ${times.map((t) => t.media.toFixed(2)).join(' / ')}).${avisoDesconhecidos}`
+    );
   }
 
   const matchImportarElenco = texto.match(REGEX_IMPORTAR_ELENCO_DE);
