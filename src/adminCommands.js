@@ -27,6 +27,10 @@ const REGEX_REMOVER_DE = /^#removerde\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$
 // só quem subiu da espera (prazo de sexta 17h)
 const REGEX_COBRAR_DE = /^#cobrarde\s+(.+)$/i;
 const REGEX_COBRAR_SUBIU_DE = /^#cobrarsubiude\s+(.+)$/i;
+// Times equilibrados a partir da lista (draft zigue-zague pelas notas do
+// elenco) e importação única do elenco da planilha antiga
+const REGEX_TIMES_DE = /^#timesde\s+(.+?)(?:\s+([2-6]))?$/i;
+const REGEX_IMPORTAR_ELENCO_DE = /^#importarelencode\s+(.+)$/i;
 // #abrirlistade <grupo> DD/MM [valor] [nome] — abre a lista da pelada daqui,
 // já anunciando no grupo dela (ex: #abrirlistade riachuelo 07/08 17 Sexta 3h)
 const REGEX_ABRIR_LISTA_DE = /^#abrirlistade\s+(.+?)\s+(\d{1,2}\/\d{1,2})(?:\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?))?(?:\s+(.+))?$/i;
@@ -100,6 +104,8 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 *#removerde <grupo> 14* — tira da lista semanal (aceita faixa); a espera sobe e o grupo é avisado
 *#cobrarde <grupo>* — solta o recado do agiota agora (mira = principal sem pagar)
 *#cobrarsubiude <grupo>* — cobra só quem subiu da espera (prazo sexta 17h)
+*#timesde <grupo> 3* — monta times equilibrados da lista (2 a 6; padrão 3) e anuncia
+*#importarelencode <grupo>* — importa o elenco/notas da planilha antiga (uma vez)
 *#fixode <grupo> 3* — liga/desliga a vaga cativa (📌)
 *#mensalistade <grupo> Nome* — cadastra candidato (melhor a pessoa mandar #mensalista no grupo: aí o WhatsApp dela fica vinculado)
 *#removermensalistade <grupo> 3* — tira do quadro (aceita faixa: 6-9 ou 6,8)
@@ -212,6 +218,70 @@ async function processarComandoAdmin(msg) {
       `✅ Lista ${nomeLista ? `*${nomeLista}* ` : ''}de *${dataJogo}* aberta em *${nomeGrupo}*${
         valorCriacao != null ? ` — ${db.formatarReais(valorCriacao)}/pessoa` : ''
       }, com os mensalistas no topo. Anunciada lá no grupo.${avisoEntrega}`
+    );
+  }
+
+  const matchTimesDe = texto.match(REGEX_TIMES_DE);
+  if (matchTimesDe) {
+    // Nome de grupo terminando em número (ex: "Quadra 7") engoliria a
+    // quantidade — se o termo inteiro é um grupo, usa ele e o padrão de times
+    let termo = matchTimesDe[1];
+    let quantidade = matchTimesDe[2] ? parseInt(matchTimesDe[2], 10) : 3;
+    const inteiro = `${matchTimesDe[1]}${matchTimesDe[2] ? ` ${matchTimesDe[2]}` : ''}`;
+    if (matchTimesDe[2] && db.buscarGrupos(inteiro).length > 0) {
+      termo = inteiro;
+      quantidade = 3;
+    }
+    const r = resolverGrupo(termo);
+    if (r.mensagem) return msg.reply(r.mensagem);
+    const lista = db.getListaMaisRecente(r.grupo.chat_id);
+    if (!lista) {
+      return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* ainda não tem lista.`);
+    }
+
+    const principal = db.entradasPrincipais(lista.id);
+    if (principal.length < quantidade) {
+      return msg.reply(`Só ${principal.length} pessoa(s) na principal da lista ${lista.data_jogo} — não dá pra montar ${quantidade} times.`);
+    }
+
+    const times = db.montarTimes(r.grupo.chat_id, quantidade, principal);
+    const linhas = times.map((t) =>
+      `⚔️ *Time ${t.numero}* (média ${t.media.toFixed(2)})\n` +
+      t.jogadores.map((j) => `• ${j.nome}`).join('\n')
+    );
+    const anuncio = `🏐 *Times da pelada — ${lista.data_jogo}*\nMontados pelas notas do elenco, em draft zigue-zague:\n\n${linhas.join('\n\n')}\n\nBom jogo! 🔥`;
+    try {
+      await msg.enviarPara(r.grupo.chat_id, anuncio);
+    } catch (err) {
+      return msg.reply(`⚠️ Não consegui mandar no grupo (${err.message}).`);
+    }
+
+    const desconhecidos = times.flatMap((t) => t.jogadores).filter((j) => !j.conhecido).map((j) => j.nome);
+    let resposta = `⚔️ ${quantidade} times montados e anunciados na lista ${lista.data_jogo} (médias: ${times.map((t) => t.media.toFixed(2)).join(' / ')}).`;
+    if (desconhecidos.length > 0) {
+      resposta += `\n⚠️ Sem nota no elenco (entraram como medianos): ${desconhecidos.join(', ')} — cadastra e vota no painel.`;
+    }
+    return msg.reply(resposta);
+  }
+
+  const matchImportarElenco = texto.match(REGEX_IMPORTAR_ELENCO_DE);
+  if (matchImportarElenco) {
+    const r = resolverGrupo(matchImportarElenco[1]);
+    if (r.mensagem) return msg.reply(r.mensagem);
+    const { NIVEL_PARA_NOTA, VOTANTES, ELENCO } = require('./elencoSeed');
+    let importados = 0;
+    for (const [nome, niveis] of ELENCO) {
+      const jogador = db.upsertJogador(r.grupo.chat_id, nome);
+      VOTANTES.forEach((votante, i) => {
+        const nota = NIVEL_PARA_NOTA[niveis[i]];
+        for (const fundamento of db.FUNDAMENTOS) {
+          db.votarHabilidade(jogador.id, votante, fundamento, nota);
+        }
+      });
+      importados++;
+    }
+    return msg.reply(
+      `📥 Elenco da planilha importado pra *${r.grupo.nome || r.grupo.chat_id}*: ${importados} jogador(es), com os votos dos 4 votantes convertidos pra escala 1-5 (I=2, M=3, A=4) nos 4 fundamentos. Refina no painel!`
     );
   }
 
@@ -753,7 +823,7 @@ async function processarComandoAdmin(msg) {
   // Qualquer variação dos comandos acima que não casou é sintaxe errada
   // (ex: "18 -6", "#listade" sem grupo, "#listargrupos x") — responde com o
   // uso em vez de ficar mudo e deixar o admin achando que funcionou
-  if (/^#(ativargrupo|desativargrupo|abrirlistade|encerrarlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|cobrarde|cobrarsubiude|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
+  if (/^#(ativargrupo|desativargrupo|abrirlistade|encerrarlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|cobrarde|cobrarsubiude|timesde|importarelencode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
     return msg.reply(
       `Não entendi o formato 🤔 Exemplos:\n*#ativargrupo <chat_id> 18 --6*\n*#listade quinta* · *#pagosde quinta* · *#valorde quinta 25*\nManda *#admin* pra ver a sintaxe de tudo.`
     );

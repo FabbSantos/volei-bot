@@ -7,6 +7,7 @@ const db = require('./db');
 const { processarMensagem, acharFigurinha, montarLembretePagamento } = require('./commands');
 const { processarComandoAdmin } = require('./adminCommands');
 const { notificarFalha } = require('./notify');
+const { registrarPainel } = require('./painel');
 
 const PORT = process.env.PORT || 3000;
 const NOME_GRUPO_ALVO = process.env.NOME_GRUPO_ALVO || null; // opcional: filtrar por nome do grupo
@@ -40,6 +41,8 @@ app.get('/qr', (req, res) => {
   }
   res.json({ qr: ultimoQrBase64 });
 });
+
+registrarPainel(app);
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);

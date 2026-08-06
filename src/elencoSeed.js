@@ -1,0 +1,30 @@
+// Importação única da planilha "Planejamento Volei Riachuelo" (estado de 31/07):
+// o nível que cada votante deu (Iniciante/Intermediário/Avançado) vira voto
+// 1-5 (I=2, M=3, A=4) aplicado aos 4 fundamentos. A partir daí a vida segue
+// no painel, com granularidade real por fundamento.
+const NIVEL_PARA_NOTA = { I: 2, M: 3, A: 4 };
+const VOTANTES = ['Fabrício', 'Diego', 'Marcel', 'Bianca'];
+
+// [nome, níveis na ordem dos votantes acima]
+const ELENCO = [
+  ['Marcel Garcia', 'MMMM'],
+  ['Fabrício Bahiense', 'MMMM'],
+  ['Kamila Vianna', 'MIMM'],
+  ['Diego Borges', 'MMMI'],
+  ['Camila Vitorino', 'IIII'],
+  ['Thiago Prata', 'AMAM'],
+  ['Andressa não Urach', 'IIII'],
+  ['Marcelle', 'IIII'],
+  ['Carlos Brugger', 'MMMM'],
+  ['W. Luketa', 'AMMM'],
+  ['Camila W.', 'MAMA'],
+  ['Pedro Moura', 'IIII'],
+  ['Ryan Araújo', 'MMMM'],
+  ['Dvd', 'MMMM'],
+  ['Thiago', 'IMMM'],
+  ['Vini', 'AMAM'],
+  ['Aces', 'AAAA'],
+  ['Stephanie Bastos', 'IIII'],
+];
+
+module.exports = { NIVEL_PARA_NOTA, VOTANTES, ELENCO };

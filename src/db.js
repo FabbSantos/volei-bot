@@ -105,6 +105,43 @@ migrarColunas('listas', {
 migrarColunas('mensalistas', {
   espera: 'INTEGER NOT NULL DEFAULT 0', // candidato além das vagas: fila de espera
 });
+
+// ---- elenco, habilidade e evolução (substitui a planilha de times) ----------
+db.exec(`
+  CREATE TABLE IF NOT EXISTS jogadores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_id TEXT NOT NULL,          -- elenco é por grupo
+    nome TEXT NOT NULL,
+    numero TEXT,                    -- vincula com as entradas das listas quando conhecido
+    criado_em TEXT NOT NULL,
+    UNIQUE(chat_id, nome)
+  );
+
+  CREATE TABLE IF NOT EXISTS votos_habilidade (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    jogador_id INTEGER NOT NULL,
+    votante TEXT NOT NULL,          -- quem votou (ex: "Fabrício")
+    fundamento TEXT NOT NULL,       -- ataque | defesa | levantamento | saque
+    nota INTEGER NOT NULL,          -- 1-5
+    atualizado_em TEXT NOT NULL,
+    UNIQUE(jogador_id, votante, fundamento),
+    FOREIGN KEY (jogador_id) REFERENCES jogadores(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS notas_do_dia (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    jogador_id INTEGER NOT NULL,
+    lista_id INTEGER NOT NULL,      -- a pelada em que a atuação aconteceu
+    nota REAL NOT NULL,             -- 1-5
+    observacao TEXT,
+    atualizado_em TEXT NOT NULL,
+    UNIQUE(jogador_id, lista_id),
+    FOREIGN KEY (jogador_id) REFERENCES jogadores(id),
+    FOREIGN KEY (lista_id) REFERENCES listas(id)
+  );
+`);
+
+const FUNDAMENTOS = ['ataque', 'defesa', 'levantamento', 'saque'];
 migrarColunas('entradas', {
   pago: 'INTEGER NOT NULL DEFAULT 0',
   promovido: 'INTEGER NOT NULL DEFAULT 0', // subiu da espera pra principal (prazo de pagamento diferente)
@@ -842,6 +879,207 @@ function acharEntradasPorNome(listaId, nome) {
   return listarCombinada(listaId).filter((e) => normalizarTexto(e.nome).trim() === alvo);
 }
 
+// ---- elenco, habilidade e times --------------------------------------------
+
+function upsertJogador(chatId, nome, numero = null) {
+  const existente = db.prepare(
+    'SELECT * FROM jogadores WHERE chat_id = ? AND nome = ?'
+  ).get(chatId, nome.trim());
+  if (existente) {
+    if (numero && !existente.numero) {
+      db.prepare('UPDATE jogadores SET numero = ? WHERE id = ?').run(numero, existente.id);
+      existente.numero = numero;
+    }
+    return existente;
+  }
+  const info = db.prepare(
+    'INSERT INTO jogadores (chat_id, nome, numero, criado_em) VALUES (?, ?, ?, ?)'
+  ).run(chatId, nome.trim(), numero, new Date().toISOString());
+  return db.prepare('SELECT * FROM jogadores WHERE id = ?').get(info.lastInsertRowid);
+}
+
+function removerJogador(jogadorId) {
+  db.prepare('DELETE FROM votos_habilidade WHERE jogador_id = ?').run(jogadorId);
+  db.prepare('DELETE FROM notas_do_dia WHERE jogador_id = ?').run(jogadorId);
+  const info = db.prepare('DELETE FROM jogadores WHERE id = ?').run(jogadorId);
+  return info.changes > 0;
+}
+
+function votarHabilidade(jogadorId, votante, fundamento, nota) {
+  if (!FUNDAMENTOS.includes(fundamento)) return { erro: 'fundamento_invalido' };
+  if (!(nota >= 1 && nota <= 5)) return { erro: 'nota_invalida' };
+  db.prepare(`
+    INSERT INTO votos_habilidade (jogador_id, votante, fundamento, nota, atualizado_em)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(jogador_id, votante, fundamento) DO UPDATE SET nota = excluded.nota, atualizado_em = excluded.atualizado_em
+  `).run(jogadorId, votante.trim(), fundamento, nota, new Date().toISOString());
+  return {};
+}
+
+function darNotaDoDia(jogadorId, listaId, nota, observacao = null) {
+  if (!(nota >= 1 && nota <= 5)) return { erro: 'nota_invalida' };
+  db.prepare(`
+    INSERT INTO notas_do_dia (jogador_id, lista_id, nota, observacao, atualizado_em)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(jogador_id, lista_id) DO UPDATE SET nota = excluded.nota, observacao = excluded.observacao, atualizado_em = excluded.atualizado_em
+  `).run(jogadorId, listaId, nota, observacao, new Date().toISOString());
+  return {};
+}
+
+// Elenco completo com as médias calculadas:
+// - habilidade: média de TODOS os votos (fundamento × votante), escala 1-5
+// - notaTime: o que o montador de times usa — 70% habilidade + 30% média das
+//   últimas 3 notas do dia (quem joga bem/mal em quadra mexe no peso, sem
+//   atropelar a avaliação de base); sem nota do dia, vale a habilidade pura
+function listarJogadores(chatId) {
+  const jogadores = db.prepare(
+    'SELECT * FROM jogadores WHERE chat_id = ? ORDER BY nome COLLATE NOCASE ASC'
+  ).all(chatId);
+
+  return jogadores.map((j) => {
+    const votos = db.prepare(
+      'SELECT votante, fundamento, nota FROM votos_habilidade WHERE jogador_id = ?'
+    ).all(j.id);
+    const porFundamento = {};
+    for (const f of FUNDAMENTOS) {
+      const doFundamento = votos.filter((v) => v.fundamento === f);
+      porFundamento[f] = doFundamento.length
+        ? doFundamento.reduce((s, v) => s + v.nota, 0) / doFundamento.length
+        : null;
+    }
+    const habilidade = votos.length
+      ? votos.reduce((s, v) => s + v.nota, 0) / votos.length
+      : null;
+
+    const ultimasNotas = db.prepare(`
+      SELECT nd.nota FROM notas_do_dia nd
+      JOIN listas l ON l.id = nd.lista_id
+      WHERE nd.jogador_id = ?
+      ORDER BY l.id DESC LIMIT 3
+    `).all(j.id).map((r) => r.nota);
+    const mediaDia = ultimasNotas.length
+      ? ultimasNotas.reduce((s, n) => s + n, 0) / ultimasNotas.length
+      : null;
+
+    const presencas = db.prepare(`
+      SELECT COUNT(*) AS total FROM entradas e
+      JOIN listas l ON l.id = e.lista_id
+      WHERE l.chat_id = ? AND (e.numero = ? OR e.nome = ? COLLATE NOCASE)
+    `).get(chatId, j.numero || '(sem numero)', j.nome).total;
+
+    const notaTime = habilidade == null
+      ? null
+      : (mediaDia == null ? habilidade : 0.7 * habilidade + 0.3 * mediaDia);
+
+    return { ...j, votos, porFundamento, habilidade, mediaDia, notaTime, presencas };
+  });
+}
+
+// Série temporal pros gráficos: notas do dia por pelada + presença acumulada
+function evolucaoJogadores(chatId) {
+  const listas = db.prepare(
+    "SELECT id, data_jogo, nome, criada_em FROM listas WHERE chat_id = ? ORDER BY id ASC"
+  ).all(chatId);
+  const jogadores = db.prepare(
+    'SELECT * FROM jogadores WHERE chat_id = ? ORDER BY nome COLLATE NOCASE ASC'
+  ).all(chatId);
+
+  const series = jogadores.map((j) => {
+    const notas = db.prepare(`
+      SELECT nd.lista_id, nd.nota, nd.observacao FROM notas_do_dia nd WHERE nd.jogador_id = ?
+    `).all(j.id);
+    const porLista = new Map(notas.map((n) => [n.lista_id, n]));
+    let acumulado = 0;
+    const pontos = listas.map((l) => {
+      const presente = db.prepare(
+        'SELECT 1 FROM entradas WHERE lista_id = ? AND (numero = ? OR nome = ? COLLATE NOCASE)'
+      ).get(l.id, j.numero || '(sem numero)', j.nome);
+      if (presente) acumulado++;
+      return {
+        lista_id: l.id,
+        data_jogo: l.data_jogo,
+        nota: porLista.get(l.id)?.nota ?? null,
+        observacao: porLista.get(l.id)?.observacao ?? null,
+        presente: Boolean(presente),
+        presencaAcumulada: acumulado,
+      };
+    });
+    return { jogador: j.nome, jogador_id: j.id, pontos };
+  });
+
+  return { listas, series };
+}
+
+// Só a lista principal, na ordem de exibição — é quem entra na montagem de times
+function entradasPrincipais(listaId) {
+  return db.prepare(
+    "SELECT * FROM entradas WHERE lista_id = ? AND tipo = 'principal' ORDER BY timestamp ASC, id ASC"
+  ).all(listaId);
+}
+
+// Casa uma entrada da lista com o elenco: primeiro pelo número do WhatsApp,
+// senão pelo nome (ignorando acento/caixa)
+function acharJogadorDaEntrada(chatId, entrada, jogadores) {
+  const usuario = String(entrada.numero || '').split('@')[0];
+  return jogadores.find((j) => j.numero && String(j.numero).split('@')[0] === usuario)
+    || jogadores.find((j) => normalizarTexto(j.nome) === normalizarTexto(entrada.nome));
+}
+
+// Últimas listas com participantes e a nota do dia já dada — alimenta a
+// tela de avaliação pós-jogo do painel
+function listasRecentesComEntradas(chatId) {
+  const listas = db.prepare(
+    'SELECT * FROM listas WHERE chat_id = ? ORDER BY id DESC LIMIT 15'
+  ).all(chatId);
+  const jogadores = listarJogadores(chatId);
+  return listas.map((l) => ({
+    ...l,
+    entradas: listarCombinada(l.id).map((e) => {
+      const jogador = acharJogadorDaEntrada(chatId, e, jogadores);
+      const notaAtual = jogador
+        ? db.prepare('SELECT nota, observacao FROM notas_do_dia WHERE jogador_id = ? AND lista_id = ?').get(jogador.id, l.id)
+        : null;
+      return {
+        nome: e.nome,
+        tipo: e.tipo,
+        mensalista: Boolean(e.mensalista),
+        jogador_id: jogador?.id ?? null,
+        nota: notaAtual?.nota ?? null,
+        observacao: notaAtual?.observacao ?? null,
+      };
+    }),
+  }));
+}
+
+// Draft em zigue-zague (serpentina): ordena do mais forte pro mais fraco e
+// distribui 1..n, n..1, 1..n... — o mesmo método da planilha
+function montarTimes(chatId, quantidadeTimes, participantes) {
+  const elenco = listarJogadores(chatId);
+  const avaliados = participantes.map((p) => {
+    const jogador = acharJogadorDaEntrada(chatId, p, elenco);
+    return {
+      nome: p.nome,
+      nota: jogador?.notaTime ?? 3, // desconhecido entra como mediano
+      conhecido: Boolean(jogador?.notaTime != null),
+    };
+  });
+
+  avaliados.sort((a, b) => b.nota - a.nota);
+  const times = Array.from({ length: quantidadeTimes }, () => []);
+  avaliados.forEach((j, i) => {
+    const rodada = Math.floor(i / quantidadeTimes);
+    const dentroDaRodada = i % quantidadeTimes;
+    const indice = rodada % 2 === 0 ? dentroDaRodada : quantidadeTimes - 1 - dentroDaRodada;
+    times[indice].push(j);
+  });
+
+  return times.map((time, i) => ({
+    numero: i + 1,
+    jogadores: time,
+    media: time.length ? time.reduce((s, j) => s + j.nota, 0) / time.length : 0,
+  }));
+}
+
 function historico(chatId) {
   return db.prepare(
     'SELECT * FROM listas WHERE chat_id = ? ORDER BY id DESC LIMIT 20'
@@ -876,6 +1114,16 @@ module.exports = {
   setarValorPadraoGrupo,
   listasParaLembrete,
   marcarLembreteEnviado,
+  upsertJogador,
+  removerJogador,
+  votarHabilidade,
+  darNotaDoDia,
+  listarJogadores,
+  evolucaoJogadores,
+  montarTimes,
+  entradasPrincipais,
+  listasRecentesComEntradas,
+  FUNDAMENTOS,
   marcarGrupoAdmin,
   buscarGrupos,
   paraCentavos,

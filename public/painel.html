@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel do Vôlei</title>
+<script src="/painel/chart.js"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --plano: #f9f9f7;
+    --superficie: #fcfcfb;
+    --tinta: #0b0b0b;
+    --tinta-2: #52514e;
+    --tinta-mut: #898781;
+    --grade: #e1e0d9;
+    --eixo: #c3c2b7;
+    --borda: rgba(11,11,11,0.10);
+    --acento: #2a78d6;
+    --seq-100: #cde2fb; --seq-250: #86b6ef; --seq-400: #3987e5; --seq-550: #1c5cab;
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --plano: #0d0d0d;
+      --superficie: #1a1a19;
+      --tinta: #ffffff;
+      --tinta-2: #c3c2b7;
+      --tinta-mut: #898781;
+      --grade: #2c2c2a;
+      --eixo: #383835;
+      --borda: rgba(255,255,255,0.10);
+      --acento: #3987e5;
+      --seq-100: #184f95; --seq-250: #256abf; --seq-400: #3987e5; --seq-550: #86b6ef;
+      --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--plano); color: var(--tinta);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.45; font-size: 15px;
+  }
+  header {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem 1.2rem;
+    padding: 0.9rem 1.2rem; border-bottom: 1px solid var(--grade);
+    background: var(--superficie); position: sticky; top: 0; z-index: 5;
+  }
+  header h1 { font-size: 1.05rem; margin: 0; letter-spacing: -0.01em; }
+  header .sub { color: var(--tinta-mut); font-size: 0.8rem; }
+  select, input, button, textarea {
+    font: inherit; color: var(--tinta); background: var(--superficie);
+    border: 1px solid var(--eixo); border-radius: 8px; padding: 0.35rem 0.6rem;
+  }
+  button { cursor: pointer; }
+  button.primario { background: var(--acento); color: #fff; border-color: var(--acento); font-weight: 600; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--acento); outline-offset: 1px; }
+  nav.abas { display: flex; gap: 0.25rem; padding: 0.6rem 1.2rem 0; flex-wrap: wrap; }
+  nav.abas button {
+    border: none; background: none; padding: 0.5rem 0.9rem; border-radius: 8px 8px 0 0;
+    color: var(--tinta-2); font-weight: 600; border-bottom: 2px solid transparent;
+  }
+  nav.abas button.ativa { color: var(--tinta); border-bottom-color: var(--acento); }
+  main { padding: 1rem 1.2rem 3rem; max-width: 1100px; margin: 0 auto; }
+  section.aba { display: none; }
+  section.aba.ativa { display: block; }
+  .cartao {
+    background: var(--superficie); border: 1px solid var(--borda); border-radius: 12px;
+    padding: 1rem 1.2rem; margin-top: 1rem; overflow-x: auto;
+  }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--grade); vertical-align: middle; }
+  th { color: var(--tinta-mut); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .barra { display: inline-block; height: 8px; border-radius: 4px; background: var(--seq-400); vertical-align: middle; margin-right: 6px; }
+  .mut { color: var(--tinta-mut); }
+  .chip {
+    display: inline-block; padding: 0.1rem 0.55rem; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 700; background: var(--grade); color: var(--tinta-2);
+  }
+  .linhaform { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-top: 0.8rem; }
+  .votos-linha td { background: color-mix(in srgb, var(--acento) 6%, var(--superficie)); }
+  .times-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.8rem; margin-top: 1rem; }
+  .time-cartao { border: 1px solid var(--borda); border-radius: 12px; padding: 0.8rem 1rem; background: var(--superficie); }
+  .time-cartao h3 { margin: 0 0 0.2rem; font-size: 0.95rem; }
+  .time-cartao .media { color: var(--tinta-mut); font-size: 0.8rem; margin-bottom: 0.5rem; }
+  .time-cartao ul { list-style: none; margin: 0; padding: 0; }
+  .time-cartao li { display: flex; justify-content: space-between; gap: 0.5rem; padding: 0.2rem 0; border-bottom: 1px solid var(--grade); }
+  .time-cartao li:last-child { border-bottom: none; }
+  .grafico-caixa { position: relative; height: 340px; margin-top: 0.6rem; }
+  .selecao-jogadores { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.6rem; }
+  .selecao-jogadores button {
+    border-radius: 999px; padding: 0.25rem 0.7rem; font-size: 0.82rem; border: 1px solid var(--eixo);
+    background: var(--superficie); color: var(--tinta-2);
+  }
+  .selecao-jogadores button.sel { color: #fff; font-weight: 600; border-color: transparent; }
+  .aviso { color: var(--tinta-mut); font-size: 0.85rem; margin-top: 0.5rem; }
+  .toast {
+    position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%);
+    background: var(--tinta); color: var(--plano); padding: 0.5rem 1rem; border-radius: 999px;
+    font-size: 0.85rem; opacity: 0; transition: opacity 0.25s; pointer-events: none; z-index: 20;
+  }
+  .toast.on { opacity: 0.95; }
+  @media (max-width: 640px) { main, header { padding-left: 0.7rem; padding-right: 0.7rem; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>🏐 Painel do Vôlei</h1>
+  <label>Grupo:
+    <select id="selGrupo"></select>
+  </label>
+  <label>Você é:
+    <input id="inpVotante" placeholder="seu nome (votante)" size="12">
+  </label>
+  <span class="sub">notas 1–5 · habilidade por fundamento · presença vem das listas do bot</span>
+</header>
+
+<nav class="abas">
+  <button data-aba="elenco" class="ativa">Elenco</button>
+  <button data-aba="notadia">Nota do dia</button>
+  <button data-aba="times">Times</button>
+  <button data-aba="evolucao">Evolução</button>
+</nav>
+
+<main>
+  <section class="aba ativa" id="aba-elenco">
+    <div class="cartao">
+      <table id="tabElenco"></table>
+      <div class="linhaform">
+        <input id="inpNovoNome" placeholder="Nome do jogador novo">
+        <input id="inpNovoNumero" placeholder="WhatsApp (opcional) 5521...@c.us" size="24">
+        <button class="primario" id="btnAddJogador">Adicionar ao elenco</button>
+      </div>
+      <p class="aviso">Clica num jogador pra abrir os teus votos por fundamento (1–5). A coluna "Nota p/ times" pondera 70% habilidade + 30% das últimas 3 notas do dia.</p>
+    </div>
+  </section>
+
+  <section class="aba" id="aba-notadia">
+    <div class="cartao">
+      <div class="linhaform">
+        <label>Pelada: <select id="selLista"></select></label>
+      </div>
+      <table id="tabNotaDia"></table>
+      <p class="aviso">Nota de 1 a 5 (aceita 0,5). Salva sozinho ao mudar. Jogador fora do elenco aparece com o botão "cadastrar".</p>
+    </div>
+  </section>
+
+  <section class="aba" id="aba-times">
+    <div class="cartao">
+      <div class="linhaform">
+        <label>Times: <select id="selQtdTimes"><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select></label>
+        <button id="btnMarcarTodos">Marcar todo o elenco</button>
+        <button id="btnDesmarcar">Limpar</button>
+        <button class="primario" id="btnMontar">Montar times</button>
+      </div>
+      <div class="selecao-jogadores" id="selTimes"></div>
+      <div class="times-grid" id="timesMontados"></div>
+      <p class="aviso">Draft em zigue-zague pela "Nota p/ times". Depois de montado, troca alguém de time pelo seletor ao lado do nome — as médias recalculam.</p>
+    </div>
+  </section>
+
+  <section class="aba" id="aba-evolucao">
+    <div class="cartao">
+      <strong>Nota do dia por pelada</strong>
+      <div class="selecao-jogadores" id="selEvolucao"></div>
+      <div class="grafico-caixa"><canvas id="grafNotas"></canvas></div>
+    </div>
+    <div class="cartao">
+      <strong>Presença acumulada</strong>
+      <div class="grafico-caixa"><canvas id="grafPresenca"></canvas></div>
+      <p class="aviso">Até 6 jogadores por vez — cada um mantém a própria cor enquanto selecionado. Passa o mouse pra ver os valores; pelada sem nota não quebra a linha.</p>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const token = new URLSearchParams(location.search).get('token') || '';
+const $ = (s) => document.querySelector(s);
+
+async function api(caminho, opts = {}) {
+  const sep = caminho.includes('?') ? '&' : '?';
+  const resp = await fetch(`/api${caminho}${sep}token=${encodeURIComponent(token)}`, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if (!resp.ok) {
+    const erro = await resp.json().catch(() => ({}));
+    throw new Error(erro.erro || `HTTP ${resp.status}`);
+  }
+  return resp.json();
+}
+
+function toast(msg) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('on'), 1800);
+}
+
+const fmt = (n, casas = 2) => (n == null ? '—' : Number(n).toFixed(casas).replace('.', ','));
+
+// ---- estado -----------------------------------------------------------------
+let grupos = [];
+let elenco = { fundamentos: [], jogadores: [] };
+let listas = [];
+let evolucao = { listas: [], series: [] };
+let jogadorAberto = null;
+let timesAtuais = [];
+let selecionadosTimes = new Set();
+let selecionadosEvolucao = []; // ordem importa: define o slot de cor de cada um
+
+const grupoAtual = () => $('#selGrupo').value;
+const votanteAtual = () => $('#inpVotante').value.trim();
+
+// ---- paleta categórica (ordem fixa; máx. 6 séries em tela) ------------------
+const escuro = () => matchMedia('(prefers-color-scheme: dark)').matches;
+const SLOTS_LIGHT = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300'];
+const SLOTS_DARK  = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300'];
+const corDoSlot = (i) => (escuro() ? SLOTS_DARK : SLOTS_LIGHT)[i];
+const ink = () => escuro() ? '#c3c2b7' : '#52514e';
+const gridCor = () => escuro() ? '#2c2c2a' : '#e1e0d9';
+
+// ---- abas -------------------------------------------------------------------
+document.querySelectorAll('nav.abas button').forEach((b) => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('nav.abas button').forEach((x) => x.classList.remove('ativa'));
+    document.querySelectorAll('section.aba').forEach((x) => x.classList.remove('ativa'));
+    b.classList.add('ativa');
+    $(`#aba-${b.dataset.aba}`).classList.add('ativa');
+    if (b.dataset.aba === 'evolucao') desenharGraficos();
+  });
+});
+
+// ---- elenco -----------------------------------------------------------------
+async function carregarElenco() {
+  elenco = await api(`/elenco?grupo=${encodeURIComponent(grupoAtual())}`);
+  desenharElenco();
+  desenharSelecaoTimes();
+  desenharSelecaoEvolucao();
+}
+
+function desenharElenco() {
+  const f = elenco.fundamentos;
+  const linhas = [`<tr><th>Jogador</th>${f.map((x) => `<th class="num">${x}</th>`).join('')}<th class="num">Habilidade</th><th class="num">Nota p/ times</th><th class="num">Presenças</th><th></th></tr>`];
+  const ordenado = [...elenco.jogadores].sort((a, b) => (b.notaTime ?? -1) - (a.notaTime ?? -1));
+
+  for (const j of ordenado) {
+    linhas.push(`<tr data-id="${j.id}" style="cursor:pointer">
+      <td><strong>${j.nome}</strong>${j.numero ? '' : ' <span class="chip" title="sem WhatsApp vinculado">sem vínculo</span>'}</td>
+      ${f.map((x) => {
+        const v = j.porFundamento[x];
+        const w = v ? Math.round((v / 5) * 44) : 0;
+        return `<td class="num"><span class="barra" style="width:${w}px"></span>${fmt(v, 1)}</td>`;
+      }).join('')}
+      <td class="num">${fmt(j.habilidade)}</td>
+      <td class="num"><strong>${fmt(j.notaTime)}</strong></td>
+      <td class="num">${j.presencas}</td>
+      <td><button data-del="${j.id}" title="remover do elenco">✕</button></td>
+    </tr>`);
+
+    if (jogadorAberto === j.id) {
+      const votante = votanteAtual();
+      const meus = {};
+      for (const v of j.votos.filter((v) => v.votante.toLowerCase() === votante.toLowerCase())) meus[v.fundamento] = v.nota;
+      linhas.push(`<tr class="votos-linha"><td colspan="${f.length + 5}">
+        ${votante ? `Teus votos (${votante}): ` : '⚠️ Preenche "Você é" lá em cima pra votar. '}
+        ${f.map((x) => `<label style="margin-right:0.8rem">${x}
+          <select data-voto="${x}" ${votante ? '' : 'disabled'}>
+            <option value="">–</option>
+            ${[1, 2, 3, 4, 5].map((n) => `<option ${meus[x] === n ? 'selected' : ''}>${n}</option>`).join('')}
+          </select></label>`).join('')}
+        <span class="mut">· votos registrados: ${[...new Set(j.votos.map((v) => v.votante))].join(', ') || 'nenhum'}</span>
+      </td></tr>`);
+    }
+  }
+  $('#tabElenco').innerHTML = linhas.join('');
+
+  document.querySelectorAll('#tabElenco tr[data-id]').forEach((tr) => {
+    tr.addEventListener('click', (ev) => {
+      if (ev.target.closest('button')) return;
+      const id = parseInt(tr.dataset.id, 10);
+      jogadorAberto = jogadorAberto === id ? null : id;
+      desenharElenco();
+    });
+  });
+  document.querySelectorAll('#tabElenco [data-voto]').forEach((sel) => {
+    sel.addEventListener('change', async () => {
+      if (!sel.value) return;
+      await api('/voto', { method: 'POST', body: { jogador_id: jogadorAberto, votante: votanteAtual(), fundamento: sel.dataset.voto, nota: parseInt(sel.value, 10) } });
+      toast('Voto salvo ✔');
+      await carregarElenco();
+    });
+  });
+  document.querySelectorAll('#tabElenco [data-del]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const j = elenco.jogadores.find((x) => x.id === parseInt(btn.dataset.del, 10));
+      if (!confirm(`Remover ${j.nome} do elenco? (votos e notas do dia vão junto)`)) return;
+      await api(`/jogador/${j.id}`, { method: 'DELETE' });
+      toast('Removido');
+      await carregarElenco();
+    });
+  });
+}
+
+$('#btnAddJogador').addEventListener('click', async () => {
+  const nome = $('#inpNovoNome').value.trim();
+  if (!nome) return toast('Falta o nome');
+  await api('/jogador', { method: 'POST', body: { grupo: grupoAtual(), nome, numero: $('#inpNovoNumero').value.trim() || null } });
+  $('#inpNovoNome').value = ''; $('#inpNovoNumero').value = '';
+  toast(`${nome} no elenco ✔`);
+  await carregarElenco();
+});
+
+// ---- nota do dia ------------------------------------------------------------
+async function carregarListas() {
+  listas = await api(`/listas?grupo=${encodeURIComponent(grupoAtual())}`);
+  $('#selLista').innerHTML = listas.map((l, i) =>
+    `<option value="${i}">${l.nome ? `${l.nome} — ` : ''}${l.data_jogo} (${l.status})</option>`
+  ).join('') || '<option>— sem listas —</option>';
+  desenharNotaDia();
+}
+
+function desenharNotaDia() {
+  const l = listas[parseInt($('#selLista').value, 10) || 0];
+  if (!l) { $('#tabNotaDia').innerHTML = '<tr><td class="mut">Nenhuma lista ainda.</td></tr>'; return; }
+  const linhas = ['<tr><th>Jogador</th><th>Situação</th><th class="num">Nota do dia</th><th>Observação</th></tr>'];
+  for (const e of l.entradas) {
+    linhas.push(`<tr>
+      <td><strong>${e.nome}</strong>${e.mensalista ? ' <span class="chip">mensal</span>' : ''}${e.tipo === 'espera' ? ' <span class="chip">espera</span>' : ''}</td>
+      <td class="mut">${e.jogador_id ? 'no elenco' : `<button data-cad="${e.nome}">cadastrar no elenco</button>`}</td>
+      <td class="num">${e.jogador_id ? `<input data-nota="${e.jogador_id}" type="number" min="1" max="5" step="0.5" value="${e.nota ?? ''}" style="width:4.5rem">` : '—'}</td>
+      <td>${e.jogador_id ? `<input data-obs="${e.jogador_id}" value="${e.observacao ?? ''}" placeholder="opcional" style="width:100%">` : ''}</td>
+    </tr>`);
+  }
+  $('#tabNotaDia').innerHTML = linhas.join('');
+
+  const salvar = async (jogadorId) => {
+    const nota = parseFloat($(`[data-nota="${jogadorId}"]`).value);
+    if (!(nota >= 1 && nota <= 5)) return;
+    await api('/notadia', { method: 'POST', body: { jogador_id: jogadorId, lista_id: l.id, nota, observacao: $(`[data-obs="${jogadorId}"]`).value } });
+    toast('Nota salva ✔');
+  };
+  document.querySelectorAll('#tabNotaDia [data-nota]').forEach((inp) =>
+    inp.addEventListener('change', () => salvar(parseInt(inp.dataset.nota, 10))));
+  document.querySelectorAll('#tabNotaDia [data-obs]').forEach((inp) =>
+    inp.addEventListener('change', () => salvar(parseInt(inp.dataset.obs, 10))));
+  document.querySelectorAll('#tabNotaDia [data-cad]').forEach((btn) =>
+    btn.addEventListener('click', async () => {
+      await api('/jogador', { method: 'POST', body: { grupo: grupoAtual(), nome: btn.dataset.cad } });
+      toast('Cadastrado ✔');
+      await carregarListas(); await carregarElenco();
+    }));
+}
+$('#selLista').addEventListener('change', desenharNotaDia);
+
+// ---- times ------------------------------------------------------------------
+function desenharSelecaoTimes() {
+  const caixa = $('#selTimes');
+  caixa.innerHTML = '';
+  for (const j of [...elenco.jogadores].sort((a, b) => (b.notaTime ?? -1) - (a.notaTime ?? -1))) {
+    const b = document.createElement('button');
+    b.textContent = `${j.nome} (${fmt(j.notaTime, 1)})`;
+    const pinta = () => {
+      b.classList.toggle('sel', selecionadosTimes.has(j.nome));
+      b.style.background = selecionadosTimes.has(j.nome) ? 'var(--acento)' : '';
+    };
+    b.addEventListener('click', () => {
+      selecionadosTimes.has(j.nome) ? selecionadosTimes.delete(j.nome) : selecionadosTimes.add(j.nome);
+      pinta();
+    });
+    pinta();
+    caixa.appendChild(b);
+  }
+}
+$('#btnMarcarTodos').addEventListener('click', () => { selecionadosTimes = new Set(elenco.jogadores.map((j) => j.nome)); desenharSelecaoTimes(); });
+$('#btnDesmarcar').addEventListener('click', () => { selecionadosTimes.clear(); desenharSelecaoTimes(); });
+
+$('#btnMontar').addEventListener('click', async () => {
+  if (selecionadosTimes.size < 2) return toast('Seleciona os jogadores primeiro');
+  timesAtuais = await api('/times', { method: 'POST', body: { grupo: grupoAtual(), quantidade: parseInt($('#selQtdTimes').value, 10), nomes: [...selecionadosTimes] } });
+  desenharTimes();
+});
+
+function desenharTimes() {
+  const caixa = $('#timesMontados');
+  caixa.innerHTML = timesAtuais.map((t, ti) => `
+    <div class="time-cartao">
+      <h3>Time ${t.numero}</h3>
+      <div class="media">média ${fmt(t.media)}</div>
+      <ul>${t.jogadores.map((j, ji) => `<li>
+        <span>${j.nome} <span class="mut">${fmt(j.nota, 1)}</span></span>
+        <select data-mover="${ti}:${ji}">${timesAtuais.map((x) => `<option ${x.numero === t.numero ? 'selected' : ''}>${x.numero}</option>`).join('')}</select>
+      </li>`).join('')}</ul>
+    </div>`).join('');
+
+  document.querySelectorAll('[data-mover]').forEach((sel) => {
+    sel.addEventListener('change', () => {
+      const [ti, ji] = sel.dataset.mover.split(':').map(Number);
+      const destino = parseInt(sel.value, 10) - 1;
+      const [jog] = timesAtuais[ti].jogadores.splice(ji, 1);
+      timesAtuais[destino].jogadores.push(jog);
+      for (const t of timesAtuais) {
+        t.media = t.jogadores.length ? t.jogadores.reduce((s, j) => s + j.nota, 0) / t.jogadores.length : 0;
+      }
+      desenharTimes();
+    });
+  });
+}
+
+// ---- evolução ---------------------------------------------------------------
+let graficoNotas = null;
+let graficoPresenca = null;
+
+function desenharSelecaoEvolucao() {
+  const caixa = $('#selEvolucao');
+  caixa.innerHTML = '';
+  for (const j of elenco.jogadores) {
+    const b = document.createElement('button');
+    b.textContent = j.nome;
+    const pinta = () => {
+      const i = selecionadosEvolucao.indexOf(j.nome);
+      b.classList.toggle('sel', i >= 0);
+      b.style.background = i >= 0 ? corDoSlot(i) : '';
+    };
+    b.addEventListener('click', () => {
+      const i = selecionadosEvolucao.indexOf(j.nome);
+      if (i >= 0) selecionadosEvolucao.splice(i, 1);
+      else if (selecionadosEvolucao.length >= 6) return toast('Máximo de 6 jogadores por vez');
+      else selecionadosEvolucao.push(j.nome);
+      desenharSelecaoEvolucao();
+      desenharGraficos();
+    });
+    pinta();
+    caixa.appendChild(b);
+  }
+}
+
+async function carregarEvolucao() {
+  evolucao = await api(`/evolucao?grupo=${encodeURIComponent(grupoAtual())}`);
+  if (selecionadosEvolucao.length === 0) {
+    // começa com os 3 com mais notas do dia registradas
+    selecionadosEvolucao = [...evolucao.series]
+      .sort((a, b) => b.pontos.filter((p) => p.nota != null).length - a.pontos.filter((p) => p.nota != null).length)
+      .slice(0, 3).map((s) => s.jogador);
+  }
+}
+
+function baseOpcoes(tituloY, min, max) {
+  return {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { labels: { color: ink(), usePointStyle: true, boxWidth: 8 } },
+      tooltip: { intersect: false },
+    },
+    scales: {
+      x: { ticks: { color: ink() }, grid: { color: gridCor() } },
+      y: { min, max, title: { display: true, text: tituloY, color: ink() }, ticks: { color: ink() }, grid: { color: gridCor() } },
+    },
+  };
+}
+
+function desenharGraficos() {
+  if (!evolucao.listas.length) return;
+  const rotulos = evolucao.listas.map((l) => l.data_jogo);
+  const seriesSel = selecionadosEvolucao
+    .map((nome, i) => ({ serie: evolucao.series.find((s) => s.jogador === nome), slot: i }))
+    .filter((x) => x.serie);
+
+  const dsNotas = seriesSel.map(({ serie, slot }) => ({
+    label: serie.jogador,
+    data: serie.pontos.map((p) => p.nota),
+    borderColor: corDoSlot(slot), backgroundColor: corDoSlot(slot),
+    borderWidth: 2, pointRadius: 4, pointHoverRadius: 6, spanGaps: true, tension: 0.15,
+  }));
+  const dsPresenca = seriesSel.map(({ serie, slot }) => ({
+    label: serie.jogador,
+    data: serie.pontos.map((p) => p.presencaAcumulada),
+    borderColor: corDoSlot(slot), backgroundColor: corDoSlot(slot),
+    borderWidth: 2, pointRadius: 3, pointHoverRadius: 6, stepped: true,
+  }));
+
+  graficoNotas?.destroy();
+  graficoNotas = new Chart($('#grafNotas'), {
+    type: 'line',
+    data: { labels: rotulos, datasets: dsNotas },
+    options: baseOpcoes('nota do dia (1–5)', 1, 5),
+  });
+  graficoPresenca?.destroy();
+  graficoPresenca = new Chart($('#grafPresenca'), {
+    type: 'line',
+    data: { labels: rotulos, datasets: dsPresenca },
+    options: baseOpcoes('peladas jogadas (acumulado)', 0, undefined),
+  });
+}
+
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  desenharSelecaoEvolucao();
+  desenharGraficos();
+});
+
+// ---- boot -------------------------------------------------------------------
+async function trocarGrupo() {
+  localStorage.setItem('painel.grupo', grupoAtual());
+  jogadorAberto = null;
+  selecionadosTimes.clear();
+  selecionadosEvolucao = [];
+  timesAtuais = [];
+  $('#timesMontados').innerHTML = '';
+  await Promise.all([carregarElenco(), carregarListas(), carregarEvolucao()]);
+  desenharSelecaoEvolucao();
+  desenharGraficos();
+}
+
+(async function boot() {
+  $('#inpVotante').value = localStorage.getItem('painel.votante') || '';
+  $('#inpVotante').addEventListener('change', () => {
+    localStorage.setItem('painel.votante', votanteAtual());
+    desenharElenco();
+  });
+
+  try {
+    grupos = await api('/grupos');
+  } catch (e) {
+    document.body.innerHTML = `<main><div class="cartao"><h2>🔒 ${e.message}</h2><p class="mut">Confere o link com o token certo.</p></div></main>`;
+    return;
+  }
+  const salvo = localStorage.getItem('painel.grupo');
+  $('#selGrupo').innerHTML = grupos.map((g) =>
+    `<option value="${g.chat_id}" ${g.chat_id === salvo ? 'selected' : ''}>${g.nome || g.chat_id}</option>`
+  ).join('');
+  $('#selGrupo').addEventListener('change', trocarGrupo);
+  await trocarGrupo();
+})();
+</script>
+</body>
+</html>
