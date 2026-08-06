@@ -203,7 +203,13 @@ function agoraBrasilia() {
   const agora = new Date();
   return {
     dia: agora.toLocaleDateString('en-CA', { timeZone: TZ_BRASILIA }), // YYYY-MM-DD
-    hora: parseInt(agora.toLocaleString('en-US', { timeZone: TZ_BRASILIA, hour: '2-digit', hour12: false }), 10),
+    // hourCycle h23 explícito: com hour12:false, alguns ICU (ex: Node 20 do
+    // container) usam ciclo 1-24 e meia-noite vira "24" — que passava no
+    // filtro `>= LEMBRETE_HORA` e disparava o lembrete de madrugada
+    hora: parseInt(
+      new Intl.DateTimeFormat('en-GB', { timeZone: TZ_BRASILIA, hour: '2-digit', hourCycle: 'h23' }).format(agora),
+      10
+    ),
   };
 }
 
@@ -212,7 +218,9 @@ async function enviarLembretesDePagamento() {
   if (!client) return; // desconectado — tenta de novo no próximo ciclo
 
   const { dia, hora } = agoraBrasilia();
-  if (hora < LEMBRETE_HORA) return;
+  // Anti-NaN: se a hora vier ilegível por qualquer motivo, NÃO manda —
+  // (NaN < X) é false e furaria o filtro silenciosamente
+  if (!Number.isInteger(hora) || hora < LEMBRETE_HORA) return;
 
   for (const lista of db.listasParaLembrete(dia)) {
     const resumo = db.resumoPagamentos(lista.id);
