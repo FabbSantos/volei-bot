@@ -249,30 +249,34 @@ async function processarComandoAdmin(msg) {
 
     const enviar = Boolean(matchTimesDe[3]);
     const times = db.montarTimes(r.grupo.chat_id, quantidade, principal);
-    const linhas = times.map((t) =>
-      `⚔️ *Time ${t.numero}* (média ${t.media.toFixed(2)})\n` +
-      t.jogadores.map((j) => `• ${j.nome}`).join('\n')
+
+    // O que o GRUPO vê: zero pista de como foi montado — nada de médias,
+    // notas ou método. Tecnologia da NASA e ponto. 🚀
+    const linhasGrupo = times.map((t) =>
+      `⚔️ *Time ${t.numero}*\n${t.jogadores.map((j) => `• ${j.nome}`).join('\n')}`
     );
-    const anuncio = `🏐 *Times da pelada — ${lista.data_jogo}*\nMontados pelas notas do elenco, em draft zigue-zague:\n\n${linhas.join('\n\n')}\n\nBom jogo! 🔥`;
+    const anuncioGrupo = `🏐 *Times da pelada — ${lista.data_jogo}*\nMontados com tecnologia da NASA 🚀\n\n${linhasGrupo.join('\n\n')}\n\nBom jogo! 🔥`;
+
+    // O que só o ADMIN vê: médias e quem entrou sem nota
+    const mediasTexto = `📊 Médias (só pra vocês): ${times.map((t) => t.media.toFixed(2)).join(' / ')}`;
     const desconhecidos = times.flatMap((t) => t.jogadores).filter((j) => !j.conhecido).map((j) => j.nome);
     const avisoDesconhecidos = desconhecidos.length > 0
-      ? `\n⚠️ Sem nota no elenco (entraram como medianos): ${desconhecidos.join(', ')} — cadastra e vota no painel.`
+      ? `\n⚠️ ${desconhecidos.length} sem nota no elenco (entraram como medianos): ${desconhecidos.slice(0, 6).join(', ')}${desconhecidos.length > 6 ? ` e mais ${desconhecidos.length - 6}` : ''}. Cadastra/vota no painel.`
       : '';
 
     if (!enviar) {
-      // Prévia: só o admin vê; nada vai pro grupo
       return msg.reply(
-        `${anuncio}\n\n👆 *Prévia — o grupo NÃO recebeu nada.* Gostou? Manda *#timesde ${matchTimesDe[1]} ${quantidade} enviar* que sai igualzinho lá.${avisoDesconhecidos}`
+        `${anuncioGrupo}\n\n👆 *Prévia — o grupo NÃO recebeu nada.*\n${mediasTexto}${avisoDesconhecidos}\nGostou? Manda *#timesde ${matchTimesDe[1]} ${quantidade} enviar* que sai igualzinho (sem essa parte de baixo).`
       );
     }
 
     try {
-      await msg.enviarPara(r.grupo.chat_id, anuncio);
+      await msg.enviarPara(r.grupo.chat_id, anuncioGrupo);
     } catch (err) {
       return msg.reply(`⚠️ Não consegui mandar no grupo (${err.message}).`);
     }
     return msg.reply(
-      `⚔️ ${quantidade} times anunciados na lista ${lista.data_jogo} (médias: ${times.map((t) => t.media.toFixed(2)).join(' / ')}).${avisoDesconhecidos}`
+      `⚔️ ${quantidade} times anunciados na lista ${lista.data_jogo}.\n${mediasTexto}${avisoDesconhecidos}`
     );
   }
 

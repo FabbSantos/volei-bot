@@ -42,7 +42,13 @@ app.get('/qr', (req, res) => {
   res.json({ qr: ultimoQrBase64 });
 });
 
-registrarPainel(app);
+registrarPainel(app, {
+  // Usa sempre o cliente vigente — o painel publica times no grupo por aqui
+  enviarPara: (chatId, texto) => {
+    if (!clienteAtual) return Promise.reject(new Error('bot desconectado'));
+    return clienteAtual.sendText(chatId, texto);
+  },
+});
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);

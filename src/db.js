@@ -931,7 +931,7 @@ function darNotaDoDia(jogadorId, listaId, nota, observacao = null) {
 // - notaTime: o que o montador de times usa — 70% habilidade + 30% média das
 //   últimas 3 notas do dia (quem joga bem/mal em quadra mexe no peso, sem
 //   atropelar a avaliação de base); sem nota do dia, vale a habilidade pura
-function listarJogadores(chatId) {
+function enriquecerJogadores(chatId) {
   const jogadores = db.prepare(
     'SELECT * FROM jogadores WHERE chat_id = ? ORDER BY nome COLLATE NOCASE ASC'
   ).all(chatId);
@@ -961,21 +961,34 @@ function listarJogadores(chatId) {
       ? ultimasNotas.reduce((s, n) => s + n, 0) / ultimasNotas.length
       : null;
 
-    const presencas = db.prepare(`
-      SELECT COUNT(*) AS total FROM entradas e
-      JOIN listas l ON l.id = e.lista_id
-      WHERE l.chat_id = ? AND (e.numero = ? OR e.nome = ? COLLATE NOCASE)
-    `).get(chatId, j.numero || '(sem numero)', j.nome).total;
-
     const notaTime = habilidade == null
       ? null
       : (mediaDia == null ? habilidade : 0.7 * habilidade + 0.3 * mediaDia);
 
-    return { ...j, votos, porFundamento, habilidade, mediaDia, notaTime, presencas };
+    return { ...j, votos, porFundamento, habilidade, mediaDia, notaTime, presencas: 0 };
   });
 }
 
-// Série temporal pros gráficos: notas do dia por pelada + presença acumulada
+// listarJogadores em duas fases: enriquece as notas e depois conta presença
+// pelo mapeamento inteligente de nomes (o mesmo do #timesde e da evolução)
+function listarJogadores(chatId) {
+  const enriquecidos = enriquecerJogadores(chatId);
+  const { entradas, mapa } = mapearEntradasDoGrupo(chatId, enriquecidos);
+  const listasPorJogador = new Map();
+  for (const e of entradas) {
+    const jogadorId = mapa.get(e.id);
+    if (!jogadorId) continue;
+    if (!listasPorJogador.has(jogadorId)) listasPorJogador.set(jogadorId, new Set());
+    listasPorJogador.get(jogadorId).add(e.lista_id);
+  }
+  for (const j of enriquecidos) {
+    j.presencas = listasPorJogador.get(j.id)?.size ?? 0;
+  }
+  return enriquecidos;
+}
+
+// Série temporal pros gráficos: notas do dia por pelada + presença acumulada,
+// com a presença resolvida pelo mesmo casamento inteligente de nomes
 function evolucaoJogadores(chatId) {
   const listas = db.prepare(
     "SELECT id, data_jogo, nome, criada_em FROM listas WHERE chat_id = ? ORDER BY id ASC"
@@ -983,24 +996,28 @@ function evolucaoJogadores(chatId) {
   const jogadores = db.prepare(
     'SELECT * FROM jogadores WHERE chat_id = ? ORDER BY nome COLLATE NOCASE ASC'
   ).all(chatId);
+  const { entradas, mapa } = mapearEntradasDoGrupo(chatId, jogadores);
+  const presencaChaves = new Set();
+  for (const e of entradas) {
+    const jogadorId = mapa.get(e.id);
+    if (jogadorId) presencaChaves.add(`${e.lista_id}:${jogadorId}`);
+  }
 
   const series = jogadores.map((j) => {
-    const notas = db.prepare(`
-      SELECT nd.lista_id, nd.nota, nd.observacao FROM notas_do_dia nd WHERE nd.jogador_id = ?
-    `).all(j.id);
+    const notas = db.prepare(
+      'SELECT lista_id, nota, observacao FROM notas_do_dia WHERE jogador_id = ?'
+    ).all(j.id);
     const porLista = new Map(notas.map((n) => [n.lista_id, n]));
     let acumulado = 0;
     const pontos = listas.map((l) => {
-      const presente = db.prepare(
-        'SELECT 1 FROM entradas WHERE lista_id = ? AND (numero = ? OR nome = ? COLLATE NOCASE)'
-      ).get(l.id, j.numero || '(sem numero)', j.nome);
+      const presente = presencaChaves.has(`${l.id}:${j.id}`);
       if (presente) acumulado++;
       return {
         lista_id: l.id,
         data_jogo: l.data_jogo,
         nota: porLista.get(l.id)?.nota ?? null,
         observacao: porLista.get(l.id)?.observacao ?? null,
-        presente: Boolean(presente),
+        presente,
         presencaAcumulada: acumulado,
       };
     });
@@ -1017,12 +1034,101 @@ function entradasPrincipais(listaId) {
   ).all(listaId);
 }
 
-// Casa uma entrada da lista com o elenco: primeiro pelo número do WhatsApp,
-// senão pelo nome (ignorando acento/caixa)
+// ---- casamento de nomes -----------------------------------------------------
+// O nome no WhatsApp raramente é igual ao do elenco ("Marcel" vs "Marcel
+// Garcia", "Prata" vs "Thiago Prata", "Camila Wad" vs "Camila W."). O rank
+// mede o quão forte é o casamento; só vale se houver UM candidato no melhor
+// rank — ambiguidade (ex: "Marcel" vs "Marcelle" por prefixo) não casa.
+function tokensDeNome(nome) {
+  return normalizarTexto(nome).replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+}
+
+// 0 = nome inteiro igual · 1 = todos os tokens do menor batem exatos no maior,
+// em ordem · 2 = batem por prefixo ("vini"→"vinicius", "w"→"wad") · null = não casa.
+// O rank 2 exige âncora (um token exato, ex: "camila" em "Camila V.") OU
+// prefixo comum de 3+ letras — senão "Camila V." casaria com "Vini" pelo "v".
+function rankCasamento(a, b) {
+  const ta = tokensDeNome(a);
+  const tb = tokensDeNome(b);
+  if (!ta.length || !tb.length) return null;
+  if (ta.join(' ') === tb.join(' ')) return 0;
+
+  const [curto, longo] = ta.length <= tb.length ? [ta, tb] : [tb, ta];
+
+  const casaExato = () => {
+    let i = 0;
+    for (const t of curto) {
+      let achou = false;
+      while (i < longo.length) {
+        if (t === longo[i++]) { achou = true; break; }
+      }
+      if (!achou) return false;
+    }
+    return true;
+  };
+  if (casaExato()) return 1;
+
+  let i = 0;
+  let temAncora = false;
+  let maiorPrefixo = 0;
+  for (const t of curto) {
+    let achou = false;
+    while (i < longo.length) {
+      const l = longo[i++];
+      if (t === l) { achou = true; temAncora = true; break; }
+      if (l.startsWith(t) || t.startsWith(l)) {
+        achou = true;
+        maiorPrefixo = Math.max(maiorPrefixo, Math.min(t.length, l.length));
+        break;
+      }
+    }
+    if (!achou) return null;
+  }
+  return (temAncora || maiorPrefixo >= 3) ? 2 : null;
+}
+
+// Casa uma entrada da lista com o elenco: número do WhatsApp primeiro, senão
+// pelo nome (rank + candidato único). Quando casa por nome e a entrada tem
+// número real, o vínculo é gravado — daí em diante o casamento é exato.
 function acharJogadorDaEntrada(chatId, entrada, jogadores) {
   const usuario = String(entrada.numero || '').split('@')[0];
-  return jogadores.find((j) => j.numero && String(j.numero).split('@')[0] === usuario)
-    || jogadores.find((j) => normalizarTexto(j.nome) === normalizarTexto(entrada.nome));
+  if (usuario && !usuario.startsWith('manual-') && !usuario.startsWith('fake-')) {
+    const porNumero = jogadores.find((j) => j.numero && String(j.numero).split('@')[0] === usuario);
+    if (porNumero) return porNumero;
+  }
+
+  let melhorRank = Infinity;
+  let candidatos = [];
+  for (const j of jogadores) {
+    const rank = rankCasamento(entrada.nome, j.nome);
+    if (rank == null) continue;
+    if (rank < melhorRank) { melhorRank = rank; candidatos = [j]; }
+    else if (rank === melhorRank) candidatos.push(j);
+  }
+  if (candidatos.length !== 1) return null;
+
+  const jogador = candidatos[0];
+  if (usuario && !usuario.startsWith('manual-') && !usuario.startsWith('fake-') && !jogador.numero) {
+    db.prepare('UPDATE jogadores SET numero = ? WHERE id = ?').run(entrada.numero, jogador.id);
+    jogador.numero = entrada.numero;
+  }
+  return jogador;
+}
+
+// Resolve TODAS as entradas do grupo pro elenco de uma vez — presença e
+// evolução nascem daqui, com a mesma regra de casamento do resto do sistema
+function mapearEntradasDoGrupo(chatId, jogadores) {
+  const entradas = db.prepare(`
+    SELECT e.*, l.id AS lid FROM entradas e
+    JOIN listas l ON l.id = e.lista_id
+    WHERE l.chat_id = ?
+  `).all(chatId);
+  const mapa = new Map(); // entrada.id -> jogador.id
+  for (const e of entradas) {
+    const j = acharJogadorDaEntrada(chatId, e, jogadores);
+    if (j) mapa.set(e.id, j.id);
+  }
+  return { entradas, mapa };
 }
 
 // Últimas listas com participantes e a nota do dia já dada — alimenta a

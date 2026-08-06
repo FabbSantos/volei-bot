@@ -126,6 +126,10 @@
 
 <main>
   <section class="aba ativa" id="aba-elenco">
+    <div class="cartao" style="padding:0.7rem 1.2rem">
+      <strong>Como na planilha, em 3 passos:</strong>
+      <span class="mut">1️⃣ cadastra quem falta (ali embaixo) · 2️⃣ clica no jogador e avalia com UM clique (Iniciante/Inter/Avançado) · 3️⃣ aba <em>Times</em> → monta.</span>
+    </div>
     <div class="cartao">
       <table id="tabElenco"></table>
       <div class="linhaform">
@@ -133,7 +137,7 @@
         <input id="inpNovoNumero" placeholder="WhatsApp (opcional) 5521...@c.us" size="24">
         <button class="primario" id="btnAddJogador">Adicionar ao elenco</button>
       </div>
-      <p class="aviso">Clica num jogador pra abrir os teus votos por fundamento (1–5). A coluna "Nota p/ times" pondera 70% habilidade + 30% das últimas 3 notas do dia.</p>
+      <p class="aviso">A "Nota p/ times" é o que o montador usa (avaliação + como a pessoa vem jogando). Quer detalhar ataque/defesa/levantamento/saque? Abre o jogador e usa o "ajuste fino" — é opcional.</p>
     </div>
   </section>
 
@@ -154,10 +158,11 @@
         <button id="btnMarcarTodos">Marcar todo o elenco</button>
         <button id="btnDesmarcar">Limpar</button>
         <button class="primario" id="btnMontar">Montar times</button>
+        <button id="btnEnviarTimes">📣 Enviar pro grupo</button>
       </div>
       <div class="selecao-jogadores" id="selTimes"></div>
       <div class="times-grid" id="timesMontados"></div>
-      <p class="aviso">Draft em zigue-zague pela "Nota p/ times". Depois de montado, troca alguém de time pelo seletor ao lado do nome — as médias recalculam.</p>
+      <p class="aviso">Monta, ajusta trocando gente de time pelo seletor (as médias recalculam) e, quando estiver bom, <strong>📣 Enviar pro grupo</strong> — sai no WhatsApp exatamente como está na tela, sem revelar as notas (cortesia da tecnologia da NASA 🚀).</p>
     </div>
   </section>
 
@@ -211,6 +216,7 @@ let elenco = { fundamentos: [], jogadores: [] };
 let listas = [];
 let evolucao = { listas: [], series: [] };
 let jogadorAberto = null;
+let ajusteFinoAberto = false;
 let timesAtuais = [];
 let selecionadosTimes = new Set();
 let selecionadosEvolucao = []; // ordem importa: define o slot de cor de cada um
@@ -245,20 +251,20 @@ async function carregarElenco() {
   desenharSelecaoEvolucao();
 }
 
+// Nível legível, como na planilha (âncoras: Iniciante=2, Inter=3, Avançado=4)
+const nivelDe = (h) => (h == null ? null : h < 2.5 ? 'Iniciante' : h < 3.5 ? 'Intermediário' : 'Avançado');
+const NIVEL_NOTA = { Iniciante: 2, 'Intermediário': 3, 'Avançado': 4 };
+
 function desenharElenco() {
   const f = elenco.fundamentos;
-  const linhas = [`<tr><th>Jogador</th>${f.map((x) => `<th class="num">${x}</th>`).join('')}<th class="num">Habilidade</th><th class="num">Nota p/ times</th><th class="num">Presenças</th><th></th></tr>`];
+  const linhas = ['<tr><th>Jogador</th><th>Nível</th><th class="num">Nota p/ times</th><th class="num">Presenças</th><th></th></tr>'];
   const ordenado = [...elenco.jogadores].sort((a, b) => (b.notaTime ?? -1) - (a.notaTime ?? -1));
 
   for (const j of ordenado) {
+    const nivel = nivelDe(j.habilidade);
     linhas.push(`<tr data-id="${j.id}" style="cursor:pointer">
-      <td><strong>${j.nome}</strong>${j.numero ? '' : ' <span class="chip" title="sem WhatsApp vinculado">sem vínculo</span>'}</td>
-      ${f.map((x) => {
-        const v = j.porFundamento[x];
-        const w = v ? Math.round((v / 5) * 44) : 0;
-        return `<td class="num"><span class="barra" style="width:${w}px"></span>${fmt(v, 1)}</td>`;
-      }).join('')}
-      <td class="num">${fmt(j.habilidade)}</td>
+      <td><strong>${j.nome}</strong>${j.numero ? '' : ' <span class="chip" title="sem WhatsApp vinculado — vincula sozinho quando a pessoa entrar numa lista">novo</span>'}</td>
+      <td>${nivel ? `<span class="chip">${nivel}</span> <span class="mut">${fmt(j.habilidade, 1)}</span>` : '<span class="mut">avalia aí 👇</span>'}</td>
       <td class="num"><strong>${fmt(j.notaTime)}</strong></td>
       <td class="num">${j.presencas}</td>
       <td><button data-del="${j.id}" title="remover do elenco">✕</button></td>
@@ -268,14 +274,28 @@ function desenharElenco() {
       const votante = votanteAtual();
       const meus = {};
       for (const v of j.votos.filter((v) => v.votante.toLowerCase() === votante.toLowerCase())) meus[v.fundamento] = v.nota;
-      linhas.push(`<tr class="votos-linha"><td colspan="${f.length + 5}">
-        ${votante ? `Teus votos (${votante}): ` : '⚠️ Preenche "Você é" lá em cima pra votar. '}
-        ${f.map((x) => `<label style="margin-right:0.8rem">${x}
-          <select data-voto="${x}" ${votante ? '' : 'disabled'}>
-            <option value="">–</option>
-            ${[1, 2, 3, 4, 5].map((n) => `<option ${meus[x] === n ? 'selected' : ''}>${n}</option>`).join('')}
-          </select></label>`).join('')}
-        <span class="mut">· votos registrados: ${[...new Set(j.votos.map((v) => v.votante))].join(', ') || 'nenhum'}</span>
+      const meuNivel = Object.keys(meus).length
+        ? nivelDe(Object.values(meus).reduce((s, n) => s + n, 0) / Object.values(meus).length)
+        : null;
+      linhas.push(`<tr class="votos-linha"><td colspan="5">
+        ${votante
+          ? `<div style="margin-bottom:0.5rem"><strong>Tua avaliação (${votante}):</strong>
+              ${['Iniciante', 'Intermediário', 'Avançado'].map((n) =>
+                `<button data-nivel="${n}" class="${meuNivel === n ? 'primario' : ''}" style="margin-left:0.4rem">${n}</button>`
+              ).join('')}
+              <span class="mut" style="margin-left:0.6rem">um clique e pronto — igual à planilha</span></div>`
+          : '⚠️ Preenche "Você é" lá em cima pra avaliar.<br>'}
+        <details data-ajuste ${ajusteFinoAberto ? 'open' : ''} ${votante ? '' : 'style="display:none"'}>
+          <summary class="mut" style="cursor:pointer">Ajuste fino por fundamento (opcional, 1–5)</summary>
+          <div style="margin-top:0.4rem">
+          ${f.map((x) => `<label style="margin-right:0.8rem">${x}
+            <select data-voto="${x}">
+              <option value="">–</option>
+              ${[1, 2, 3, 4, 5].map((n) => `<option ${meus[x] === n ? 'selected' : ''}>${n}</option>`).join('')}
+            </select> <span class="mut">média ${fmt(j.porFundamento[x], 1)}</span></label>`).join('')}
+          </div>
+        </details>
+        <div class="mut" style="margin-top:0.4rem">já avaliaram: ${[...new Set(j.votos.map((v) => v.votante))].join(', ') || 'ninguém ainda'}</div>
       </td></tr>`);
     }
   }
@@ -283,10 +303,23 @@ function desenharElenco() {
 
   document.querySelectorAll('#tabElenco tr[data-id]').forEach((tr) => {
     tr.addEventListener('click', (ev) => {
-      if (ev.target.closest('button')) return;
+      if (ev.target.closest('button, select, details, summary, input')) return;
       const id = parseInt(tr.dataset.id, 10);
       jogadorAberto = jogadorAberto === id ? null : id;
       desenharElenco();
+    });
+  });
+  document.querySelector('#tabElenco [data-ajuste]')?.addEventListener('toggle', (e) => {
+    ajusteFinoAberto = e.target.open;
+  });
+  document.querySelectorAll('#tabElenco [data-nivel]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const nota = NIVEL_NOTA[btn.dataset.nivel];
+      for (const x of elenco.fundamentos) {
+        await api('/voto', { method: 'POST', body: { jogador_id: jogadorAberto, votante: votanteAtual(), fundamento: x, nota } });
+      }
+      toast(`${btn.dataset.nivel} salvo ✔`);
+      await carregarElenco();
     });
   });
   document.querySelectorAll('#tabElenco [data-voto]').forEach((sel) => {
@@ -385,6 +418,25 @@ $('#btnMontar').addEventListener('click', async () => {
   if (selecionadosTimes.size < 2) return toast('Seleciona os jogadores primeiro');
   timesAtuais = await api('/times', { method: 'POST', body: { grupo: grupoAtual(), quantidade: parseInt($('#selQtdTimes').value, 10), nomes: [...selecionadosTimes] } });
   desenharTimes();
+});
+
+$('#btnEnviarTimes').addEventListener('click', async () => {
+  if (!timesAtuais.length) return toast('Monta os times primeiro');
+  const nomeGrupo = grupos.find((g) => g.chat_id === grupoAtual())?.nome || 'o grupo';
+  if (!confirm(`Mandar esses ${timesAtuais.length} times pro WhatsApp de "${nomeGrupo}"?\nSai exatamente como está na tela (sem médias nem notas).`)) return;
+  try {
+    await api('/times/anunciar', {
+      method: 'POST',
+      body: {
+        grupo: grupoAtual(),
+        dataJogo: listas[0]?.data_jogo ?? null,
+        times: timesAtuais.map((t) => ({ jogadores: t.jogadores.map((j) => j.nome) })),
+      },
+    });
+    toast('Times enviados pro grupo 📣');
+  } catch (e) {
+    toast(`Falhou: ${e.message}`);
+  }
 });
 
 function desenharTimes() {

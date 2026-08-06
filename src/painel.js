@@ -5,7 +5,7 @@ const db = require('./db');
 // Painel web dos admins: elenco, votação de habilidade por fundamento, nota
 // do dia, montador de times e gráficos de evolução. Protegido por token
 // secreto (PAINEL_TOKEN no host) — sem token configurado, fica desligado.
-function registrarPainel(app) {
+function registrarPainel(app, deps = {}) {
   const TOKEN = process.env.PAINEL_TOKEN;
 
   const exigirToken = (req, res, next) => {
@@ -88,6 +88,28 @@ function registrarPainel(app) {
     const n = Math.min(6, Math.max(2, parseInt(quantidade, 10) || 3));
     const participantes = nomes.map((nome) => ({ nome, numero: null }));
     res.json(db.montarTimes(grupo, n, participantes));
+  });
+
+  // Publica no grupo EXATAMENTE os times montados/ajustados na página —
+  // mesmo texto do #timesde enviar: tecnologia da NASA, zero pistas do método
+  api.post('/times/anunciar', async (req, res) => {
+    const { grupo, dataJogo, times } = req.body || {};
+    if (!deps.enviarPara) {
+      return res.status(503).json({ erro: 'Envio pro grupo indisponível (bot desconectado?).' });
+    }
+    if (!grupo || !Array.isArray(times) || times.length === 0) {
+      return res.status(400).json({ erro: 'grupo e times são obrigatórios' });
+    }
+    const linhas = times.map((t, i) =>
+      `⚔️ *Time ${i + 1}*\n${(t.jogadores || []).map((nome) => `• ${nome}`).join('\n')}`
+    );
+    const anuncio = `🏐 *Times da pelada${dataJogo ? ` — ${dataJogo}` : ''}*\nMontados com tecnologia da NASA 🚀\n\n${linhas.join('\n\n')}\n\nBom jogo! 🔥`;
+    try {
+      await deps.enviarPara(grupo, anuncio);
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(502).json({ erro: `Falha ao mandar no grupo: ${err.message}` });
+    }
   });
 
   app.use('/api', api);
