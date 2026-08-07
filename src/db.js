@@ -114,6 +114,7 @@ db.exec(`
     nome TEXT NOT NULL,
     numero TEXT,                    -- vincula com as entradas das listas quando conhecido
     criado_em TEXT NOT NULL,
+    altura TEXT,                    -- alto | medio | baixo (opcional; null = não considera)
     UNIQUE(chat_id, nome)
   );
 
@@ -166,7 +167,10 @@ db.exec(`
   );
 `);
 
+migrarColunas('jogadores', { altura: 'TEXT' });
+
 const FUNDAMENTOS = ['ataque', 'defesa', 'levantamento', 'saque'];
+const ALTURAS = ['alto', 'medio', 'baixo'];
 migrarColunas('entradas', {
   pago: 'INTEGER NOT NULL DEFAULT 0',
   promovido: 'INTEGER NOT NULL DEFAULT 0', // subiu da espera pra principal (prazo de pagamento diferente)
@@ -971,6 +975,14 @@ function apelidosDe(jogadorId) {
   return db.prepare('SELECT apelido FROM apelidos WHERE jogador_id = ?').all(jogadorId).map((a) => a.apelido);
 }
 
+// Altura é opcional: sem ela, o jogador é neutro na hora de espalhar os
+// bloqueadores pelos times
+function definirAltura(jogadorId, altura) {
+  const valor = altura && ALTURAS.includes(altura) ? altura : null;
+  db.prepare('UPDATE jogadores SET altura = ? WHERE id = ?').run(valor, jogadorId);
+  return { altura: valor };
+}
+
 function removerJogador(jogadorId) {
   db.prepare('DELETE FROM apelidos WHERE jogador_id = ?').run(jogadorId);
   db.prepare('DELETE FROM historico_habilidade WHERE jogador_id = ?').run(jogadorId);
@@ -1315,6 +1327,31 @@ function elencoDaSemana(chatId) {
 
 // Draft em zigue-zague (serpentina): ordena do mais forte pro mais fraco e
 // distribui 1..n, n..1, 1..n... — o mesmo método da planilha
+// Espalha quem tem uma altura pelos times, trocando jogadores de nota
+// parecida — assim dois bloqueadores não caem no mesmo time. Troca só
+// acontece se o desequilíbrio for maior que 1 e a diferença de nota for
+// pequena: o equilíbrio de habilidade continua mandando.
+function equilibrarAltura(times, alturaAlvo, tolerancia = 1) {
+  const conta = (t) => t.filter((j) => j.altura === alturaAlvo).length;
+  for (let volta = 0; volta < 20; volta++) {
+    const ordenados = [...times].sort((a, b) => conta(b) - conta(a));
+    const cheio = ordenados[0];
+    const vazio = ordenados[ordenados.length - 1];
+    if (conta(cheio) - conta(vazio) <= 1) return;
+
+    let melhor = null;
+    for (const a of cheio.filter((j) => j.altura === alturaAlvo)) {
+      for (const b of vazio.filter((j) => j.altura !== alturaAlvo)) {
+        const dif = Math.abs(a.nota - b.nota);
+        if (!melhor || dif < melhor.dif) melhor = { a, b, dif };
+      }
+    }
+    if (!melhor || melhor.dif > tolerancia) return; // não vale estragar a média
+    cheio[cheio.indexOf(melhor.a)] = melhor.b;
+    vazio[vazio.indexOf(melhor.b)] = melhor.a;
+  }
+}
+
 function montarTimes(chatId, quantidadeTimes, participantes) {
   const elenco = listarJogadores(chatId);
   const avaliados = participantes.map((p) => {
@@ -1323,6 +1360,7 @@ function montarTimes(chatId, quantidadeTimes, participantes) {
       nome: p.nome,
       nota: jogador?.notaTime ?? 3, // desconhecido entra como mediano
       conhecido: Boolean(jogador?.notaTime != null),
+      altura: jogador?.altura ?? null,
     };
   });
 
@@ -1335,10 +1373,17 @@ function montarTimes(chatId, quantidadeTimes, participantes) {
     times[indice].push(j);
   });
 
+  // Só mexe se alguém tiver altura marcada — sem isso, nada muda
+  if (avaliados.some((j) => j.altura)) {
+    equilibrarAltura(times, 'alto');
+    equilibrarAltura(times, 'baixo');
+  }
+
   return times.map((time, i) => ({
     numero: i + 1,
     jogadores: time,
     media: time.length ? time.reduce((s, j) => s + j.nota, 0) / time.length : 0,
+    altos: time.filter((j) => j.altura === 'alto').length,
   }));
 }
 
@@ -1382,6 +1427,8 @@ module.exports = {
   adicionarApelido,
   removerApelido,
   listarVotantes,
+  definirAltura,
+  ALTURAS,
   votarHabilidade,
   darNotaDoDia,
   listarJogadores,

@@ -143,7 +143,7 @@
         <input id="inpNovoNumero" placeholder="WhatsApp (opcional) 5521...@c.us" size="24">
         <button class="primario" id="btnAddJogador">Adicionar ao elenco</button>
       </div>
-      <p class="aviso">A "Nota p/ times" é o que o montador usa (avaliação + como a pessoa vem jogando). Quer detalhar ataque/defesa/levantamento/saque? Abre o jogador e usa o "ajuste fino" — é opcional.</p>
+      <p class="aviso">A "Nota p/ times" é o que o montador usa (avaliação + como a pessoa vem jogando). <strong>Altura é opcional</strong>: quem estiver marcado como alto/baixo é espalhado pelos times, pra não juntar os bloqueadores num só — quem ficar em "—" não é considerado. Quer detalhar ataque/defesa/levantamento/saque? Abre o jogador e usa o "ajuste fino".</p>
     </div>
   </section>
 
@@ -339,14 +339,14 @@ function desenharElenco() {
   $('#btnFiltroTodos').classList.toggle('primario', !filtroSemana || !temSemana);
   $('#btnFiltroSemana').textContent = `⭐ Elenco da semana${temSemana ? ` (${naSemana.size})` : ''}`;
 
-  const linhas = ['<tr><th>Jogador</th><th>Nível</th><th class="num">Nota p/ times</th><th class="num">Presenças</th><th></th></tr>'];
+  const linhas = ['<tr><th>Jogador</th><th>Nível</th><th>Altura</th><th class="num">Nota p/ times</th><th class="num">Presenças</th><th></th></tr>'];
   const visiveis = (filtroSemana && temSemana)
     ? elenco.jogadores.filter((j) => naSemana.has(j.id))
     : elenco.jogadores;
   const ordenado = [...visiveis].sort((a, b) => (b.notaTime ?? -1) - (a.notaTime ?? -1));
 
   if (ordenado.length === 0) {
-    linhas.push('<tr><td colspan="5" class="mut">Ninguém aqui ainda.</td></tr>');
+    linhas.push('<tr><td colspan="6" class="mut">Ninguém aqui ainda.</td></tr>');
   }
 
   for (const j of ordenado) {
@@ -355,6 +355,10 @@ function desenharElenco() {
       <td>${naSemana.has(j.id) && !filtroSemana ? '⭐ ' : ''}<strong>${j.nome}</strong>${
         (j.apelidos || []).length ? ` <span class="mut" title="apelidos no WhatsApp">(${j.apelidos.join(', ')})</span>` : ''}</td>
       <td>${nivel ? `<span class="chip">${nivel}</span> <span class="mut">${fmt(j.habilidade, 1)}</span>` : '<span class="chip" style="background:#eda100;color:#0b0b0b">sem avaliação</span>'}</td>
+      <td><select data-altura="${j.id}">
+        <option value="">—</option>
+        ${(elenco.alturas || []).map((a) => `<option value="${a}" ${j.altura === a ? 'selected' : ''}>${a === 'medio' ? 'médio' : a}</option>`).join('')}
+      </select></td>
       <td class="num"><strong>${fmt(j.notaTime)}</strong></td>
       <td class="num">${j.presencas}</td>
       <td><button data-del="${j.id}" title="remover do elenco">✕</button></td>
@@ -367,7 +371,7 @@ function desenharElenco() {
       const meuNivel = Object.keys(meus).length
         ? nivelDe(Object.values(meus).reduce((s, n) => s + n, 0) / Object.values(meus).length)
         : null;
-      linhas.push(`<tr class="votos-linha"><td colspan="5">
+      linhas.push(`<tr class="votos-linha"><td colspan="6">
         ${votante
           ? `<div style="margin-bottom:0.5rem"><strong>Tua avaliação (${votante}):</strong>
               ${['Iniciante', 'Intermediário', 'Avançado'].map((n) =>
@@ -397,6 +401,13 @@ function desenharElenco() {
       const id = parseInt(tr.dataset.id, 10);
       jogadorAberto = jogadorAberto === id ? null : id;
       desenharElenco();
+    });
+  });
+  document.querySelectorAll('#tabElenco [data-altura]').forEach((sel) => {
+    sel.addEventListener('change', async () => {
+      await api('/altura', { method: 'POST', body: { jogador_id: parseInt(sel.dataset.altura, 10), altura: sel.value || null } });
+      toast(sel.value ? `Altura: ${sel.value} ✔` : 'Altura removida');
+      await carregarElenco();
     });
   });
   document.querySelector('#tabElenco [data-ajuste]')?.addEventListener('toggle', (e) => {
@@ -545,9 +556,9 @@ function desenharTimes() {
   caixa.innerHTML = timesAtuais.map((t, ti) => `
     <div class="time-cartao">
       <h3>Time ${t.numero}</h3>
-      <div class="media">média ${fmt(t.media)}</div>
+      <div class="media">média ${fmt(t.media)}${t.altos ? ` · ${t.altos} alto(s) 📏` : ''}</div>
       <ul>${t.jogadores.map((j, ji) => `<li>
-        <span>${j.nome} <span class="mut">${fmt(j.nota, 1)}</span></span>
+        <span>${j.nome}${j.altura === 'alto' ? ' 📏' : ''} <span class="mut">${fmt(j.nota, 1)}</span></span>
         <select data-mover="${ti}:${ji}">${timesAtuais.map((x) => `<option ${x.numero === t.numero ? 'selected' : ''}>${x.numero}</option>`).join('')}</select>
       </li>`).join('')}</ul>
     </div>`).join('');
@@ -560,6 +571,7 @@ function desenharTimes() {
       timesAtuais[destino].jogadores.push(jog);
       for (const t of timesAtuais) {
         t.media = t.jogadores.length ? t.jogadores.reduce((s, j) => s + j.nota, 0) / t.jogadores.length : 0;
+        t.altos = t.jogadores.filter((j) => j.altura === 'alto').length;
       }
       desenharTimes();
     });

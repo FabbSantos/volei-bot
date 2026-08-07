@@ -45,6 +45,7 @@ function registrarPainel(app, deps = {}) {
       .sort((a, b) => a.localeCompare(b, 'pt-BR'));
     res.json({
       fundamentos: db.FUNDAMENTOS,
+      alturas: db.ALTURAS,
       votantes,
       jogadores: db.listarJogadores(grupo),
       // A mesma lista que o #timesde usa — o painel espelha o bot
@@ -87,6 +88,12 @@ function registrarPainel(app, deps = {}) {
     const { jogador_id, apelido } = req.query;
     db.removerApelido(parseInt(jogador_id, 10), apelido);
     res.json({ ok: true });
+  });
+
+  api.post('/altura', (req, res) => {
+    const { jogador_id, altura } = req.body || {};
+    if (!jogador_id) return res.status(400).json({ erro: 'jogador_id é obrigatório' });
+    res.json(db.definirAltura(jogador_id, altura || null));
   });
 
   api.post('/voto', (req, res) => {

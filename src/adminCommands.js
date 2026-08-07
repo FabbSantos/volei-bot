@@ -261,7 +261,10 @@ async function processarComandoAdmin(msg) {
     const anuncioGrupo = `🏐 *Times da pelada — ${lista.data_jogo}*\nMontados com tecnologia da NASA 🚀\n\n${linhasGrupo.join('\n\n')}\n\nBom jogo! 🔥`;
 
     // O que só o ADMIN vê: médias e quem entrou sem nota
-    const mediasTexto = `📊 Médias (só pra vocês): ${times.map((t) => t.media.toFixed(2)).join(' / ')}`;
+    let mediasTexto = `📊 Médias (só pra vocês): ${times.map((t) => t.media.toFixed(2)).join(' / ')}`;
+    if (times.some((t) => t.altos > 0)) {
+      mediasTexto += `\n📏 Altos por time: ${times.map((t) => t.altos).join(' / ')}`;
+    }
     const desconhecidos = times.flatMap((t) => t.jogadores).filter((j) => !j.conhecido).map((j) => j.nome);
     const avisoDesconhecidos = desconhecidos.length > 0
       ? `\n⚠️ ${desconhecidos.length} sem nota no elenco (entraram como medianos): ${desconhecidos.slice(0, 6).join(', ')}${desconhecidos.length > 6 ? ` e mais ${desconhecidos.length - 6}` : ''}. Cadastra/vota no painel.`
