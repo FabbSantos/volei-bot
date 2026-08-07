@@ -114,7 +114,8 @@
   <label>Você é:
     <input id="inpVotante" placeholder="seu nome (votante)" size="12">
   </label>
-  <span class="sub">notas 1–5 · habilidade por fundamento · presença vem das listas do bot</span>
+  <button id="btnAtualizar" title="Recarrega a lista da semana (quem subiu da espera, quem entrou/saiu)">🔄 Atualizar</button>
+  <span class="sub" id="carimboAtualizacao">notas 1–5 · presença vem das listas do bot</span>
 </header>
 
 <nav class="abas">
@@ -274,19 +275,40 @@ function desenharCaixaSemana() {
     return;
   }
   const novos = elenco.novosNaSemana || [];
+  const opcoesElenco = [...elenco.jogadores]
+    .sort((a, b) => a.nome.localeCompare(b.nome))
+    .map((j) => `<option value="${j.id}">${j.nome}</option>`).join('');
+
   caixa.innerHTML = `
     <strong>⭐ Pelada da semana: ${l.nome ? `${l.nome} — ` : ''}${l.data_jogo}</strong>
     <span class="chip">${l.status}</span>
-    <span class="mut">· ${(elenco.idsNaSemana || []).length} do elenco na lista${novos.length ? ` · ${novos.length} fora do elenco` : ''}</span>
-    ${novos.length ? `<div style="margin-top:0.5rem">⚠️ <strong>Não estão no elenco:</strong> ${novos.map((n) =>
-      `<button data-cadsemana="${n.nome.replace(/"/g, '&quot;')}" style="margin:0.15rem">+ ${n.nome}</button>`).join('')}
-      <div class="mut" style="margin-top:0.3rem">Cadastra e avalia — senão eles entram nos times como medianos.</div></div>` : ''}`;
+    <span class="mut">· ${(elenco.idsNaSemana || []).length} do elenco na lista${novos.length ? ` · ${novos.length} sem vínculo` : ''}</span>
+    ${novos.length ? `<div style="margin-top:0.6rem">
+      ⚠️ <strong>Não reconheci esses nomes:</strong>
+      <div class="mut" style="margin:0.2rem 0 0.4rem">Ou é gente nova (cadastra) ou é alguém do elenco com outro nome no WhatsApp (vincula) — senão entram nos times como medianos.</div>
+      ${novos.map((n, i) => `<div style="display:flex;flex-wrap:wrap;gap:0.4rem;align-items:center;padding:0.25rem 0">
+        <strong style="min-width:9rem">${n.nome}</strong>
+        <button data-cadsemana="${n.nome.replace(/"/g, '&quot;')}">+ é gente nova</button>
+        <span class="mut">ou é</span>
+        <select data-vincula="${i}"><option value="">— escolhe do elenco —</option>${opcoesElenco}</select>
+      </div>`).join('')}
+    </div>` : ''}`;
 
   caixa.querySelectorAll('[data-cadsemana]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       await api('/jogador', { method: 'POST', body: { grupo: grupoAtual(), nome: btn.dataset.cadsemana } });
       toast(`${btn.dataset.cadsemana} no elenco ✔`);
-      await carregarElenco();
+      await recarregarTudo();
+    });
+  });
+  caixa.querySelectorAll('[data-vincula]').forEach((sel) => {
+    sel.addEventListener('change', async () => {
+      if (!sel.value) return;
+      const nome = novos[parseInt(sel.dataset.vincula, 10)].nome;
+      const jogador = elenco.jogadores.find((j) => j.id === parseInt(sel.value, 10));
+      await api('/apelido', { method: 'POST', body: { jogador_id: jogador.id, apelido: nome } });
+      toast(`"${nome}" agora é ${jogador.nome} ✔`);
+      await recarregarTudo();
     });
   });
 }
@@ -312,7 +334,8 @@ function desenharElenco() {
   for (const j of ordenado) {
     const nivel = nivelDe(j.habilidade);
     linhas.push(`<tr data-id="${j.id}" style="cursor:pointer">
-      <td>${naSemana.has(j.id) && !filtroSemana ? '⭐ ' : ''}<strong>${j.nome}</strong></td>
+      <td>${naSemana.has(j.id) && !filtroSemana ? '⭐ ' : ''}<strong>${j.nome}</strong>${
+        (j.apelidos || []).length ? ` <span class="mut" title="apelidos no WhatsApp">(${j.apelidos.join(', ')})</span>` : ''}</td>
       <td>${nivel ? `<span class="chip">${nivel}</span> <span class="mut">${fmt(j.habilidade, 1)}</span>` : '<span class="chip" style="background:#eda100;color:#0b0b0b">sem avaliação</span>'}</td>
       <td class="num"><strong>${fmt(j.notaTime)}</strong></td>
       <td class="num">${j.presencas}</td>
@@ -615,6 +638,29 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
 });
 
 // ---- boot -------------------------------------------------------------------
+// Recarrega tudo do servidor preservando o que você já escolheu na tela —
+// é o que traz quem subiu da espera, quem entrou ou saiu da lista
+async function recarregarTudo({ remarcarTimes = false } = {}) {
+  await Promise.all([carregarElenco(), carregarListas(), carregarEvolucao()]);
+  if (remarcarTimes) usarListaDaSemana();
+  desenharSelecaoEvolucao();
+  desenharGraficos();
+  const agora = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  $('#carimboAtualizacao').textContent = `atualizado ${agora}`;
+}
+
+$('#btnAtualizar').addEventListener('click', async () => {
+  await recarregarTudo({ remarcarTimes: timesAtuais.length === 0 });
+  toast('Atualizado ✔');
+});
+
+// Voltou pra aba depois de mexer no WhatsApp? Recarrega sozinho.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && grupoAtual()) {
+    recarregarTudo({ remarcarTimes: timesAtuais.length === 0 }).catch(() => {});
+  }
+});
+
 async function trocarGrupo() {
   localStorage.setItem('painel.grupo', grupoAtual());
   jogadorAberto = null;
@@ -623,10 +669,7 @@ async function trocarGrupo() {
   selecionadosEvolucao = [];
   timesAtuais = [];
   $('#timesMontados').innerHTML = '';
-  await Promise.all([carregarElenco(), carregarListas(), carregarEvolucao()]);
-  usarListaDaSemana(); // Times já abre com a galera da semana marcada
-  desenharSelecaoEvolucao();
-  desenharGraficos();
+  await recarregarTudo({ remarcarTimes: true });
 }
 
 (async function boot() {

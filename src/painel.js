@@ -65,6 +65,24 @@ function registrarPainel(app, deps = {}) {
     res.json({ ok: db.removerJogador(parseInt(req.params.id, 10)) });
   });
 
+  // "Esse nome da lista é o fulano do elenco" — vale retroativo (presença,
+  // notas) e daqui pra frente
+  api.post('/apelido', (req, res) => {
+    const { jogador_id, apelido } = req.body || {};
+    if (!jogador_id || !apelido?.trim()) {
+      return res.status(400).json({ erro: 'jogador_id e apelido são obrigatórios' });
+    }
+    const resultado = db.adicionarApelido(jogador_id, apelido);
+    if (resultado.erro) return res.status(400).json(resultado);
+    res.json({ ok: true });
+  });
+
+  api.delete('/apelido', (req, res) => {
+    const { jogador_id, apelido } = req.query;
+    db.removerApelido(parseInt(jogador_id, 10), apelido);
+    res.json({ ok: true });
+  });
+
   api.post('/voto', (req, res) => {
     const { jogador_id, votante, fundamento, nota } = req.body || {};
     if (!jogador_id || !votante?.trim()) {

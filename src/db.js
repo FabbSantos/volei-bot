@@ -141,6 +141,19 @@ db.exec(`
   );
 `);
 
+// Apelidos: o nome no WhatsApp muda e nem sempre o casamento automático dá
+// conta ("A6" = Aces, "David" = Dvd). Aqui os admins ensinam o vínculo.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS apelidos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    jogador_id INTEGER NOT NULL,
+    apelido TEXT NOT NULL,
+    criado_em TEXT NOT NULL,
+    UNIQUE(jogador_id, apelido),
+    FOREIGN KEY (jogador_id) REFERENCES jogadores(id)
+  );
+`);
+
 const FUNDAMENTOS = ['ataque', 'defesa', 'levantamento', 'saque'];
 migrarColunas('entradas', {
   pago: 'INTEGER NOT NULL DEFAULT 0',
@@ -902,7 +915,27 @@ function upsertJogador(chatId, nome, numero = null) {
   return db.prepare('SELECT * FROM jogadores WHERE id = ?').get(info.lastInsertRowid);
 }
 
+// Ensina que um nome do WhatsApp é fulano do elenco — vale pra presença,
+// nota do dia e montagem de times, de hoje em diante e retroativo
+function adicionarApelido(jogadorId, apelido) {
+  const limpo = String(apelido || '').trim();
+  if (!limpo) return { erro: 'apelido_vazio' };
+  db.prepare(
+    'INSERT OR IGNORE INTO apelidos (jogador_id, apelido, criado_em) VALUES (?, ?, ?)'
+  ).run(jogadorId, limpo, new Date().toISOString());
+  return {};
+}
+
+function removerApelido(jogadorId, apelido) {
+  db.prepare('DELETE FROM apelidos WHERE jogador_id = ? AND apelido = ?').run(jogadorId, apelido);
+}
+
+function apelidosDe(jogadorId) {
+  return db.prepare('SELECT apelido FROM apelidos WHERE jogador_id = ?').all(jogadorId).map((a) => a.apelido);
+}
+
 function removerJogador(jogadorId) {
+  db.prepare('DELETE FROM apelidos WHERE jogador_id = ?').run(jogadorId);
   db.prepare('DELETE FROM votos_habilidade WHERE jogador_id = ?').run(jogadorId);
   db.prepare('DELETE FROM notas_do_dia WHERE jogador_id = ?').run(jogadorId);
   const info = db.prepare('DELETE FROM jogadores WHERE id = ?').run(jogadorId);
@@ -969,7 +1002,7 @@ function enriquecerJogadores(chatId) {
       ? null
       : (mediaDia == null ? habilidade : 0.7 * habilidade + 0.3 * mediaDia);
 
-    return { ...j, votos, porFundamento, habilidade, mediaDia, notaTime, presencas: 0 };
+    return { ...j, apelidos: apelidosDe(j.id), votos, porFundamento, habilidade, mediaDia, notaTime, presencas: 0 };
   });
 }
 
@@ -999,7 +1032,7 @@ function evolucaoJogadores(chatId) {
   ).all(chatId);
   const jogadores = db.prepare(
     'SELECT * FROM jogadores WHERE chat_id = ? ORDER BY nome COLLATE NOCASE ASC'
-  ).all(chatId);
+  ).all(chatId).map((j) => ({ ...j, apelidos: apelidosDe(j.id) }));
   const { entradas, mapa } = mapearEntradasDoGrupo(chatId, jogadores);
   const presencaChaves = new Set();
   for (const e of entradas) {
@@ -1117,6 +1150,12 @@ function acharJogadorDaEntrada(chatId, entrada, jogadores) {
     const porNumero = jogadores.find((j) => j.numero && String(j.numero).split('@')[0] === usuario);
     if (porNumero) return porNumero;
   }
+
+  // Apelido ensinado pelos admins vence qualquer heurística
+  const alvoNormalizado = normalizarTexto(entrada.nome);
+  const porApelido = jogadores.find((j) =>
+    (j.apelidos || []).some((a) => normalizarTexto(a) === alvoNormalizado));
+  if (porApelido) return porApelido;
 
   let melhorRank = Infinity;
   let candidatos = [];
@@ -1261,6 +1300,8 @@ module.exports = {
   marcarLembreteEnviado,
   upsertJogador,
   removerJogador,
+  adicionarApelido,
+  removerApelido,
   votarHabilidade,
   darNotaDoDia,
   listarJogadores,

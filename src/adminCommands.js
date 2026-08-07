@@ -284,10 +284,12 @@ async function processarComandoAdmin(msg) {
   if (matchImportarElenco) {
     const r = resolverGrupo(matchImportarElenco[1]);
     if (r.mensagem) return msg.reply(r.mensagem);
-    const { NIVEL_PARA_NOTA, VOTANTES, ELENCO, PELADA_PLANILHA } = require('./elencoSeed');
+    const { NIVEL_PARA_NOTA, VOTANTES, ELENCO, PELADA_PLANILHA, APELIDOS } = require('./elencoSeed');
+    const porNome = new Map();
     let importados = 0;
     for (const [nome, niveis] of ELENCO) {
       const jogador = db.upsertJogador(r.grupo.chat_id, nome);
+      porNome.set(nome, jogador);
       VOTANTES.forEach((votante, i) => {
         const nota = NIVEL_PARA_NOTA[niveis[i]];
         for (const fundamento of db.FUNDAMENTOS) {
@@ -295,6 +297,10 @@ async function processarComandoAdmin(msg) {
         }
       });
       importados++;
+    }
+    for (const [nome, apelidos] of APELIDOS) {
+      const jogador = porNome.get(nome);
+      if (jogador) for (const apelido of apelidos) db.adicionarApelido(jogador.id, apelido);
     }
 
     // Quem estava na planilha jogou aquela pelada: cria a lista histórica

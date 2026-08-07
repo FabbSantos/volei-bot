@@ -31,4 +31,11 @@ const ELENCO = [
   ['Stephanie Bastos', 'IIII'],
 ];
 
-module.exports = { NIVEL_PARA_NOTA, VOTANTES, ELENCO, PELADA_PLANILHA };
+// Apelidos conhecidos: o nome no WhatsApp difere do nome da planilha.
+// [nome no elenco, apelidos no WhatsApp]
+const APELIDOS = [
+  ['Aces', ['A6']],
+  ['Dvd', ['David']],
+];
+
+module.exports = { NIVEL_PARA_NOTA, VOTANTES, ELENCO, PELADA_PLANILHA, APELIDOS };
