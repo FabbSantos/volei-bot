@@ -5,6 +5,10 @@
 const NIVEL_PARA_NOTA = { I: 2, M: 3, A: 4 };
 const VOTANTES = ['Fabrício', 'Diego', 'Marcel', 'Bianca'];
 
+// A pelada que a planilha registrava — quem estava lá jogou, então o import
+// cria essa lista histórica pra todo mundo começar com presença 1
+const PELADA_PLANILHA = { dataJogo: '31/07', nome: 'Pelada da planilha', criadaEm: '2026-07-31T21:00:00.000Z' };
+
 // [nome, níveis na ordem dos votantes acima]
 const ELENCO = [
   ['Marcel Garcia', 'MMMM'],
@@ -27,4 +31,4 @@ const ELENCO = [
   ['Stephanie Bastos', 'IIII'],
 ];
 
-module.exports = { NIVEL_PARA_NOTA, VOTANTES, ELENCO };
+module.exports = { NIVEL_PARA_NOTA, VOTANTES, ELENCO, PELADA_PLANILHA };

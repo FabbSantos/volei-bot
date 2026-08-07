@@ -37,7 +37,20 @@ function registrarPainel(app, deps = {}) {
   });
 
   api.get('/elenco', (req, res) => {
-    res.json({ fundamentos: db.FUNDAMENTOS, jogadores: db.listarJogadores(req.query.grupo) });
+    const grupo = req.query.grupo;
+    const semana = db.elencoDaSemana(grupo);
+    res.json({
+      fundamentos: db.FUNDAMENTOS,
+      jogadores: db.listarJogadores(grupo),
+      // A mesma lista que o #timesde usa — o painel espelha o bot
+      listaAtual: semana.lista
+        ? { id: semana.lista.id, data_jogo: semana.lista.data_jogo, nome: semana.lista.nome, status: semana.lista.status }
+        : null,
+      idsNaSemana: semana.naLista.map((j) => j.id),
+      novosNaSemana: semana.novos,
+      // Só a principal vai pros times (espera não joga)
+      nomesPrincipal: semana.naLista.filter((j) => j.tipo === 'principal').map((j) => j.nome),
+    });
   });
 
   api.post('/jogador', (req, res) => {

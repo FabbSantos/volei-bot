@@ -252,7 +252,7 @@ function listarGrupos() {
   return db.prepare('SELECT * FROM grupos ORDER BY primeira_mensagem_em DESC').all();
 }
 
-function criarLista(chatId, dataJogo, nome = null, valorCriacao = null) {
+function criarLista(chatId, dataJogo, nome = null, valorCriacao = null, opts = {}) {
   const existente = db.prepare(
     'SELECT * FROM listas WHERE chat_id = ? AND data_jogo = ?'
   ).get(chatId, dataJogo);
@@ -264,9 +264,11 @@ function criarLista(chatId, dataJogo, nome = null, valorCriacao = null) {
   const grupo = getGrupo(chatId);
   const valorCentavos = valorCriacao != null ? valorCriacao : (grupo?.valor_padrao_centavos || 0);
 
+  // criadaEm/status vêm preenchidos só no import histórico da planilha — a
+  // ordem das listas é por criada_em, então a pelada antiga não vira "a atual"
   const info = db.prepare(
     'INSERT INTO listas (chat_id, data_jogo, status, criada_em, valor_centavos, nome) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(chatId, dataJogo, 'aberta', new Date().toISOString(), valorCentavos, nome);
+  ).run(chatId, dataJogo, opts.status || 'aberta', opts.criadaEm || new Date().toISOString(), valorCentavos, nome);
   const listaId = info.lastInsertRowid;
 
   // Mensalistas EFETIVOS entram automaticamente no topo de toda lista nova:
@@ -290,16 +292,18 @@ function getLista(listaId) {
 function getListaAtiva(chatId) {
   // A "ativa" é a lista aberta mais recente DESSE grupo
   return db.prepare(
-    "SELECT * FROM listas WHERE chat_id = ? AND status = 'aberta' ORDER BY id DESC LIMIT 1"
+    "SELECT * FROM listas WHERE chat_id = ? AND status = 'aberta' ORDER BY criada_em DESC, id DESC LIMIT 1"
   ).get(chatId);
 }
 
 // Última lista do grupo, aberta OU encerrada — os comandos de pagamento usam
 // esta: a cobrança costuma acontecer depois do #encerrarlista, e travar nomes
 // não pode travar o dinheiro
+// Ordena por criada_em (id como desempate) — assim uma pelada importada com
+// data antiga não se passa pela lista da semana
 function getListaMaisRecente(chatId) {
   return db.prepare(
-    'SELECT * FROM listas WHERE chat_id = ? ORDER BY id DESC LIMIT 1'
+    'SELECT * FROM listas WHERE chat_id = ? ORDER BY criada_em DESC, id DESC LIMIT 1'
   ).get(chatId);
 }
 
@@ -991,7 +995,7 @@ function listarJogadores(chatId) {
 // com a presença resolvida pelo mesmo casamento inteligente de nomes
 function evolucaoJogadores(chatId) {
   const listas = db.prepare(
-    "SELECT id, data_jogo, nome, criada_em FROM listas WHERE chat_id = ? ORDER BY id ASC"
+    "SELECT id, data_jogo, nome, criada_em FROM listas WHERE chat_id = ? ORDER BY criada_em ASC, id ASC"
   ).all(chatId);
   const jogadores = db.prepare(
     'SELECT * FROM jogadores WHERE chat_id = ? ORDER BY nome COLLATE NOCASE ASC'
@@ -1028,6 +1032,16 @@ function evolucaoJogadores(chatId) {
 }
 
 // Só a lista principal, na ordem de exibição — é quem entra na montagem de times
+// Registro de quem JÁ jogou (import da planilha): entra direto na principal,
+// sem passar pelo limite de vagas — é história, não inscrição
+function registrarPresencaHistorica(listaId, nome, numero) {
+  if (jaEstaNaLista(listaId, numero)) return { erro: 'ja_esta' };
+  db.prepare(
+    'INSERT INTO entradas (lista_id, nome, numero, tipo, timestamp) VALUES (?, ?, ?, ?, ?)'
+  ).run(listaId, nome, numero, 'principal', new Date().toISOString());
+  return {};
+}
+
 function entradasPrincipais(listaId) {
   return db.prepare(
     "SELECT * FROM entradas WHERE lista_id = ? AND tipo = 'principal' ORDER BY timestamp ASC, id ASC"
@@ -1090,9 +1104,16 @@ function rankCasamento(a, b) {
 // Casa uma entrada da lista com o elenco: número do WhatsApp primeiro, senão
 // pelo nome (rank + candidato único). Quando casa por nome e a entrada tem
 // número real, o vínculo é gravado — daí em diante o casamento é exato.
+// Números que o próprio bot inventou (cadastro remoto, import, testes) não
+// servem pra casar nem pra virar vínculo — só WhatsApp de verdade
+function numeroSintetico(numero) {
+  const u = String(numero || '');
+  return !u || u.startsWith('manual-') || u.startsWith('fake-') || u.startsWith('planilha-');
+}
+
 function acharJogadorDaEntrada(chatId, entrada, jogadores) {
-  const usuario = String(entrada.numero || '').split('@')[0];
-  if (usuario && !usuario.startsWith('manual-') && !usuario.startsWith('fake-')) {
+  const usuario = numeroSintetico(entrada.numero) ? '' : String(entrada.numero).split('@')[0];
+  if (usuario) {
     const porNumero = jogadores.find((j) => j.numero && String(j.numero).split('@')[0] === usuario);
     if (porNumero) return porNumero;
   }
@@ -1108,7 +1129,7 @@ function acharJogadorDaEntrada(chatId, entrada, jogadores) {
   if (candidatos.length !== 1) return null;
 
   const jogador = candidatos[0];
-  if (usuario && !usuario.startsWith('manual-') && !usuario.startsWith('fake-') && !jogador.numero) {
+  if (usuario && !jogador.numero) {
     db.prepare('UPDATE jogadores SET numero = ? WHERE id = ?').run(entrada.numero, jogador.id);
     jogador.numero = entrada.numero;
   }
@@ -1135,7 +1156,7 @@ function mapearEntradasDoGrupo(chatId, jogadores) {
 // tela de avaliação pós-jogo do painel
 function listasRecentesComEntradas(chatId) {
   const listas = db.prepare(
-    'SELECT * FROM listas WHERE chat_id = ? ORDER BY id DESC LIMIT 15'
+    'SELECT * FROM listas WHERE chat_id = ? ORDER BY criada_em DESC, id DESC LIMIT 15'
   ).all(chatId);
   const jogadores = listarJogadores(chatId);
   return listas.map((l) => ({
@@ -1155,6 +1176,24 @@ function listasRecentesComEntradas(chatId) {
       };
     }),
   }));
+}
+
+// A pelada da semana: a lista mais recente do grupo, já casada com o elenco.
+// É a mesma fonte que o #timesde usa — o painel mostra exatamente isso, então
+// bot e site nunca divergem.
+function elencoDaSemana(chatId) {
+  const lista = getListaMaisRecente(chatId);
+  if (!lista) return { lista: null, naLista: [], novos: [] };
+
+  const jogadores = listarJogadores(chatId);
+  const naLista = [];
+  const novos = [];
+  for (const e of listarCombinada(lista.id)) {
+    const jogador = acharJogadorDaEntrada(chatId, e, jogadores);
+    if (jogador) naLista.push({ ...jogador, nomeNaLista: e.nome, tipo: e.tipo, mensalista: Boolean(e.mensalista) });
+    else novos.push({ nome: e.nome, tipo: e.tipo, mensalista: Boolean(e.mensalista) });
+  }
+  return { lista, naLista, novos };
 }
 
 // Draft em zigue-zague (serpentina): ordena do mais forte pro mais fraco e
@@ -1228,7 +1267,9 @@ module.exports = {
   evolucaoJogadores,
   montarTimes,
   entradasPrincipais,
+  registrarPresencaHistorica,
   listasRecentesComEntradas,
+  elencoDaSemana,
   FUNDAMENTOS,
   marcarGrupoAdmin,
   buscarGrupos,

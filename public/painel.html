@@ -128,9 +128,14 @@
   <section class="aba ativa" id="aba-elenco">
     <div class="cartao" style="padding:0.7rem 1.2rem">
       <strong>Como na planilha, em 3 passos:</strong>
-      <span class="mut">1️⃣ cadastra quem falta (ali embaixo) · 2️⃣ clica no jogador e avalia com UM clique (Iniciante/Inter/Avançado) · 3️⃣ aba <em>Times</em> → monta.</span>
+      <span class="mut">1️⃣ cadastra quem falta · 2️⃣ clica no jogador e avalia com UM clique (Iniciante/Inter/Avançado) · 3️⃣ aba <em>Times</em> → monta.</span>
     </div>
+    <div class="cartao" id="caixaSemana"></div>
     <div class="cartao">
+      <div class="linhaform" style="margin:0 0 0.6rem">
+        <button id="btnFiltroSemana" class="primario">⭐ Elenco da semana</button>
+        <button id="btnFiltroTodos">Todos do elenco</button>
+      </div>
       <table id="tabElenco"></table>
       <div class="linhaform">
         <input id="inpNovoNome" placeholder="Nome do jogador novo">
@@ -155,14 +160,15 @@
     <div class="cartao">
       <div class="linhaform">
         <label>Times: <select id="selQtdTimes"><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select></label>
-        <button id="btnMarcarTodos">Marcar todo o elenco</button>
+        <button id="btnUsarSemana">⭐ Usar a lista da semana</button>
+        <button id="btnMarcarTodos">Todo o elenco</button>
         <button id="btnDesmarcar">Limpar</button>
         <button class="primario" id="btnMontar">Montar times</button>
         <button id="btnEnviarTimes">📣 Enviar pro grupo</button>
       </div>
       <div class="selecao-jogadores" id="selTimes"></div>
       <div class="times-grid" id="timesMontados"></div>
-      <p class="aviso">Monta, ajusta trocando gente de time pelo seletor (as médias recalculam) e, quando estiver bom, <strong>📣 Enviar pro grupo</strong> — sai no WhatsApp exatamente como está na tela, sem revelar as notas (cortesia da tecnologia da NASA 🚀).</p>
+      <p class="aviso">Já abre com <strong>a lista da semana</strong> marcada (a mesma que o <code>#timesde</code> usa — só a principal, sem a espera). Monta, ajusta trocando gente de time pelo seletor (as médias recalculam) e, quando estiver bom, <strong>📣 Enviar pro grupo</strong> — sai no WhatsApp exatamente como está na tela, sem revelar as notas (cortesia da tecnologia da NASA 🚀).</p>
     </div>
   </section>
 
@@ -217,6 +223,7 @@ let listas = [];
 let evolucao = { listas: [], series: [] };
 let jogadorAberto = null;
 let ajusteFinoAberto = false;
+let filtroSemana = true; // Elenco abre focado na galera da semana
 let timesAtuais = [];
 let selecionadosTimes = new Set();
 let selecionadosEvolucao = []; // ordem importa: define o slot de cor de cada um
@@ -246,25 +253,67 @@ document.querySelectorAll('nav.abas button').forEach((b) => {
 // ---- elenco -----------------------------------------------------------------
 async function carregarElenco() {
   elenco = await api(`/elenco?grupo=${encodeURIComponent(grupoAtual())}`);
+  desenharCaixaSemana();
   desenharElenco();
   desenharSelecaoTimes();
   desenharSelecaoEvolucao();
 }
 
+$('#btnFiltroSemana').addEventListener('click', () => { filtroSemana = true; desenharElenco(); });
+$('#btnFiltroTodos').addEventListener('click', () => { filtroSemana = false; desenharElenco(); });
+
 // Nível legível, como na planilha (âncoras: Iniciante=2, Inter=3, Avançado=4)
 const nivelDe = (h) => (h == null ? null : h < 2.5 ? 'Iniciante' : h < 3.5 ? 'Intermediário' : 'Avançado');
 const NIVEL_NOTA = { Iniciante: 2, 'Intermediário': 3, 'Avançado': 4 };
 
+function desenharCaixaSemana() {
+  const caixa = $('#caixaSemana');
+  const l = elenco.listaAtual;
+  if (!l) {
+    caixa.innerHTML = '<span class="mut">Nenhuma lista ainda neste grupo — abre uma pelo WhatsApp (<code>#abrirlistade</code>) que ela aparece aqui.</span>';
+    return;
+  }
+  const novos = elenco.novosNaSemana || [];
+  caixa.innerHTML = `
+    <strong>⭐ Pelada da semana: ${l.nome ? `${l.nome} — ` : ''}${l.data_jogo}</strong>
+    <span class="chip">${l.status}</span>
+    <span class="mut">· ${(elenco.idsNaSemana || []).length} do elenco na lista${novos.length ? ` · ${novos.length} fora do elenco` : ''}</span>
+    ${novos.length ? `<div style="margin-top:0.5rem">⚠️ <strong>Não estão no elenco:</strong> ${novos.map((n) =>
+      `<button data-cadsemana="${n.nome.replace(/"/g, '&quot;')}" style="margin:0.15rem">+ ${n.nome}</button>`).join('')}
+      <div class="mut" style="margin-top:0.3rem">Cadastra e avalia — senão eles entram nos times como medianos.</div></div>` : ''}`;
+
+  caixa.querySelectorAll('[data-cadsemana]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      await api('/jogador', { method: 'POST', body: { grupo: grupoAtual(), nome: btn.dataset.cadsemana } });
+      toast(`${btn.dataset.cadsemana} no elenco ✔`);
+      await carregarElenco();
+    });
+  });
+}
+
 function desenharElenco() {
   const f = elenco.fundamentos;
+  const naSemana = new Set(elenco.idsNaSemana || []);
+  const temSemana = naSemana.size > 0;
+  $('#btnFiltroSemana').classList.toggle('primario', filtroSemana && temSemana);
+  $('#btnFiltroTodos').classList.toggle('primario', !filtroSemana || !temSemana);
+  $('#btnFiltroSemana').textContent = `⭐ Elenco da semana${temSemana ? ` (${naSemana.size})` : ''}`;
+
   const linhas = ['<tr><th>Jogador</th><th>Nível</th><th class="num">Nota p/ times</th><th class="num">Presenças</th><th></th></tr>'];
-  const ordenado = [...elenco.jogadores].sort((a, b) => (b.notaTime ?? -1) - (a.notaTime ?? -1));
+  const visiveis = (filtroSemana && temSemana)
+    ? elenco.jogadores.filter((j) => naSemana.has(j.id))
+    : elenco.jogadores;
+  const ordenado = [...visiveis].sort((a, b) => (b.notaTime ?? -1) - (a.notaTime ?? -1));
+
+  if (ordenado.length === 0) {
+    linhas.push('<tr><td colspan="5" class="mut">Ninguém aqui ainda.</td></tr>');
+  }
 
   for (const j of ordenado) {
     const nivel = nivelDe(j.habilidade);
     linhas.push(`<tr data-id="${j.id}" style="cursor:pointer">
-      <td><strong>${j.nome}</strong>${j.numero ? '' : ' <span class="chip" title="sem WhatsApp vinculado — vincula sozinho quando a pessoa entrar numa lista">novo</span>'}</td>
-      <td>${nivel ? `<span class="chip">${nivel}</span> <span class="mut">${fmt(j.habilidade, 1)}</span>` : '<span class="mut">avalia aí 👇</span>'}</td>
+      <td>${naSemana.has(j.id) && !filtroSemana ? '⭐ ' : ''}<strong>${j.nome}</strong></td>
+      <td>${nivel ? `<span class="chip">${nivel}</span> <span class="mut">${fmt(j.habilidade, 1)}</span>` : '<span class="chip" style="background:#eda100;color:#0b0b0b">sem avaliação</span>'}</td>
       <td class="num"><strong>${fmt(j.notaTime)}</strong></td>
       <td class="num">${j.presencas}</td>
       <td><button data-del="${j.id}" title="remover do elenco">✕</button></td>
@@ -411,6 +460,14 @@ function desenharSelecaoTimes() {
     caixa.appendChild(b);
   }
 }
+function usarListaDaSemana() {
+  selecionadosTimes = new Set(elenco.nomesPrincipal || []);
+  desenharSelecaoTimes();
+}
+$('#btnUsarSemana').addEventListener('click', () => {
+  usarListaDaSemana();
+  toast(selecionadosTimes.size ? `${selecionadosTimes.size} da lista da semana` : 'Lista da semana vazia');
+});
 $('#btnMarcarTodos').addEventListener('click', () => { selecionadosTimes = new Set(elenco.jogadores.map((j) => j.nome)); desenharSelecaoTimes(); });
 $('#btnDesmarcar').addEventListener('click', () => { selecionadosTimes.clear(); desenharSelecaoTimes(); });
 
@@ -561,11 +618,13 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
 async function trocarGrupo() {
   localStorage.setItem('painel.grupo', grupoAtual());
   jogadorAberto = null;
+  filtroSemana = true;
   selecionadosTimes.clear();
   selecionadosEvolucao = [];
   timesAtuais = [];
   $('#timesMontados').innerHTML = '';
   await Promise.all([carregarElenco(), carregarListas(), carregarEvolucao()]);
+  usarListaDaSemana(); // Times já abre com a galera da semana marcada
   desenharSelecaoEvolucao();
   desenharGraficos();
 }

@@ -284,7 +284,7 @@ async function processarComandoAdmin(msg) {
   if (matchImportarElenco) {
     const r = resolverGrupo(matchImportarElenco[1]);
     if (r.mensagem) return msg.reply(r.mensagem);
-    const { NIVEL_PARA_NOTA, VOTANTES, ELENCO } = require('./elencoSeed');
+    const { NIVEL_PARA_NOTA, VOTANTES, ELENCO, PELADA_PLANILHA } = require('./elencoSeed');
     let importados = 0;
     for (const [nome, niveis] of ELENCO) {
       const jogador = db.upsertJogador(r.grupo.chat_id, nome);
@@ -296,8 +296,30 @@ async function processarComandoAdmin(msg) {
       });
       importados++;
     }
+
+    // Quem estava na planilha jogou aquela pelada: cria a lista histórica
+    // (encerrada, com a data original) pra todos começarem com presença 1
+    const { ja_existia, lista } = db.criarLista(
+      r.grupo.chat_id,
+      PELADA_PLANILHA.dataJogo,
+      PELADA_PLANILHA.nome,
+      0,
+      { status: 'encerrada', criadaEm: PELADA_PLANILHA.criadaEm }
+    );
+    let presencas = 0;
+    if (!ja_existia) {
+      for (const [nome] of ELENCO) {
+        const numero = `planilha-${nome.toLowerCase().replace(/[^a-z0-9]+/g, '-')}@import`;
+        if (!db.registrarPresencaHistorica(lista.id, nome, numero).erro) presencas++;
+      }
+    }
+
     return msg.reply(
-      `📥 Elenco da planilha importado pra *${r.grupo.nome || r.grupo.chat_id}*: ${importados} jogador(es), com os votos dos 4 votantes convertidos pra escala 1-5 (I=2, M=3, A=4) nos 4 fundamentos. Refina no painel!`
+      `📥 Elenco da planilha importado pra *${r.grupo.nome || r.grupo.chat_id}*: ${importados} jogador(es) com os votos dos 4 votantes (I=2, M=3, A=4 na escala 1-5).` +
+      (presencas > 0
+        ? `\n📅 Pelada de ${PELADA_PLANILHA.dataJogo} registrada — ${presencas} jogador(es) já começam com presença 1.`
+        : `\n📅 A pelada de ${PELADA_PLANILHA.dataJogo} já estava registrada.`) +
+      `\nRefina as notas no painel!`
     );
   }
 
