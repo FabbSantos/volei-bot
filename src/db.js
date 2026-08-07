@@ -1210,7 +1210,9 @@ function listasRecentesComEntradas(chatId) {
   const jogadores = listarJogadores(chatId);
   return listas.map((l) => ({
     ...l,
-    entradas: listarCombinada(l.id).map((e) => {
+    naEspera: contarPorTipo(l.id, 'espera'),
+    // Só quem entrou em quadra leva nota — a espera fica de fora
+    entradas: entradasPrincipais(l.id).map((e) => {
       const jogador = acharJogadorDaEntrada(chatId, e, jogadores);
       const notaAtual = jogador
         ? db.prepare('SELECT nota, observacao FROM notas_do_dia WHERE jogador_id = ? AND lista_id = ?').get(jogador.id, l.id)

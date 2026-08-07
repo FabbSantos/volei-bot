@@ -153,7 +153,7 @@
         <label>Pelada: <select id="selLista"></select></label>
       </div>
       <table id="tabNotaDia"></table>
-      <p class="aviso">Nota de 1 a 5 (aceita 0,5). Salva sozinho ao mudar. Jogador fora do elenco aparece com o botão "cadastrar".</p>
+      <p class="aviso">Só quem estava na <strong>lista principal</strong> da pelada escolhida — quem ficou na espera não jogou, então não leva nota. Nota de 1 a 5 (aceita 0,5), salva sozinho ao mudar. Jogador fora do elenco aparece com o botão "cadastrar".</p>
     </div>
   </section>
 
@@ -448,9 +448,12 @@ function desenharNotaDia() {
   const l = listas[parseInt($('#selLista').value, 10) || 0];
   if (!l) { $('#tabNotaDia').innerHTML = '<tr><td class="mut">Nenhuma lista ainda.</td></tr>'; return; }
   const linhas = ['<tr><th>Jogador</th><th>Situação</th><th class="num">Nota do dia</th><th>Observação</th></tr>'];
+  if (l.entradas.length === 0) {
+    linhas.push('<tr><td colspan="4" class="mut">Ninguém na lista principal dessa pelada.</td></tr>');
+  }
   for (const e of l.entradas) {
     linhas.push(`<tr>
-      <td><strong>${e.nome}</strong>${e.mensalista ? ' <span class="chip">mensal</span>' : ''}${e.tipo === 'espera' ? ' <span class="chip">espera</span>' : ''}</td>
+      <td><strong>${e.nome}</strong>${e.mensalista ? ' <span class="chip">mensal</span>' : ''}</td>
       <td class="mut">${e.jogador_id ? 'no elenco' : `<button data-cad="${e.nome}">cadastrar no elenco</button>`}</td>
       <td class="num">${e.jogador_id ? `<input data-nota="${e.jogador_id}" type="number" min="1" max="5" step="0.5" value="${e.nota ?? ''}" style="width:4.5rem">` : '—'}</td>
       <td>${e.jogador_id ? `<input data-obs="${e.jogador_id}" value="${e.observacao ?? ''}" placeholder="opcional" style="width:100%">` : ''}</td>
