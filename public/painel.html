@@ -282,7 +282,8 @@ function desenharCaixaSemana() {
   caixa.innerHTML = `
     <strong>⭐ Pelada da semana: ${l.nome ? `${l.nome} — ` : ''}${l.data_jogo}</strong>
     <span class="chip">${l.status}</span>
-    <span class="mut">· ${(elenco.idsNaSemana || []).length} do elenco na lista${novos.length ? ` · ${novos.length} sem vínculo` : ''}</span>
+    <span class="mut">· ${(elenco.idsNaSemana || []).length} do elenco na principal${novos.length ? ` · ${novos.length} sem vínculo` : ''}${
+      elenco.naEspera ? ` · ${elenco.naEspera} na espera (só contam se subirem)` : ''}</span>
     ${novos.length ? `<div style="margin-top:0.6rem">
       ⚠️ <strong>Não reconheci esses nomes:</strong>
       <div class="mut" style="margin:0.2rem 0 0.4rem">Ou é gente nova (cadastra) ou é alguém do elenco com outro nome no WhatsApp (vincula) — senão entram nos times como medianos.</div>

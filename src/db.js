@@ -1222,17 +1222,20 @@ function listasRecentesComEntradas(chatId) {
 // bot e site nunca divergem.
 function elencoDaSemana(chatId) {
   const lista = getListaMaisRecente(chatId);
-  if (!lista) return { lista: null, naLista: [], novos: [] };
+  if (!lista) return { lista: null, naLista: [], novos: [], naEspera: 0 };
 
   const jogadores = listarJogadores(chatId);
   const naLista = [];
   const novos = [];
-  for (const e of listarCombinada(lista.id)) {
+  // Só a PRINCIPAL: quem está na espera ainda não joga — entra no elenco da
+  // semana (e nos times) apenas quando subir
+  for (const e of entradasPrincipais(lista.id)) {
     const jogador = acharJogadorDaEntrada(chatId, e, jogadores);
     if (jogador) naLista.push({ ...jogador, nomeNaLista: e.nome, tipo: e.tipo, mensalista: Boolean(e.mensalista) });
     else novos.push({ nome: e.nome, tipo: e.tipo, mensalista: Boolean(e.mensalista) });
   }
-  return { lista, naLista, novos };
+  const naEspera = contarPorTipo(lista.id, 'espera');
+  return { lista, naLista, novos, naEspera };
 }
 
 // Draft em zigue-zague (serpentina): ordena do mais forte pro mais fraco e

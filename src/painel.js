@@ -48,8 +48,9 @@ function registrarPainel(app, deps = {}) {
         : null,
       idsNaSemana: semana.naLista.map((j) => j.id),
       novosNaSemana: semana.novos,
-      // Só a principal vai pros times (espera não joga)
-      nomesPrincipal: semana.naLista.filter((j) => j.tipo === 'principal').map((j) => j.nome),
+      naEspera: semana.naEspera,
+      // O que a aba Times pré-seleciona (a semana já é só principal)
+      nomesPrincipal: semana.naLista.map((j) => j.nome),
     });
   });
 
