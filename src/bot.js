@@ -16,7 +16,7 @@ const ADMIN_NUMBER = process.env.ADMIN_NUMBER || null; // ex: 5521999999999@c.us
 // browserClose = o Chrome morreu com o processo vivo; autocloseCalled = o
 // wppconnect desistiu de esperar o QR — nos dois casos, sem reconectar aqui
 // o bot ficaria zumbi (de pé, mas surdo)
-const ESTADOS_DESCONEXAO = ['CONFLICT', 'CLOSED', 'DISCONNECTED', 'DEPRECATED_VERSION', 'UNPAIRED', 'UNPAIRED_IDLE', 'browserClose', 'autocloseCalled', 'serverClose'];
+const ESTADOS_DESCONEXAO = ['CONFLICT', 'CLOSED', 'DISCONNECTED', 'DEPRECATED_VERSION', 'UNPAIRED', 'UNPAIRED_IDLE', 'browserClose', 'autocloseCalled', 'serverClose', 'disconnectedMobile', 'desconnectedMobile', 'qrReadFail'];
 const DELAY_BASE_MS = 15_000;
 const DELAY_MAX_MS = 5 * 60_000; // teto de 5min entre tentativas, pra não martelar o host
 const TENTATIVAS_ANTES_DE_NOTIFICAR = 2;
@@ -475,10 +475,23 @@ function start(client) {
     }
   });
 
-  // Log auxiliar — a reconexão em si já é tratada via statusFind acima,
-  // pra não disparar duas rotinas de retry em paralelo.
+  // Vigia de flapping: quando a sessão morre de verdade (celular derruba o
+  // aparelho), o wppconnect às vezes NÃO emite nenhum estado de desconexão —
+  // fica ciclando OPENING → PAIRING → CONNECTED pra sempre, e o bot vira
+  // zumbi "conectado". 8+ OPENINGs em 10min = instável: recria o cliente
+  // (e se a sessão estiver morta, o QR aparece e o Telegram avisa).
+  const aberturas = [];
   client.onStateChange((state) => {
     console.log('Mudança de estado:', state);
+    if (state !== 'OPENING') return;
+    const agora = Date.now();
+    aberturas.push(agora);
+    while (aberturas.length > 0 && agora - aberturas[0] > 10 * 60_000) aberturas.shift();
+    if (aberturas.length >= 8) {
+      aberturas.length = 0;
+      console.warn('[reconexao] conexão instável: 8+ ciclos de OPENING em 10min — recriando o cliente');
+      agendarReconexao('conexão instável (flapping OPENING/PAIRING sem estabilizar)');
+    }
   });
 
   console.log('Bot pronto e escutando mensagens.');
