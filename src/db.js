@@ -154,6 +154,18 @@ db.exec(`
   );
 `);
 
+// Cada mudança de avaliação vira um ponto na linha do tempo do jogador —
+// o voto em si é "o atual", mas a subida (ou queda) de nível fica registrada
+db.exec(`
+  CREATE TABLE IF NOT EXISTS historico_habilidade (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    jogador_id INTEGER NOT NULL,
+    habilidade REAL NOT NULL,
+    em TEXT NOT NULL,
+    FOREIGN KEY (jogador_id) REFERENCES jogadores(id)
+  );
+`);
+
 const FUNDAMENTOS = ['ataque', 'defesa', 'levantamento', 'saque'];
 migrarColunas('entradas', {
   pago: 'INTEGER NOT NULL DEFAULT 0',
@@ -961,10 +973,29 @@ function apelidosDe(jogadorId) {
 
 function removerJogador(jogadorId) {
   db.prepare('DELETE FROM apelidos WHERE jogador_id = ?').run(jogadorId);
+  db.prepare('DELETE FROM historico_habilidade WHERE jogador_id = ?').run(jogadorId);
   db.prepare('DELETE FROM votos_habilidade WHERE jogador_id = ?').run(jogadorId);
   db.prepare('DELETE FROM notas_do_dia WHERE jogador_id = ?').run(jogadorId);
   const info = db.prepare('DELETE FROM jogadores WHERE id = ?').run(jogadorId);
   return info.changes > 0;
+}
+
+function mediaHabilidade(jogadorId) {
+  const r = db.prepare('SELECT AVG(nota) AS m FROM votos_habilidade WHERE jogador_id = ?').get(jogadorId);
+  return r?.m ?? null;
+}
+
+// Guarda um ponto só quando a média MUDA — a linha do tempo fica com as
+// viradas de nível, não com um ponto por clique
+function registrarSnapshotHabilidade(jogadorId) {
+  const media = mediaHabilidade(jogadorId);
+  if (media == null) return;
+  const ultimo = db.prepare(
+    'SELECT habilidade FROM historico_habilidade WHERE jogador_id = ? ORDER BY em DESC, id DESC LIMIT 1'
+  ).get(jogadorId);
+  if (ultimo && Math.abs(ultimo.habilidade - media) < 1e-9) return;
+  db.prepare('INSERT INTO historico_habilidade (jogador_id, habilidade, em) VALUES (?, ?, ?)')
+    .run(jogadorId, media, new Date().toISOString());
 }
 
 function votarHabilidade(jogadorId, votante, fundamento, nota) {
@@ -975,6 +1006,7 @@ function votarHabilidade(jogadorId, votante, fundamento, nota) {
     VALUES (?, ?, ?, ?, ?)
     ON CONFLICT(jogador_id, votante, fundamento) DO UPDATE SET nota = excluded.nota, atualizado_em = excluded.atualizado_em
   `).run(jogadorId, votante.trim(), fundamento, nota, new Date().toISOString());
+  registrarSnapshotHabilidade(jogadorId);
   return {};
 }
 
@@ -1070,6 +1102,19 @@ function evolucaoJogadores(chatId) {
       'SELECT lista_id, nota, observacao FROM notas_do_dia WHERE jogador_id = ?'
     ).all(j.id);
     const porLista = new Map(notas.map((n) => [n.lista_id, n]));
+
+    // Nível na época de cada pelada: o último snapshot até aquela data
+    const snapshots = db.prepare(
+      'SELECT habilidade, em FROM historico_habilidade WHERE jogador_id = ? ORDER BY em ASC, id ASC'
+    ).all(j.id);
+    const nivelEm = (quando) => {
+      let valor = null;
+      for (const s of snapshots) {
+        if (s.em <= quando) valor = s.habilidade; else break;
+      }
+      return valor;
+    };
+
     let acumulado = 0;
     const pontos = listas.map((l) => {
       const presente = presencaChaves.has(`${l.id}:${j.id}`);
@@ -1081,9 +1126,12 @@ function evolucaoJogadores(chatId) {
         observacao: porLista.get(l.id)?.observacao ?? null,
         presente,
         presencaAcumulada: acumulado,
+        nivel: nivelEm(l.criada_em),
       };
     });
-    return { jogador: j.nome, jogador_id: j.id, pontos };
+    // "Hoje" fecha a linha do nível — mostra a avaliação vigente
+    const nivelAtual = snapshots.length ? snapshots[snapshots.length - 1].habilidade : null;
+    return { jogador: j.nome, jogador_id: j.id, pontos, nivelAtual, mudancasDeNivel: snapshots };
   });
 
   return { listas, series };

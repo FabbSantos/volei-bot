@@ -180,6 +180,11 @@
       <div class="grafico-caixa"><canvas id="grafNotas"></canvas></div>
     </div>
     <div class="cartao">
+      <strong>Nível (média das avaliações)</strong>
+      <span class="mut">— sobe quando alguém reavalia o jogador</span>
+      <div class="grafico-caixa"><canvas id="grafNivel"></canvas></div>
+    </div>
+    <div class="cartao">
       <strong>Presença acumulada</strong>
       <div class="grafico-caixa"><canvas id="grafPresenca"></canvas></div>
       <p class="aviso">Até 6 jogadores por vez — cada um mantém a própria cor enquanto selecionado. Passa o mouse pra ver os valores; pelada sem nota não quebra a linha.</p>
@@ -563,6 +568,7 @@ function desenharTimes() {
 
 // ---- evolução ---------------------------------------------------------------
 let graficoNotas = null;
+let graficoNivel = null;
 let graficoPresenca = null;
 
 function desenharSelecaoEvolucao() {
@@ -634,11 +640,26 @@ function desenharGraficos() {
     borderWidth: 2, pointRadius: 3, pointHoverRadius: 6, stepped: true,
   }));
 
+  // Nível ao longo do tempo em degraus: só muda quando alguém reavalia — o
+  // trecho reto entre peladas é o nível que vigorava naquele período
+  const dsNivel = seriesSel.map(({ serie, slot }) => ({
+    label: serie.jogador,
+    data: serie.pontos.map((p) => p.nivel),
+    borderColor: corDoSlot(slot), backgroundColor: corDoSlot(slot),
+    borderWidth: 2, pointRadius: 3, pointHoverRadius: 6, stepped: true, spanGaps: true,
+  }));
+
   graficoNotas?.destroy();
   graficoNotas = new Chart($('#grafNotas'), {
     type: 'line',
     data: { labels: rotulos, datasets: dsNotas },
     options: baseOpcoes('nota do dia (1–5)', 1, 5),
+  });
+  graficoNivel?.destroy();
+  graficoNivel = new Chart($('#grafNivel'), {
+    type: 'line',
+    data: { labels: rotulos, datasets: dsNivel },
+    options: baseOpcoes('nível (1–5)', 1, 5),
   });
   graficoPresenca?.destroy();
   graficoPresenca = new Chart($('#grafPresenca'), {
