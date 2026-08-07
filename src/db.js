@@ -930,6 +930,16 @@ function removerApelido(jogadorId, apelido) {
   db.prepare('DELETE FROM apelidos WHERE jogador_id = ? AND apelido = ?').run(jogadorId, apelido);
 }
 
+// Quem já votou neste grupo — alimenta o seletor "Você é" do painel
+function listarVotantes(chatId) {
+  return db.prepare(`
+    SELECT DISTINCT v.votante FROM votos_habilidade v
+    JOIN jogadores j ON j.id = v.jogador_id
+    WHERE j.chat_id = ?
+    ORDER BY v.votante COLLATE NOCASE ASC
+  `).all(chatId).map((r) => r.votante);
+}
+
 function apelidosDe(jogadorId) {
   return db.prepare('SELECT apelido FROM apelidos WHERE jogador_id = ?').all(jogadorId).map((a) => a.apelido);
 }
@@ -1305,6 +1315,7 @@ module.exports = {
   removerJogador,
   adicionarApelido,
   removerApelido,
+  listarVotantes,
   votarHabilidade,
   darNotaDoDia,
   listarJogadores,

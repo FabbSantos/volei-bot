@@ -112,7 +112,7 @@
     <select id="selGrupo"></select>
   </label>
   <label>Você é:
-    <input id="inpVotante" placeholder="seu nome (votante)" size="12">
+    <select id="selVotante"><option value="">— escolhe —</option></select>
   </label>
   <button id="btnAtualizar" title="Recarrega a lista da semana (quem subiu da espera, quem entrou/saiu)">🔄 Atualizar</button>
   <span class="sub" id="carimboAtualizacao">notas 1–5 · presença vem das listas do bot</span>
@@ -230,7 +230,18 @@ let selecionadosTimes = new Set();
 let selecionadosEvolucao = []; // ordem importa: define o slot de cor de cada um
 
 const grupoAtual = () => $('#selGrupo').value;
-const votanteAtual = () => $('#inpVotante').value.trim();
+const votanteAtual = () => $('#selVotante').value.trim();
+
+// Quem avalia: os votantes conhecidos + "Outro…" pra um admin novo entrar
+// sem depender de deploy. O escolhido fica salvo no navegador.
+function desenharVotantes() {
+  const sel = $('#selVotante');
+  const salvo = localStorage.getItem('painel.votante') || '';
+  const lista = [...new Set([...(elenco.votantes || []), ...(salvo ? [salvo] : [])])];
+  sel.innerHTML = '<option value="">— escolhe —</option>'
+    + lista.map((v) => `<option ${v === salvo ? 'selected' : ''}>${v}</option>`).join('')
+    + '<option value="__outro__">Outro…</option>';
+}
 
 // ---- paleta categórica (ordem fixa; máx. 6 séries em tela) ------------------
 const escuro = () => matchMedia('(prefers-color-scheme: dark)').matches;
@@ -254,6 +265,7 @@ document.querySelectorAll('nav.abas button').forEach((b) => {
 // ---- elenco -----------------------------------------------------------------
 async function carregarElenco() {
   elenco = await api(`/elenco?grupo=${encodeURIComponent(grupoAtual())}`);
+  desenharVotantes();
   desenharCaixaSemana();
   desenharElenco();
   desenharSelecaoTimes();
@@ -674,9 +686,15 @@ async function trocarGrupo() {
 }
 
 (async function boot() {
-  $('#inpVotante').value = localStorage.getItem('painel.votante') || '';
-  $('#inpVotante').addEventListener('change', () => {
-    localStorage.setItem('painel.votante', votanteAtual());
+  $('#selVotante').addEventListener('change', () => {
+    if ($('#selVotante').value === '__outro__') {
+      const novo = (prompt('Teu nome (aparece como votante):') || '').trim();
+      if (!novo) { $('#selVotante').value = localStorage.getItem('painel.votante') || ''; return; }
+      localStorage.setItem('painel.votante', novo);
+      desenharVotantes();
+    } else {
+      localStorage.setItem('painel.votante', votanteAtual());
+    }
     desenharElenco();
   });
 

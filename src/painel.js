@@ -39,8 +39,13 @@ function registrarPainel(app, deps = {}) {
   api.get('/elenco', (req, res) => {
     const grupo = req.query.grupo;
     const semana = db.elencoDaSemana(grupo);
+    // Votantes: os da planilha + quem já votou por aqui (sem repetir)
+    const { VOTANTES } = require('./elencoSeed');
+    const votantes = [...new Set([...VOTANTES, ...db.listarVotantes(grupo)])]
+      .sort((a, b) => a.localeCompare(b, 'pt-BR'));
     res.json({
       fundamentos: db.FUNDAMENTOS,
+      votantes,
       jogadores: db.listarJogadores(grupo),
       // A mesma lista que o #timesde usa — o painel espelha o bot
       listaAtual: semana.lista
