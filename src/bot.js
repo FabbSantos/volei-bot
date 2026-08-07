@@ -137,9 +137,10 @@ async function iniciarSessao() {
       // apaga o pareamento e obriga a escanear o QR de novo
       folderNameToken: process.env.TOKENS_DIR || 'tokens',
       puppeteerOptions: {
-        // A rajada de mensagens da reconexão enfileira chamadas na página e o
-        // timeout padrão (180s) estoura ("Runtime.callFunctionOn timed out")
-        protocolTimeout: 480_000,
+        // Curto de propósito: página travada tem que doer rápido pro teste de
+        // vida agir. (O histórico da reconexão já é descartado por timestamp,
+        // então não há mais rajada pra justificar timeout longo.)
+        protocolTimeout: 90_000,
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
@@ -200,6 +201,45 @@ function agendarReconexao(motivo) {
 }
 
 iniciarSessao();
+
+// ---- teste de vida da página -----------------------------------------------
+// O modo de morte mais traiçoeiro: o Chrome continua de pé e os eventos até
+// chegam, mas a PÁGINA do WhatsApp congela — toda chamada pendura e estoura
+// em ProtocolError. Nenhum estado de desconexão é emitido, então o bot fica
+// zumbi achando que está inChat. Um ping leve, com prazo curto, desmascara.
+const SAUDE_INTERVALO_MS = 3 * 60_000;
+const SAUDE_TIMEOUT_MS = 25_000;
+let falhasSaude = 0;
+
+function paginaTravou(err) {
+  const msg = String(err?.message || err);
+  return msg.includes('timed out') || msg.includes('Target closed')
+    || msg.includes('Session closed') || msg.includes('detached');
+}
+
+async function verificarSaude() {
+  const client = clienteAtual;
+  if (!client) return;
+  try {
+    await Promise.race([
+      client.getConnectionState(),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('ping timed out')), SAUDE_TIMEOUT_MS)),
+    ]);
+    falhasSaude = 0;
+  } catch (err) {
+    falhasSaude++;
+    console.warn(`[saude] página não respondeu (${falhasSaude}/2): ${err.message}`);
+    if (falhasSaude >= 2) {
+      falhasSaude = 0;
+      statusConexao = 'sem_resposta';
+      agendarReconexao('página do WhatsApp travada (teste de vida falhou 2x)');
+    }
+  }
+}
+
+setInterval(() => {
+  verificarSaude().catch((err) => console.warn(`[saude] erro no teste: ${err.message}`));
+}, SAUDE_INTERVALO_MS);
 
 // ---- lembrete diário de pagamento ------------------------------------------
 // Uma vez por dia (a partir de LEMBRETE_HORA, horário de Brasília), toda lista
@@ -471,7 +511,14 @@ function start(client) {
       await processarMensagem(msg);
     } catch (err) {
       console.error('Erro ao processar mensagem:', err);
-      notificarFalha(`erro processando mensagem: ${err.message}`);
+      // Página travada não é erro de comando: é sessão morta. Reconecta em
+      // vez de repetir o mesmo timeout em cada mensagem que chegar.
+      if (paginaTravou(err)) {
+        statusConexao = 'sem_resposta';
+        agendarReconexao('página travou ao processar mensagem');
+      } else {
+        notificarFalha(`erro processando mensagem: ${err.message}`);
+      }
     }
   });
 
