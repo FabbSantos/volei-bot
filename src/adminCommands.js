@@ -19,6 +19,8 @@ const CMD_AJUDA_ADMIN = '#admin';
 const REGEX_LISTA_DE = /^#listade\s+(.+)$/i;
 const REGEX_CANCELAR_LISTA_DE = /^#cancelarlistade\s+(.+)$/i;
 const REGEX_ENCERRAR_LISTA_DE = /^#encerrarlistade\s+(.+)$/i;
+// #editarlistade <grupo> 07/08 [Nome novo] — conserta data/nome da lista atual
+const REGEX_EDITAR_LISTA_DE = /^#editarlistade\s+(.+?)\s+(\d{1,2}\/\d{1,2})(?:\s+(.+))?$/i;
 // Remove da LISTA semanal à distância (fluxo do "não pagou até 12h, sai
 // pro da espera entrar") — aceita lote: 14, 13-16 ou 13,15
 const REGEX_REMOVER_DE = /^#removerde\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$/i;
@@ -90,6 +92,7 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 
 📡 *Consulta/gestão remota (<grupo> = pedaço do nome ou chat_id):*
 *#abrirlistade <grupo> 07/08 17 Sexta 3h* — abre a lista de lá (valor e nome opcionais) e anuncia no grupo
+*#editarlistade <grupo> 07/08 Nome* — corrige data/nome da lista atual (nome opcional)
 *#encerrarlistade <grupo>* — encerra a lista aberta (trava nomes) e anuncia
 *#cancelarlistade <grupo>* — APAGA a lista mais recente (criada errada/teste) e anuncia
 *#listade <grupo>* — lista atual do grupo
@@ -416,6 +419,27 @@ async function processarComandoAdmin(msg) {
     ].filter(Boolean).join(' ');
     return msg.reply(
       `❌ ${removidos.length} removido(s) da lista ${lista.data_jogo} (anunciado no grupo).${avisos ? ` ${avisos}` : ''}`
+    );
+  }
+
+  const matchEditarListaDe = texto.match(REGEX_EDITAR_LISTA_DE);
+  if (matchEditarListaDe) {
+    const r = resolverGrupo(matchEditarListaDe[1]);
+    if (r.mensagem) return msg.reply(r.mensagem);
+    const lista = db.getListaMaisRecente(r.grupo.chat_id);
+    if (!lista) {
+      return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* ainda não tem lista.`);
+    }
+    const resultado = db.editarLista(lista.id, {
+      dataJogo: matchEditarListaDe[2],
+      nome: matchEditarListaDe[3]?.trim() || null,
+    });
+    if (resultado.erro === 'data_ocupada') {
+      return msg.reply(`Já existe outra lista de *${matchEditarListaDe[2]}* nesse grupo. Cancela ela antes ou escolhe outra data.`);
+    }
+    // Correção é silenciosa no grupo: quem quiser reanuncia com #listade
+    return msg.reply(
+      `✏️ Lista corrigida: *${resultado.antes.data_jogo}*${resultado.antes.nome ? ` (${resultado.antes.nome})` : ''} → *${resultado.lista.data_jogo}*${resultado.lista.nome ? ` (${resultado.lista.nome})` : ''}. Ninguém saiu da lista.\n\n${db.montarListaFormatada(lista.id, resultado.lista.data_jogo)}`
     );
   }
 
@@ -867,7 +891,7 @@ async function processarComandoAdmin(msg) {
   // Qualquer variação dos comandos acima que não casou é sintaxe errada
   // (ex: "18 -6", "#listade" sem grupo, "#listargrupos x") — responde com o
   // uso em vez de ficar mudo e deixar o admin achando que funcionou
-  if (/^#(ativargrupo|desativargrupo|abrirlistade|encerrarlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|cobrarde|cobrarsubiude|timesde|importarelencode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
+  if (/^#(ativargrupo|desativargrupo|abrirlistade|editarlistade|encerrarlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|cobrarde|cobrarsubiude|timesde|importarelencode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
     return msg.reply(
       `Não entendi o formato 🤔 Exemplos:\n*#ativargrupo <chat_id> 18 --6*\n*#listade quinta* · *#pagosde quinta* · *#valorde quinta 25*\nManda *#admin* pra ver a sintaxe de tudo.`
     );

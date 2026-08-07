@@ -320,6 +320,21 @@ function getListaMaisRecente(chatId) {
   ).get(chatId);
 }
 
+// Corrige data e/ou nome de uma lista sem mexer em quem já está nela
+function editarLista(listaId, { dataJogo = null, nome = null } = {}) {
+  const lista = getLista(listaId);
+  if (!lista) return { erro: 'sem_lista' };
+  if (dataJogo && dataJogo !== lista.data_jogo) {
+    const conflito = db.prepare(
+      'SELECT 1 FROM listas WHERE chat_id = ? AND data_jogo = ? AND id <> ?'
+    ).get(lista.chat_id, dataJogo, listaId);
+    if (conflito) return { erro: 'data_ocupada' };
+  }
+  db.prepare('UPDATE listas SET data_jogo = COALESCE(?, data_jogo), nome = COALESCE(?, nome) WHERE id = ?')
+    .run(dataJogo, nome, listaId);
+  return { antes: lista, lista: getLista(listaId) };
+}
+
 function encerrarLista(listaId) {
   db.prepare("UPDATE listas SET status = 'encerrada' WHERE id = ?").run(listaId);
 }
@@ -1293,6 +1308,7 @@ module.exports = {
   listarGrupos,
   criarLista,
   cancelarLista,
+  editarLista,
   getLista,
   getListaAtiva,
   getListaMaisRecente,

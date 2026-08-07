@@ -62,6 +62,8 @@ const REGEX_ENTRAR = /^#lista(?:\s+(.+))?$/i;
 const CMD_MOSTRAR = '#mostralista';
 const CMD_ENCERRAR = '#encerrarlista';
 const CMD_CANCELAR = '#cancelarlista';
+// #editarlista 07/08 [Nome] — conserta data/nome da lista mais recente
+const REGEX_EDITAR = /^#editarlista\s+(\d{1,2}\/\d{1,2})(?:\s+(.+))?$/i;
 const CMD_AJUDA = '#comandos';
 // #remover (sozinho ou com o próprio nome) = sair da lista, aberto a todos;
 // #remover N / #remover NomeDeOutro = só admins
@@ -110,6 +112,7 @@ const TEXTO_AJUDA_ADMIN_GRUPO = `
 💰 *Só pra admins (do grupo ou do grupo de admins):*
 *#listaDD/MM* — abre a lista pro dia; valor e nome opcionais: #lista07/08 17 Sexta 3h
 *#encerrarlista* — fecha a lista, para de aceitar nomes
+*#editarlista 07/08 Nome* — corrige a data/nome da lista (nome opcional)
 *#cancelarlista* — APAGA a lista mais recente (criada errada/teste); libera a data
 *#remover N* — remove quem está na posição N (ou #remover Nome)
 *#pago N* — marca ✅ de quem está na posição N (ou responde o comprovante com *#pago*)
@@ -154,6 +157,7 @@ function correspondeAlgumComando(texto) {
     textoLower === CMD_MOSTRAR ||
     textoLower === CMD_ENCERRAR ||
     textoLower === CMD_CANCELAR ||
+    REGEX_EDITAR.test(texto) ||
     textoLower === CMD_MENSALISTAS ||
     textoLower === CMD_AJUDA
   );
@@ -269,6 +273,28 @@ async function processarMensagem(msg) {
     }
     db.encerrarLista(lista.id);
     return msg.reply(`🔒 Lista do dia *${lista.data_jogo}* encerrada. Não aceita mais nomes.`);
+  }
+
+  const matchEditar = texto.match(REGEX_EDITAR);
+  if (matchEditar) {
+    if (!(await msg.ehAdmin())) {
+      return msg.reply('🔒 Só admin pode editar a lista.');
+    }
+    const lista = db.getListaMaisRecente(chatId);
+    if (!lista) {
+      return msg.reply('Não tem lista pra editar.');
+    }
+    const resultado = db.editarLista(lista.id, {
+      dataJogo: matchEditar[1],
+      nome: matchEditar[2]?.trim() || null,
+    });
+    if (resultado.erro === 'data_ocupada') {
+      return msg.reply(`Já existe outra lista de *${matchEditar[1]}* aqui. Cancela ela antes ou escolhe outra data.`);
+    }
+    await msg.reply(
+      `✏️ Lista corrigida: *${resultado.antes.data_jogo}* → *${resultado.lista.data_jogo}*${resultado.lista.nome ? ` (${resultado.lista.nome})` : ''}. Ninguém saiu da lista.`
+    );
+    return msg.reply(db.montarListaFormatada(lista.id, resultado.lista.data_jogo));
   }
 
   if (texto.toLowerCase() === CMD_CANCELAR) {
