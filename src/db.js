@@ -169,6 +169,17 @@ db.exec(`
 
 migrarColunas('jogadores', { altura: 'TEXT' });
 
+// A montagem de times fica salva por lista: sobrevive a recarregar a página,
+// aceita edição (troca de última hora) e é a mesma que o bot mostra/envia
+db.exec(`
+  CREATE TABLE IF NOT EXISTS times_montados (
+    lista_id INTEGER PRIMARY KEY,
+    dados TEXT NOT NULL,
+    atualizado_em TEXT NOT NULL,
+    FOREIGN KEY (lista_id) REFERENCES listas(id)
+  );
+`);
+
 const FUNDAMENTOS = ['ataque', 'defesa', 'levantamento', 'saque'];
 const ALTURAS = ['alto', 'medio', 'baixo'];
 migrarColunas('entradas', {
@@ -362,6 +373,8 @@ function cancelarLista(chatId) {
   const lista = getListaMaisRecente(chatId);
   if (!lista) return { erro: 'sem_lista' };
   const entradas = db.prepare('DELETE FROM entradas WHERE lista_id = ?').run(lista.id).changes;
+  db.prepare('DELETE FROM times_montados WHERE lista_id = ?').run(lista.id);
+  db.prepare('DELETE FROM notas_do_dia WHERE lista_id = ?').run(lista.id);
   db.prepare('DELETE FROM listas WHERE id = ?').run(lista.id);
   return { data_jogo: lista.data_jogo, nome: lista.nome, entradas };
 }
@@ -1352,6 +1365,50 @@ function equilibrarAltura(times, alturaAlvo, tolerancia = 1) {
   }
 }
 
+// ---- times salvos por lista -------------------------------------------------
+
+function salvarTimes(listaId, times) {
+  const limpos = times.map((t, i) => ({
+    numero: i + 1,
+    jogadores: (t.jogadores || []).map((j) => ({
+      nome: j.nome,
+      nota: typeof j.nota === 'number' ? j.nota : 3,
+      altura: j.altura ?? null,
+      conhecido: Boolean(j.conhecido),
+    })),
+  }));
+  db.prepare(`
+    INSERT INTO times_montados (lista_id, dados, atualizado_em) VALUES (?, ?, ?)
+    ON CONFLICT(lista_id) DO UPDATE SET dados = excluded.dados, atualizado_em = excluded.atualizado_em
+  `).run(listaId, JSON.stringify(limpos), new Date().toISOString());
+  return getTimesSalvos(listaId);
+}
+
+// Recalcula média/altos na leitura — nunca confia em número guardado
+function getTimesSalvos(listaId) {
+  const row = db.prepare('SELECT dados, atualizado_em FROM times_montados WHERE lista_id = ?').get(listaId);
+  if (!row) return null;
+  let times;
+  try {
+    times = JSON.parse(row.dados);
+  } catch {
+    return null;
+  }
+  return {
+    atualizadoEm: row.atualizado_em,
+    times: times.map((t, i) => ({
+      numero: i + 1,
+      jogadores: t.jogadores || [],
+      media: t.jogadores?.length ? t.jogadores.reduce((s, j) => s + (j.nota ?? 3), 0) / t.jogadores.length : 0,
+      altos: (t.jogadores || []).filter((j) => j.altura === 'alto').length,
+    })),
+  };
+}
+
+function apagarTimesSalvos(listaId) {
+  db.prepare('DELETE FROM times_montados WHERE lista_id = ?').run(listaId);
+}
+
 function montarTimes(chatId, quantidadeTimes, participantes) {
   const elenco = listarJogadores(chatId);
   const avaliados = participantes.map((p) => {
@@ -1434,6 +1491,9 @@ module.exports = {
   listarJogadores,
   evolucaoJogadores,
   montarTimes,
+  salvarTimes,
+  getTimesSalvos,
+  apagarTimesSalvos,
   entradasPrincipais,
   registrarPresencaHistorica,
   listasRecentesComEntradas,

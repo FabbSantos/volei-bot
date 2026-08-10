@@ -168,7 +168,15 @@
         <button id="btnEnviarTimes">📣 Enviar pro grupo</button>
       </div>
       <div class="selecao-jogadores" id="selTimes"></div>
+      <div id="statusTimes" class="aviso"></div>
       <div class="times-grid" id="timesMontados"></div>
+      <div class="linhaform" id="caixaSubstituir" style="display:none">
+        <strong>Chegou alguém de última hora?</strong>
+        <select id="selEntra"></select>
+        <span class="mut">entra no</span>
+        <select id="selTimeDestino"></select>
+        <button id="btnEntrarNoTime">+ Colocar no time</button>
+      </div>
       <p class="aviso">Já abre com <strong>a lista da semana</strong> marcada (a mesma que o <code>#timesde</code> usa — só a principal, sem a espera). Monta, ajusta trocando gente de time pelo seletor (as médias recalculam) e, quando estiver bom, <strong>📣 Enviar pro grupo</strong> — sai no WhatsApp exatamente como está na tela, sem revelar as notas (cortesia da tecnologia da NASA 🚀).</p>
     </div>
   </section>
@@ -231,6 +239,7 @@ let jogadorAberto = null;
 let ajusteFinoAberto = false;
 let filtroSemana = true; // Elenco abre focado na galera da semana
 let timesAtuais = [];
+let timesSalvosEm = null;
 let selecionadosTimes = new Set();
 let selecionadosEvolucao = []; // ordem importa: define o slot de cor de cada um
 
@@ -528,9 +537,26 @@ $('#btnDesmarcar').addEventListener('click', () => { selecionadosTimes.clear(); 
 
 $('#btnMontar').addEventListener('click', async () => {
   if (selecionadosTimes.size < 2) return toast('Seleciona os jogadores primeiro');
+  if (timesAtuais.length && !confirm('Já existem times salvos nessa lista. Montar de novo joga fora os ajustes que você fez. Continuar?')) return;
   timesAtuais = await api('/times', { method: 'POST', body: { grupo: grupoAtual(), quantidade: parseInt($('#selQtdTimes').value, 10), nomes: [...selecionadosTimes] } });
+  timesSalvosEm = new Date().toISOString();
   desenharTimes();
+  toast('Times montados e salvos ✔');
 });
+
+// Traz do servidor a montagem salva desta lista (se houver)
+async function carregarTimesSalvos() {
+  try {
+    const r = await api(`/times/salvos?grupo=${encodeURIComponent(grupoAtual())}`);
+    timesAtuais = r.times || [];
+    timesSalvosEm = r.atualizadoEm;
+  } catch {
+    timesAtuais = [];
+    timesSalvosEm = null;
+  }
+  if (timesAtuais.length) desenharTimes();
+  else { $('#timesMontados').innerHTML = ''; desenharSubstituicao(); desenharStatusTimes(); }
+}
 
 $('#btnEnviarTimes').addEventListener('click', async () => {
   if (!timesAtuais.length) return toast('Monta os times primeiro');
@@ -551,32 +577,104 @@ $('#btnEnviarTimes').addEventListener('click', async () => {
   }
 });
 
+function recalcularTimes() {
+  for (const t of timesAtuais) {
+    t.media = t.jogadores.length ? t.jogadores.reduce((s, j) => s + (j.nota ?? 3), 0) / t.jogadores.length : 0;
+    t.altos = t.jogadores.filter((j) => j.altura === 'alto').length;
+  }
+}
+
+// Toda edição é gravada na hora: recarregar a página (ou o bot) mostra a
+// versão mais nova, não a montagem original
+async function salvarTimes(aviso) {
+  try {
+    await api('/times/salvar', {
+      method: 'POST',
+      body: { grupo: grupoAtual(), times: timesAtuais.map((t) => ({ jogadores: t.jogadores })) },
+    });
+    timesSalvosEm = new Date().toISOString();
+    if (aviso) toast(aviso);
+    desenharStatusTimes();
+  } catch (e) {
+    toast(`Não salvou: ${e.message}`);
+  }
+}
+
+function desenharStatusTimes() {
+  const el = $('#statusTimes');
+  if (!timesAtuais.length) { el.textContent = ''; return; }
+  const quando = timesSalvosEm
+    ? new Date(timesSalvosEm).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+    : null;
+  el.innerHTML = `💾 Times salvos${quando ? ` (${quando})` : ''} na lista ${elenco.listaAtual?.data_jogo || ''} — o bot mostra esta versão no <code>#timesde</code>. Editar aqui salva na hora.`;
+}
+
 function desenharTimes() {
+  recalcularTimes();
   const caixa = $('#timesMontados');
   caixa.innerHTML = timesAtuais.map((t, ti) => `
     <div class="time-cartao">
       <h3>Time ${t.numero}</h3>
-      <div class="media">média ${fmt(t.media)}${t.altos ? ` · ${t.altos} alto(s) 📏` : ''}</div>
+      <div class="media">média ${fmt(t.media)}${t.altos ? ` · ${t.altos} alto(s) 📏` : ''} · ${t.jogadores.length} jogador(es)</div>
       <ul>${t.jogadores.map((j, ji) => `<li>
         <span>${j.nome}${j.altura === 'alto' ? ' 📏' : ''} <span class="mut">${fmt(j.nota, 1)}</span></span>
-        <select data-mover="${ti}:${ji}">${timesAtuais.map((x) => `<option ${x.numero === t.numero ? 'selected' : ''}>${x.numero}</option>`).join('')}</select>
+        <span style="display:flex;gap:0.25rem;align-items:center">
+          <select data-mover="${ti}:${ji}" title="mudar de time">${timesAtuais.map((x) => `<option ${x.numero === t.numero ? 'selected' : ''}>${x.numero}</option>`).join('')}</select>
+          <button data-sai="${ti}:${ji}" title="saiu / não foi">✕</button>
+        </span>
       </li>`).join('')}</ul>
     </div>`).join('');
 
   document.querySelectorAll('[data-mover]').forEach((sel) => {
-    sel.addEventListener('change', () => {
+    sel.addEventListener('change', async () => {
       const [ti, ji] = sel.dataset.mover.split(':').map(Number);
       const destino = parseInt(sel.value, 10) - 1;
       const [jog] = timesAtuais[ti].jogadores.splice(ji, 1);
       timesAtuais[destino].jogadores.push(jog);
-      for (const t of timesAtuais) {
-        t.media = t.jogadores.length ? t.jogadores.reduce((s, j) => s + j.nota, 0) / t.jogadores.length : 0;
-        t.altos = t.jogadores.filter((j) => j.altura === 'alto').length;
-      }
       desenharTimes();
+      await salvarTimes();
     });
   });
+  document.querySelectorAll('[data-sai]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const [ti, ji] = btn.dataset.sai.split(':').map(Number);
+      const [fora] = timesAtuais[ti].jogadores.splice(ji, 1);
+      desenharTimes();
+      await salvarTimes(`${fora.nome} saiu do Time ${ti + 1}`);
+    });
+  });
+
+  desenharSubstituicao();
+  desenharStatusTimes();
 }
+
+// Quem pode entrar: todo o elenco que não está em nenhum time
+function desenharSubstituicao() {
+  const caixa = $('#caixaSubstituir');
+  if (!timesAtuais.length) { caixa.style.display = 'none'; return; }
+  caixa.style.display = 'flex';
+  const jaEscalados = new Set(timesAtuais.flatMap((t) => t.jogadores.map((j) => j.nome)));
+  const disponiveis = elenco.jogadores.filter((j) => !jaEscalados.has(j.nome));
+  $('#selEntra').innerHTML = disponiveis.length
+    ? disponiveis.map((j) => `<option value="${j.id}">${j.nome}${j.altura === 'alto' ? ' 📏' : ''} (${fmt(j.notaTime, 1)})</option>`).join('')
+    : '<option value="">— todos já estão escalados —</option>';
+  $('#selTimeDestino').innerHTML = timesAtuais.map((t) => `<option value="${t.numero}">Time ${t.numero}</option>`).join('');
+}
+
+$('#btnEntrarNoTime').addEventListener('click', async () => {
+  const id = parseInt($('#selEntra').value, 10);
+  const jogador = elenco.jogadores.find((j) => j.id === id);
+  if (!jogador) return toast('Escolhe quem entra');
+  const destino = parseInt($('#selTimeDestino').value, 10) - 1;
+  timesAtuais[destino].jogadores.push({
+    nome: jogador.nome,
+    nota: jogador.notaTime ?? 3,
+    altura: jogador.altura ?? null,
+    conhecido: jogador.notaTime != null,
+  });
+  desenharTimes();
+  await salvarTimes(`${jogador.nome} entrou no Time ${destino + 1}`);
+});
 
 // ---- evolução ---------------------------------------------------------------
 let graficoNotas = null;
@@ -691,6 +789,7 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
 // é o que traz quem subiu da espera, quem entrou ou saiu da lista
 async function recarregarTudo({ remarcarTimes = false } = {}) {
   await Promise.all([carregarElenco(), carregarListas(), carregarEvolucao()]);
+  await carregarTimesSalvos();
   if (remarcarTimes) usarListaDaSemana();
   desenharSelecaoEvolucao();
   desenharGraficos();
@@ -699,14 +798,16 @@ async function recarregarTudo({ remarcarTimes = false } = {}) {
 }
 
 $('#btnAtualizar').addEventListener('click', async () => {
-  await recarregarTudo({ remarcarTimes: timesAtuais.length === 0 });
+  const semTimes = timesAtuais.length === 0;
+  await recarregarTudo({ remarcarTimes: semTimes });
   toast('Atualizado ✔');
 });
 
 // Voltou pra aba depois de mexer no WhatsApp? Recarrega sozinho.
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && grupoAtual()) {
-    recarregarTudo({ remarcarTimes: timesAtuais.length === 0 }).catch(() => {});
+    const semTimes = timesAtuais.length === 0;
+    recarregarTudo({ remarcarTimes: semTimes }).catch(() => {});
   }
 });
 

@@ -124,6 +124,7 @@ function registrarPainel(app, deps = {}) {
     res.json(db.evolucaoJogadores(req.query.grupo));
   });
 
+  // Monta E salva na lista atual — a montagem tem que sobreviver a F5
   api.post('/times', (req, res) => {
     const { grupo, quantidade, nomes } = req.body || {};
     if (!grupo || !Array.isArray(nomes) || nomes.length === 0) {
@@ -131,7 +132,38 @@ function registrarPainel(app, deps = {}) {
     }
     const n = Math.min(6, Math.max(2, parseInt(quantidade, 10) || 3));
     const participantes = nomes.map((nome) => ({ nome, numero: null }));
-    res.json(db.montarTimes(grupo, n, participantes));
+    const times = db.montarTimes(grupo, n, participantes);
+    const lista = db.getListaMaisRecente(grupo);
+    if (lista) db.salvarTimes(lista.id, times);
+    res.json(times);
+  });
+
+  api.get('/times/salvos', (req, res) => {
+    const lista = db.getListaMaisRecente(req.query.grupo);
+    if (!lista) return res.json({ lista: null, times: [], atualizadoEm: null });
+    const salvos = db.getTimesSalvos(lista.id);
+    res.json({
+      lista: { id: lista.id, data_jogo: lista.data_jogo, nome: lista.nome },
+      times: salvos?.times || [],
+      atualizadoEm: salvos?.atualizadoEm || null,
+    });
+  });
+
+  // Salva a edição manual (troca de time, substituição de última hora)
+  api.post('/times/salvar', (req, res) => {
+    const { grupo, times } = req.body || {};
+    if (!grupo || !Array.isArray(times)) {
+      return res.status(400).json({ erro: 'grupo e times são obrigatórios' });
+    }
+    const lista = db.getListaMaisRecente(grupo);
+    if (!lista) return res.status(400).json({ erro: 'grupo sem lista' });
+    res.json(db.salvarTimes(lista.id, times));
+  });
+
+  api.delete('/times/salvos', (req, res) => {
+    const lista = db.getListaMaisRecente(req.query.grupo);
+    if (lista) db.apagarTimesSalvos(lista.id);
+    res.json({ ok: true });
   });
 
   // Publica no grupo EXATAMENTE os times montados/ajustados na página —

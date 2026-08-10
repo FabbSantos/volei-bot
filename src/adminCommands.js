@@ -34,7 +34,7 @@ const REGEX_COBRAR_SUBIU_DE = /^#cobrarsubiude\s+(.+)$/i;
 // Prévia por padrão (times só na resposta do admin); "enviar" no fim é o que
 // posta no grupo da pelada — a montagem é determinística, então a prévia e o
 // envio produzem exatamente os mesmos times
-const REGEX_TIMES_DE = /^#timesde\s+(.+?)(?:\s+([2-6]))?(?:\s+(enviar))?$/i;
+const REGEX_TIMES_DE = /^#timesde\s+(.+?)(?:\s+([2-6]))?(?:\s+(enviar|refazer))?$/i;
 const REGEX_IMPORTAR_ELENCO_DE = /^#importarelencode\s+(.+)$/i;
 // #abrirlistade <grupo> DD/MM [valor] [nome] — abre a lista da pelada daqui,
 // já anunciando no grupo dela (ex: #abrirlistade riachuelo 07/08 17 Sexta 3h)
@@ -110,7 +110,8 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 *#removerde <grupo> 14* — tira da lista semanal (aceita faixa); a espera sobe e o grupo é avisado
 *#cobrarde <grupo>* — solta o recado do agiota agora (mira = principal sem pagar)
 *#cobrarsubiude <grupo>* — cobra só quem subiu da espera (prazo sexta 17h)
-*#timesde <grupo> 3* — PRÉVIA dos times equilibrados (só você vê); com "enviar" no fim, posta no grupo
+*#timesde <grupo> 3* — PRÉVIA dos times (só você vê); mostra os salvos se já existirem
+*#timesde <grupo> 3 enviar* — posta no grupo · *... refazer* — remonta do zero
 *#importarelencode <grupo>* — importa o elenco/notas da planilha antiga (uma vez)
 *#fixode <grupo> 3* — liga/desliga a vaga cativa (📌)
 *#mensalistade <grupo> Nome* — cadastra candidato (melhor a pessoa mandar #mensalista no grupo: aí o WhatsApp dela fica vinculado)
@@ -245,13 +246,26 @@ async function processarComandoAdmin(msg) {
       return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* ainda não tem lista.`);
     }
 
-    const principal = db.entradasPrincipais(lista.id);
-    if (principal.length < quantidade) {
-      return msg.reply(`Só ${principal.length} pessoa(s) na principal da lista ${lista.data_jogo} — não dá pra montar ${quantidade} times.`);
-    }
+    const modo = (matchTimesDe[3] || '').toLowerCase();
+    const enviar = modo === 'enviar';
+    const refazer = modo === 'refazer';
 
-    const enviar = Boolean(matchTimesDe[3]);
-    const times = db.montarTimes(r.grupo.chat_id, quantidade, principal);
+    // Times salvos (montados/editados no painel ou aqui) mandam: só refaz
+    // quando pedido explicitamente — senão a edição manual seria perdida
+    const salvos = refazer ? null : db.getTimesSalvos(lista.id);
+    let times;
+    let origem = 'novos';
+    if (salvos?.times?.length) {
+      times = salvos.times;
+      origem = 'salvos';
+    } else {
+      const principal = db.entradasPrincipais(lista.id);
+      if (principal.length < quantidade) {
+        return msg.reply(`Só ${principal.length} pessoa(s) na principal da lista ${lista.data_jogo} — não dá pra montar ${quantidade} times.`);
+      }
+      times = db.montarTimes(r.grupo.chat_id, quantidade, principal);
+      db.salvarTimes(lista.id, times);
+    }
 
     // O que o GRUPO vê: zero pista de como foi montado — nada de médias,
     // notas ou método. Tecnologia da NASA e ponto. 🚀
@@ -271,8 +285,11 @@ async function processarComandoAdmin(msg) {
       : '';
 
     if (!enviar) {
+      const notaOrigem = origem === 'salvos'
+        ? `\n💾 São os times *salvos* (montados/editados no painel). Pra jogar tudo fora e montar de novo: *#timesde ${matchTimesDe[1]} ${quantidade} refazer*.`
+        : `\n💾 Salvos — pode editar no painel que o bot passa a mostrar a versão editada.`;
       return msg.reply(
-        `${anuncioGrupo}\n\n👆 *Prévia — o grupo NÃO recebeu nada.*\n${mediasTexto}${avisoDesconhecidos}\nGostou? Manda *#timesde ${matchTimesDe[1]} ${quantidade} enviar* que sai igualzinho (sem essa parte de baixo).`
+        `${anuncioGrupo}\n\n👆 *Prévia — o grupo NÃO recebeu nada.*\n${mediasTexto}${avisoDesconhecidos}${notaOrigem}\nGostou? Manda *#timesde ${matchTimesDe[1]} ${quantidade} enviar* que sai igualzinho (sem essa parte de baixo).`
       );
     }
 
