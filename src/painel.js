@@ -52,6 +52,7 @@ function registrarPainel(app, deps = {}) {
       listaAtual: semana.lista
         ? { id: semana.lista.id, data_jogo: semana.lista.data_jogo, nome: semana.lista.nome, status: semana.lista.status }
         : null,
+      preListaAberta: db.resumoMensalistas(grupo).preListaAberta,
       idsNaSemana: semana.naLista.map((j) => j.id),
       novosNaSemana: semana.novos,
       naEspera: semana.naEspera,
@@ -88,6 +89,16 @@ function registrarPainel(app, deps = {}) {
     const { jogador_id, apelido } = req.query;
     db.removerApelido(parseInt(jogador_id, 10), apelido);
     res.json({ ok: true });
+  });
+
+  // Abre/fecha as inscrições de mensalista SEM anunciar no grupo — o painel é
+  // a superfície silenciosa (o comando do bot avisa a galera de propósito)
+  api.post('/prelista', (req, res) => {
+    const { grupo, aberta } = req.body || {};
+    if (!grupo) return res.status(400).json({ erro: 'grupo é obrigatório' });
+    const ok = db.abrirPreLista(grupo, Boolean(aberta));
+    if (!ok) return res.status(400).json({ erro: 'grupo não encontrado' });
+    res.json({ aberta: Boolean(aberta) });
   });
 
   api.post('/altura', (req, res) => {

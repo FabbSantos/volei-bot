@@ -43,8 +43,9 @@ const REGEX_PAGOS_DE = /^#pagosde\s+(.+)$/i;
 const REGEX_ADMINS_DE = /^#adminsde\s+(.+)$/i;
 const REGEX_MENSALISTAS_DE = /^#mensalistasde\s+(.+)$/i;
 // Pré-lista de mensalistas: abre/fecha as inscrições do mês e reinício manual
-const REGEX_ABRIR_MENSALISTAS_DE = /^#abrirmensalistasde\s+(.+)$/i;
-const REGEX_FECHAR_MENSALISTAS_DE = /^#fecharmensalistasde\s+(.+)$/i;
+// "quieto" no fim = muda sem anunciar no grupo
+const REGEX_ABRIR_MENSALISTAS_DE = /^#abrirmensalistasde\s+(.+?)(\s+quieto)?$/i;
+const REGEX_FECHAR_MENSALISTAS_DE = /^#fecharmensalistasde\s+(.+?)(\s+quieto)?$/i;
 const REGEX_REINICIAR_MENSALISTAS_DE = /^#reiniciarmensalistasde\s+(.+)$/i;
 // Gestão remota de mensalistas — mexe no quadro de um grupo sem poluir o
 // grupo da pelada com comando; o efeito aparece lá na próxima lista
@@ -101,7 +102,7 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 *#adminsde <grupo>* — admins do grupo no WhatsApp (são eles que marcam #pago lá)
 
 🗓 *Gestão de mensalistas daqui mesmo:*
-*#abrirmensalistasde <grupo>* / *#fecharmensalistasde <grupo>* — abre/fecha as inscrições do mês (anuncia no grupo)
+*#abrirmensalistasde <grupo>* / *#fecharmensalistasde <grupo>* — abre/fecha as inscrições do mês (anuncia no grupo; com *quieto* no fim, não anuncia)
 *#reiniciarmensalistasde <grupo>* — zera os não-fixos e fecha as inscrições
 *#pagomesde <grupo> 1-5* — marca o mês (aceita 3, 1-5 ou 1,3,7; valor opcional no fim); anuncia no grupo
 *#naopagomesde <grupo> 3* — desmarca o mês (aceita faixa também)
@@ -582,7 +583,9 @@ async function processarComandoAdmin(msg) {
   const matchFecharMensalistas = matchAbrirMensalistas ? null : texto.match(REGEX_FECHAR_MENSALISTAS_DE);
   if (matchAbrirMensalistas || matchFecharMensalistas) {
     const abrir = Boolean(matchAbrirMensalistas);
-    const r = resolverGrupo((matchAbrirMensalistas || matchFecharMensalistas)[1]);
+    const m = matchAbrirMensalistas || matchFecharMensalistas;
+    const quieto = Boolean(m[2]);
+    const r = resolverGrupo(m[1]);
     if (r.mensagem) return msg.reply(r.mensagem);
     const nomeGrupo = r.grupo.nome || r.grupo.chat_id;
     db.abrirPreLista(r.grupo.chat_id, abrir);
@@ -593,14 +596,16 @@ async function processarComandoAdmin(msg) {
       ? `🗓 *Inscrições de mensalista abertas!* ${vagas} vaga(s) + fila de espera.\n\nManda *#mensalista* pra garantir a tua. Pagamento até o 5º dia útil com os admins — o ✅ é o que confirma a vaga.`
       : `🗓 *Inscrições de mensalista encerradas.* Quem garantiu, garantiu — agora é acertar o pagamento com os admins.`;
     let aviso = '';
-    if (msg.enviarPara) {
+    if (!quieto && msg.enviarPara) {
       try {
         await msg.enviarPara(r.grupo.chat_id, anuncio);
       } catch (err) {
         aviso = `\n⚠️ Não consegui anunciar no grupo (${err.message}).`;
       }
     }
-    await msg.reply(`🗓 Inscrições de *${nomeGrupo}* ${abrir ? 'abertas' : 'fechadas'} e anunciadas no grupo.${aviso}`);
+    await msg.reply(
+      `🗓 Inscrições de *${nomeGrupo}* ${abrir ? 'abertas' : 'fechadas'}${quieto ? ' — em silêncio, o grupo não foi avisado.' : ' e anunciadas no grupo.'}${aviso}`
+    );
     return msg.reply(db.montarMensalistasFormatado(r.grupo.chat_id));
   }
 

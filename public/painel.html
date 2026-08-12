@@ -143,6 +143,7 @@
         <input id="inpNovoNumero" placeholder="WhatsApp (opcional) 5521...@c.us" size="24">
         <button class="primario" id="btnAddJogador">Adicionar ao elenco</button>
       </div>
+      <div class="linhaform" id="caixaPreLista"></div>
       <p class="aviso">A "Nota p/ times" é o que o montador usa (avaliação + como a pessoa vem jogando). <strong>Altura é opcional</strong>: quem estiver marcado como alto/baixo é espalhado pelos times, pra não juntar os bloqueadores num só — quem ficar em "—" não é considerado. Quer detalhar ataque/defesa/levantamento/saque? Abre o jogador e usa o "ajuste fino".</p>
     </div>
   </section>
@@ -280,6 +281,7 @@ document.querySelectorAll('nav.abas button').forEach((b) => {
 async function carregarElenco() {
   elenco = await api(`/elenco?grupo=${encodeURIComponent(grupoAtual())}`);
   desenharVotantes();
+  desenharPreLista();
   desenharCaixaSemana();
   desenharElenco();
   desenharSelecaoTimes();
@@ -337,6 +339,20 @@ function desenharCaixaSemana() {
       toast(`"${nome}" agora é ${jogador.nome} ✔`);
       await recarregarTudo();
     });
+  });
+}
+
+// Abrir/fechar inscrições de mensalista sem mandar nada no grupo
+function desenharPreLista() {
+  const aberta = Boolean(elenco.preListaAberta);
+  $('#caixaPreLista').innerHTML =
+    `<span>🗓 Inscrições de mensalista: <strong>${aberta ? 'abertas' : 'fechadas'}</strong></span>
+     <button id="btnPreLista">${aberta ? 'Fechar' : 'Abrir'} inscrições</button>
+     <span class="mut">daqui não avisa o grupo</span>`;
+  $('#btnPreLista').addEventListener('click', async () => {
+    await api('/prelista', { method: 'POST', body: { grupo: grupoAtual(), aberta: !aberta } });
+    toast(aberta ? 'Inscrições fechadas (em silêncio)' : 'Inscrições abertas (em silêncio)');
+    await carregarElenco();
   });
 }
 
