@@ -594,13 +594,14 @@ function setarValorLista(listaId, centavos) {
   db.prepare('UPDATE listas SET valor_centavos = ? WHERE id = ?').run(centavos, listaId);
 }
 
-// Listas abertas de grupos de pelada ativos que ainda não receberam o
-// lembrete de pagamento de hoje (o carimbo garante 1 por dia, por lista)
+// A cobrança automática só existe com lista ABERTA: depois do jogo o assunto
+// vira inadimplência (manual), não recado diário. Vale só pra lista mais
+// recente do grupo, e o carimbo garante um lembrete por dia.
 function listasParaLembrete(hoje) {
   return db.prepare(`
     SELECT l.* FROM listas l
     JOIN grupos g ON g.chat_id = l.chat_id
-    WHERE g.ativo = 1 AND g.eh_admin = 0
+    WHERE l.status = 'aberta' AND g.ativo = 1 AND g.eh_admin = 0
       AND l.id = (SELECT l2.id FROM listas l2 WHERE l2.chat_id = l.chat_id ORDER BY l2.criada_em DESC, l2.id DESC LIMIT 1)
       AND (l.lembrete_em IS NULL OR l.lembrete_em <> ?)
   `).all(hoje);
