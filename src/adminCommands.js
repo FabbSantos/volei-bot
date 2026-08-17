@@ -18,7 +18,9 @@ const CMD_AJUDA_ADMIN = '#admin';
 // Comandos remotos: <grupo> pode ser um pedaço do nome ou o chat_id exato
 const REGEX_LISTA_DE = /^#listade\s+(.+)$/i;
 const REGEX_CANCELAR_LISTA_DE = /^#cancelarlistade\s+(.+)$/i;
-const REGEX_ENCERRAR_LISTA_DE = /^#encerrarlistade\s+(.+)$/i;
+const REGEX_ENCERRAR_LISTA_DE = /^#encerrarlistade\s+(.+?)(\s+quieto)?$/i;
+// Destranca lista encerrada cedo demais (gente ainda querendo entrar)
+const REGEX_REABRIR_LISTA_DE = /^#reabrirlistade\s+(.+?)(\s+quieto)?$/i;
 // #editarlistade <grupo> 07/08 [Nome novo] — conserta data/nome da lista atual
 const REGEX_EDITAR_LISTA_DE = /^#editarlistade\s+(.+?)\s+(\d{1,2}\/\d{1,2})(?:\s+(.+))?$/i;
 // Remove da LISTA semanal à distância (fluxo do "não pagou até 12h, sai
@@ -94,7 +96,8 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 📡 *Consulta/gestão remota (<grupo> = pedaço do nome ou chat_id):*
 *#abrirlistade <grupo> 07/08 17 Sexta 3h* — abre a lista de lá (valor e nome opcionais) e anuncia no grupo
 *#editarlistade <grupo> 07/08 Nome* — corrige data/nome da lista atual (nome opcional)
-*#encerrarlistade <grupo>* — encerra a lista aberta (trava nomes) e anuncia
+*#encerrarlistade <grupo>* — encerra a lista (trava nomes) e anuncia; com *quieto* no fim, não anuncia
+*#reabrirlistade <grupo>* — destranca a lista encerrada (aceita *quieto*)
 *#cancelarlistade <grupo>* — APAGA a lista mais recente (criada errada/teste) e anuncia
 *#listade <grupo>* — lista atual do grupo
 *#pagosde <grupo>* — quem pagou, quem falta e quanto arrecadou
@@ -359,9 +362,9 @@ async function processarComandoAdmin(msg) {
     const soPromovidos = Boolean(matchCobrarSubiuDe);
     const r = resolverGrupo((matchCobrarDe || matchCobrarSubiuDe)[1]);
     if (r.mensagem) return msg.reply(r.mensagem);
-    const lista = db.getListaAtiva(r.grupo.chat_id);
+    const lista = db.getListaMaisRecente(r.grupo.chat_id);
     if (!lista) {
-      return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* não tem lista aberta pra cobrar.`);
+      return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* ainda não tem lista.`);
     }
 
     const resumo = db.resumoPagamentos(lista.id);
@@ -397,9 +400,9 @@ async function processarComandoAdmin(msg) {
     if (aviso) return msg.reply(aviso);
     const r = resolverGrupo(matchRemoverDe[1]);
     if (r.mensagem) return msg.reply(r.mensagem);
-    const lista = db.getListaAtiva(r.grupo.chat_id);
+    const lista = db.getListaMaisRecente(r.grupo.chat_id);
     if (!lista) {
-      return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* não tem lista aberta.`);
+      return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* ainda não tem lista.`);
     }
 
     // De baixo pra cima pra remoção não deslocar as posições seguintes
@@ -464,6 +467,24 @@ async function processarComandoAdmin(msg) {
     );
   }
 
+  const matchReabrirListaDe = texto.match(REGEX_REABRIR_LISTA_DE);
+  if (matchReabrirListaDe) {
+    const r = resolverGrupo(matchReabrirListaDe[1]);
+    if (r.mensagem) return msg.reply(r.mensagem);
+    const lista = db.getListaMaisRecente(r.grupo.chat_id);
+    if (!lista) return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* ainda não tem lista.`);
+    db.reabrirLista(lista.id);
+    const quieto = Boolean(matchReabrirListaDe[2]);
+    if (!quieto && msg.enviarPara) {
+      try {
+        await msg.enviarPara(r.grupo.chat_id, `🔓 Lista de *${lista.data_jogo}* reaberta — pode mandar *#lista* de novo.`);
+      } catch (err) {
+        await msg.reply(`⚠️ Não consegui anunciar no grupo (${err.message}).`);
+      }
+    }
+    return msg.reply(`🔓 Lista de *${lista.data_jogo}* de *${r.grupo.nome || r.grupo.chat_id}* reaberta` + (quieto ? ' — em silêncio.' : ' (anunciado no grupo).'));
+  }
+
   const matchEncerrarListaDe = texto.match(REGEX_ENCERRAR_LISTA_DE);
   if (matchEncerrarListaDe) {
     const r = resolverGrupo(matchEncerrarListaDe[1]);
@@ -473,7 +494,7 @@ async function processarComandoAdmin(msg) {
       return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* não tem lista aberta pra encerrar.`);
     }
     db.encerrarLista(lista.id);
-    if (msg.enviarPara) {
+    if (!matchEncerrarListaDe[2] && msg.enviarPara) {
       try {
         await msg.enviarPara(
           r.grupo.chat_id,
@@ -483,7 +504,7 @@ async function processarComandoAdmin(msg) {
         await msg.reply(`⚠️ Não consegui anunciar no grupo (${err.message}).`);
       }
     }
-    await msg.reply(`🔒 Lista de *${lista.data_jogo}* de *${r.grupo.nome || r.grupo.chat_id}* encerrada (anunciado no grupo). Os pagamentos continuam valendo — #pagode segue funcionando.`);
+    await msg.reply(`🔒 Lista de *${lista.data_jogo}* de *${r.grupo.nome || r.grupo.chat_id}* encerrada${matchEncerrarListaDe[2] ? ' — em silêncio, o grupo não foi avisado.' : ' (anunciado no grupo).'} Cobrança, times e #pagode seguem funcionando.`);
     return msg.reply(db.montarListaFormatada(lista.id, lista.data_jogo));
   }
 
@@ -868,9 +889,9 @@ async function processarComandoAdmin(msg) {
     }
     const r = resolverGrupo(matchValorListaDe[1]);
     if (r.mensagem) return msg.reply(r.mensagem);
-    const lista = db.getListaAtiva(r.grupo.chat_id);
+    const lista = db.getListaMaisRecente(r.grupo.chat_id);
     if (!lista) {
-      return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* não tem lista aberta agora. Pro padrão das próximas, usa *#valorde*.`);
+      return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* ainda não tem lista. Pro padrão das próximas, usa *#valorde*.`);
     }
     const centavos = db.paraCentavos(matchValorListaDe[2]);
     db.setarValorLista(lista.id, centavos);
@@ -916,7 +937,7 @@ async function processarComandoAdmin(msg) {
   // Qualquer variação dos comandos acima que não casou é sintaxe errada
   // (ex: "18 -6", "#listade" sem grupo, "#listargrupos x") — responde com o
   // uso em vez de ficar mudo e deixar o admin achando que funcionou
-  if (/^#(ativargrupo|desativargrupo|abrirlistade|editarlistade|encerrarlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|cobrarde|cobrarsubiude|timesde|importarelencode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
+  if (/^#(ativargrupo|desativargrupo|abrirlistade|editarlistade|encerrarlistade|reabrirlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|cobrarde|cobrarsubiude|timesde|importarelencode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
     return msg.reply(
       `Não entendi o formato 🤔 Exemplos:\n*#ativargrupo <chat_id> 18 --6*\n*#listade quinta* · *#pagosde quinta* · *#valorde quinta 25*\nManda *#admin* pra ver a sintaxe de tudo.`
     );

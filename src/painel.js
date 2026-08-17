@@ -101,6 +101,16 @@ function registrarPainel(app, deps = {}) {
     res.json({ aberta: Boolean(aberta) });
   });
 
+  // Encerrar/reabrir a lista sem mandar nada no grupo
+  api.post('/lista/status', (req, res) => {
+    const { grupo, aberta } = req.body || {};
+    if (!grupo) return res.status(400).json({ erro: 'grupo é obrigatório' });
+    const lista = db.getListaMaisRecente(grupo);
+    if (!lista) return res.status(400).json({ erro: 'grupo sem lista' });
+    if (aberta) db.reabrirLista(lista.id); else db.encerrarLista(lista.id);
+    res.json({ data_jogo: lista.data_jogo, status: aberta ? 'aberta' : 'encerrada' });
+  });
+
   api.post('/altura', (req, res) => {
     const { jogador_id, altura } = req.body || {};
     if (!jogador_id) return res.status(400).json({ erro: 'jogador_id é obrigatório' });

@@ -362,6 +362,10 @@ function editarLista(listaId, { dataJogo = null, nome = null } = {}) {
   return { antes: lista, lista: getLista(listaId) };
 }
 
+function reabrirLista(listaId) {
+  db.prepare("UPDATE listas SET status = 'aberta' WHERE id = ?").run(listaId);
+}
+
 function encerrarLista(listaId) {
   db.prepare("UPDATE listas SET status = 'encerrada' WHERE id = ?").run(listaId);
 }
@@ -596,7 +600,8 @@ function listasParaLembrete(hoje) {
   return db.prepare(`
     SELECT l.* FROM listas l
     JOIN grupos g ON g.chat_id = l.chat_id
-    WHERE l.status = 'aberta' AND g.ativo = 1 AND g.eh_admin = 0
+    WHERE g.ativo = 1 AND g.eh_admin = 0
+      AND l.id = (SELECT l2.id FROM listas l2 WHERE l2.chat_id = l.chat_id ORDER BY l2.criada_em DESC, l2.id DESC LIMIT 1)
       AND (l.lembrete_em IS NULL OR l.lembrete_em <> ?)
   `).all(hoje);
 }
@@ -1463,6 +1468,7 @@ module.exports = {
   getListaAtiva,
   getListaMaisRecente,
   encerrarLista,
+  reabrirLista,
   adicionarEntrada,
   limparEntradas,
   montarListaFormatada,
