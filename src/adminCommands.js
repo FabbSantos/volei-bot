@@ -23,6 +23,8 @@ const REGEX_ENCERRAR_LISTA_DE = /^#encerrarlistade\s+(.+?)(\s+quieto)?$/i;
 const REGEX_REABRIR_LISTA_DE = /^#reabrirlistade\s+(.+?)(\s+quieto)?$/i;
 // #editarlistade <grupo> 07/08 [Nome novo] — conserta data/nome da lista atual
 const REGEX_EDITAR_LISTA_DE = /^#editarlistade\s+(.+?)\s+(\d{1,2}\/\d{1,2})(?:\s+(.+))?$/i;
+// Coloca convidado na lista à distância (o par do #removerde)
+const REGEX_ADICIONAR_DE = /^#adicionarde\s+(.+?)(\s+quieto)?$/i;
 // Remove da LISTA semanal à distância (fluxo do "não pagou até 12h, sai
 // pro da espera entrar") — aceita lote: 14, 13-16 ou 13,15
 const REGEX_REMOVER_DE = /^#removerde\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$/i;
@@ -61,6 +63,20 @@ const REGEX_NAOPAGO_DE = /^#naopagode\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$
 
 // "1-5", "1,3,7" ou "2" → [1, 2, 3, 4, 5] — máx. 50 posições por comando,
 // valendo pra faixa, avulsas e mistura (repetida conta uma vez só)
+// Em '<grupo> <nome>' os dois são texto livre: testa o pedaço de grupo mais
+// longo que resolve pra exatamente um grupo (assim 'Sem Espera Maria' vira
+// grupo 'Sem Espera' + nome 'Maria', e 'riachuelo Joao' vira 'riachuelo' + 'Joao')
+function separarGrupoENome(resto) {
+  const partes = String(resto || '').trim().split(' ').filter(Boolean);
+  for (let i = partes.length - 1; i >= 1; i--) {
+    const termo = partes.slice(0, i).join(' ');
+    if (db.buscarGrupos(termo).length === 1) {
+      return { termo, nome: partes.slice(i).join(' ') };
+    }
+  }
+  return { termo: partes[0] || '', nome: partes.slice(1).join(' ') };
+}
+
 function expandirPosicoes(texto) {
   const posicoes = new Set();
   const cheio = () => posicoes.size >= 50;
@@ -111,6 +127,7 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 *#naopagomesde <grupo> 3* — desmarca o mês (aceita faixa também)
 *#pagode <grupo> 1-3* — marca o ✅ da LISTA semanal daqui (aceita faixa); anuncia no grupo
 *#naopagode <grupo> 3* — desmarca o ✅ da lista
+*#adicionarde <grupo> Nome* — coloca convidado na lista (aceita *quieto*)
 *#removerde <grupo> 14* — tira da lista semanal (aceita faixa); a espera sobe e o grupo é avisado
 *#cobrarde <grupo>* — solta o recado do agiota agora (mira = principal sem pagar)
 *#cobrarsubiude <grupo>* — cobra só quem subiu da espera (prazo sexta 17h)
@@ -392,6 +409,47 @@ async function processarComandoAdmin(msg) {
     return msg.reply(
       `📣 Cobrança mandada pro grupo (${alvo.length} na mira${soPromovidos ? ', só quem subiu da espera' : ''}). O lembrete diário automático não foi afetado.`
     );
+  }
+
+  const matchAdicionarDe = texto.match(REGEX_ADICIONAR_DE);
+  if (matchAdicionarDe) {
+    const separado = separarGrupoENome(matchAdicionarDe[1]);
+    if (!separado.nome) return msg.reply('Falta o nome. Ex: *#adicionarde riachuelo Joao Convidado*');
+    const r = resolverGrupo(separado.termo);
+    if (r.mensagem) return msg.reply(r.mensagem);
+    const lista = db.getListaMaisRecente(r.grupo.chat_id);
+    if (!lista) return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* ainda não tem lista.`);
+
+    const nome = separado.nome;
+    const quieto = Boolean(matchAdicionarDe[2]);
+    if (db.acharEntradasPorNome(lista.id, nome).length > 0) {
+      return msg.reply(`*${nome}* já está na lista de ${lista.data_jogo}.`);
+    }
+    const devendo = db.ehInadimplente(r.grupo.chat_id, null, nome);
+    if (devendo) {
+      return msg.reply(`⛔ *${nome}* está na lista de inadimplentes. Resolve com *#quitado* no grupo antes de colocar de volta.`);
+    }
+
+    // Número sintético: convidado colocado pela mão do admin não tem
+    // WhatsApp vinculado (se ele mesmo mandar #lista, aí sim vincula)
+    const resultado = db.adicionarEntrada(lista.id, nome, `manual-${Date.now()}@bot`);
+    if (resultado.erro === "tudo_lotado") {
+      return msg.reply(`Lista de ${lista.data_jogo} lotada (principal + espera). Tira alguém com *#removerde* antes.`);
+    }
+    const ondeEntrou = resultado.tipo === "principal"
+      ? `na *principal* (posição ${resultado.posicao})`
+      : `na *espera* (posição ${resultado.posicao})`;
+
+    if (!quieto && msg.enviarPara) {
+      try {
+        await msg.enviarPara(r.grupo.chat_id, `✅ *${nome}* entrou ${ondeEntrou} — convidado(a) pelos admins.`);
+        await msg.enviarPara(r.grupo.chat_id, db.montarListaFormatada(lista.id, lista.data_jogo));
+      } catch (err) {
+        await msg.reply(`⚠️ Não consegui anunciar no grupo (${err.message}).`);
+      }
+    }
+    await msg.reply(`✅ *${nome}* colocado ${ondeEntrou} na lista de ${lista.data_jogo}` + (quieto ? " — em silêncio." : " (anunciado no grupo)."));
+    return msg.reply(db.montarListaFormatada(lista.id, lista.data_jogo));
   }
 
   const matchRemoverDe = texto.match(REGEX_REMOVER_DE);
@@ -937,7 +995,7 @@ async function processarComandoAdmin(msg) {
   // Qualquer variação dos comandos acima que não casou é sintaxe errada
   // (ex: "18 -6", "#listade" sem grupo, "#listargrupos x") — responde com o
   // uso em vez de ficar mudo e deixar o admin achando que funcionou
-  if (/^#(ativargrupo|desativargrupo|abrirlistade|editarlistade|encerrarlistade|reabrirlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|cobrarde|cobrarsubiude|timesde|importarelencode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
+  if (/^#(ativargrupo|desativargrupo|abrirlistade|editarlistade|encerrarlistade|reabrirlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|adicionarde|cobrarde|cobrarsubiude|timesde|importarelencode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
     return msg.reply(
       `Não entendi o formato 🤔 Exemplos:\n*#ativargrupo <chat_id> 18 --6*\n*#listade quinta* · *#pagosde quinta* · *#valorde quinta 25*\nManda *#admin* pra ver a sintaxe de tudo.`
     );
