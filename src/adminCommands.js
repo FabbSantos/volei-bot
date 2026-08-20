@@ -442,7 +442,7 @@ async function processarComandoAdmin(msg) {
 
     if (!quieto && msg.enviarPara) {
       try {
-        await msg.enviarPara(r.grupo.chat_id, `✅ *${nome}* entrou ${ondeEntrou} — convidado(a) pelos admins.`);
+        await msg.enviarPara(r.grupo.chat_id, `✅ *${nome}* entrou ${ondeEntrou} — convidado(a).`);
         await msg.enviarPara(r.grupo.chat_id, db.montarListaFormatada(lista.id, lista.data_jogo));
       } catch (err) {
         await msg.reply(`⚠️ Não consegui anunciar no grupo (${err.message}).`);
