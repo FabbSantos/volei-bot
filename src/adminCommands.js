@@ -23,6 +23,8 @@ const REGEX_ENCERRAR_LISTA_DE = /^#encerrarlistade\s+(.+?)(\s+quieto)?$/i;
 const REGEX_REABRIR_LISTA_DE = /^#reabrirlistade\s+(.+?)(\s+quieto)?$/i;
 // #editarlistade <grupo> 07/08 [Nome novo] — conserta data/nome da lista atual
 const REGEX_EDITAR_LISTA_DE = /^#editarlistade\s+(.+?)\s+(\d{1,2}\/\d{1,2})(?:\s+(.+))?$/i;
+// Corrige o nome de alguém que já está na lista (posição continua a mesma)
+const REGEX_RENOMEAR_DE = /^#renomearde\s+(.+?)\s+(\d{1,3})\s+(.+?)(\s+quieto)?$/i;
 // Coloca convidado na lista à distância (o par do #removerde)
 const REGEX_ADICIONAR_DE = /^#adicionarde\s+(.+?)(\s+quieto)?$/i;
 // Remove da LISTA semanal à distância (fluxo do "não pagou até 12h, sai
@@ -128,6 +130,7 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 *#pagode <grupo> 1-3* — marca o ✅ da LISTA semanal daqui (aceita faixa); anuncia no grupo
 *#naopagode <grupo> 3* — desmarca o ✅ da lista
 *#adicionarde <grupo> Nome* — coloca convidado na lista (aceita *quieto*)
+*#renomearde <grupo> 5 Nome Certo* — corrige o nome de quem está na posição 5 (silencioso)
 *#removerde <grupo> 14* — tira da lista semanal (aceita faixa); a espera sobe e o grupo é avisado
 *#cobrarde <grupo>* — solta o recado do agiota agora (mira = principal sem pagar)
 *#cobrarsubiude <grupo>* — cobra só quem subiu da espera (prazo sexta 17h)
@@ -409,6 +412,27 @@ async function processarComandoAdmin(msg) {
     return msg.reply(
       `📣 Cobrança mandada pro grupo (${alvo.length} na mira${soPromovidos ? ', só quem subiu da espera' : ''}). O lembrete diário automático não foi afetado.`
     );
+  }
+
+  const matchRenomearDe = texto.match(REGEX_RENOMEAR_DE);
+  if (matchRenomearDe) {
+    const aviso = grupoEngoliuPosicao(matchRenomearDe[1], matchRenomearDe[2], `#renomearde ${matchRenomearDe[1]} ${matchRenomearDe[2]} 5 Nome Certo`);
+    if (aviso) return msg.reply(aviso);
+    const r = resolverGrupo(matchRenomearDe[1]);
+    if (r.mensagem) return msg.reply(r.mensagem);
+    const lista = db.getListaMaisRecente(r.grupo.chat_id);
+    if (!lista) return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* ainda não tem lista.`);
+
+    const resultado = db.renomearEntradaPorPosicao(lista.id, parseInt(matchRenomearDe[2], 10), matchRenomearDe[3]);
+    if (resultado.erro === 'posicao_invalida') {
+      return msg.reply(`Não achei ninguém na posição ${matchRenomearDe[2]} da lista ${lista.data_jogo}. Confere com *#listade*.`);
+    }
+    if (resultado.erro) return msg.reply('Falta o nome novo. Ex: *#renomearde riachuelo 5 Nome Certo*');
+
+    // Correção é silenciosa (igual ao #editarlistade): se quiser mostrar a
+    // lista corrigida no grupo, é só reenviar com #listade
+    await msg.reply(`✏️ Posição ${matchRenomearDe[2]}: *${resultado.antes}* → *${resultado.depois}*. Posição e pagamento intactos.`);
+    return msg.reply(db.montarListaFormatada(lista.id, lista.data_jogo));
   }
 
   const matchAdicionarDe = texto.match(REGEX_ADICIONAR_DE);
@@ -995,7 +1019,7 @@ async function processarComandoAdmin(msg) {
   // Qualquer variação dos comandos acima que não casou é sintaxe errada
   // (ex: "18 -6", "#listade" sem grupo, "#listargrupos x") — responde com o
   // uso em vez de ficar mudo e deixar o admin achando que funcionou
-  if (/^#(ativargrupo|desativargrupo|abrirlistade|editarlistade|encerrarlistade|reabrirlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|adicionarde|cobrarde|cobrarsubiude|timesde|importarelencode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
+  if (/^#(ativargrupo|desativargrupo|abrirlistade|editarlistade|encerrarlistade|reabrirlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|adicionarde|renomearde|cobrarde|cobrarsubiude|timesde|importarelencode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i.test(texto)) {
     return msg.reply(
       `Não entendi o formato 🤔 Exemplos:\n*#ativargrupo <chat_id> 18 --6*\n*#listade quinta* · *#pagosde quinta* · *#valorde quinta 25*\nManda *#admin* pra ver a sintaxe de tudo.`
     );

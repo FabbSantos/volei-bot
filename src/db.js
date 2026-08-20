@@ -910,6 +910,17 @@ function getEntradaPorPosicao(listaId, posicao) {
   return listarCombinada(listaId)[posicao - 1];
 }
 
+// Corrige o nome de quem já está na lista sem mexer em posição, pagamento
+// ou vínculo — pra quando o convidado foi cadastrado com o nome errado
+function renomearEntradaPorPosicao(listaId, posicao, novoNome) {
+  const alvo = listarCombinada(listaId)[posicao - 1];
+  if (!alvo) return { erro: 'posicao_invalida' };
+  const nome = String(novoNome || '').trim();
+  if (!nome) return { erro: 'nome_vazio' };
+  db.prepare('UPDATE entradas SET nome = ? WHERE id = ?').run(nome, alvo.id);
+  return { antes: alvo.nome, depois: nome, tipo: alvo.tipo };
+}
+
 function removerEntrada(listaId, alvo) {
   db.prepare('DELETE FROM entradas WHERE id = ?').run(alvo.id);
 
@@ -1475,6 +1486,7 @@ module.exports = {
   montarListaFormatada,
   removerPorPosicao,
   removerPorNumero,
+  renomearEntradaPorPosicao,
   removerEntrada,
   acharEntradasPorNome,
   historico,
