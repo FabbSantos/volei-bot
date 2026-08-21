@@ -669,8 +669,11 @@ function desenharSubstituicao() {
   const caixa = $('#caixaSubstituir');
   if (!timesAtuais.length) { caixa.style.display = 'none'; return; }
   caixa.style.display = 'flex';
-  const jaEscalados = new Set(timesAtuais.flatMap((t) => t.jogadores.map((j) => j.nome)));
-  const disponiveis = elenco.jogadores.filter((j) => !jaEscalados.has(j.nome));
+  // Casa por jogador do elenco (o nome no WhatsApp pode ser outro) e
+  // também pelo nome cru, pra convidado que não está no elenco
+  const idsEscalados = new Set(timesAtuais.flatMap((t) => t.jogadores.map((j) => j.jogador_id).filter(Boolean)));
+  const nomesEscalados = new Set(timesAtuais.flatMap((t) => t.jogadores.map((j) => j.nome)));
+  const disponiveis = elenco.jogadores.filter((j) => !idsEscalados.has(j.id) && !nomesEscalados.has(j.nome));
   $('#selEntra').innerHTML = disponiveis.length
     ? disponiveis.map((j) => `<option value="${j.id}">${j.nome}${j.altura === 'alto' ? ' 📏' : ''} (${fmt(j.notaTime, 1)})</option>`).join('')
     : '<option value="">— todos já estão escalados —</option>';

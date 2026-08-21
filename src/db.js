@@ -1275,7 +1275,11 @@ function acharJogadorDaEntrada(chatId, entrada, jogadores) {
   let melhorRank = Infinity;
   let candidatos = [];
   for (const j of jogadores) {
-    const rank = rankCasamento(entrada.nome, j.nome);
+    // Melhor casamento entre o nome do elenco e os apelidos ensinados
+    const rank = [j.nome, ...(j.apelidos || [])]
+      .map((candidato) => rankCasamento(entrada.nome, candidato))
+      .filter((x) => x != null)
+      .reduce((melhor, x) => (melhor == null || x < melhor ? x : melhor), null);
     if (rank == null) continue;
     if (rank < melhorRank) { melhorRank = rank; candidatos = [j]; }
     else if (rank === melhorRank) candidatos.push(j);
@@ -1405,6 +1409,12 @@ function salvarTimes(listaId, times) {
 function getTimesSalvos(listaId) {
   const row = db.prepare('SELECT dados, atualizado_em FROM times_montados WHERE lista_id = ?').get(listaId);
   if (!row) return null;
+  const lista = getLista(listaId);
+  const elenco = lista ? listarJogadores(lista.chat_id) : [];
+  const resolver = (nome) => {
+    const j = lista ? acharJogadorDaEntrada(lista.chat_id, { nome, numero: null }, elenco) : null;
+    return j ? j.id : null;
+  };
   let times;
   try {
     times = JSON.parse(row.dados);
@@ -1415,7 +1425,7 @@ function getTimesSalvos(listaId) {
     atualizadoEm: row.atualizado_em,
     times: times.map((t, i) => ({
       numero: i + 1,
-      jogadores: t.jogadores || [],
+      jogadores: (t.jogadores || []).map((j) => ({ ...j, jogador_id: resolver(j.nome) })),
       media: t.jogadores?.length ? t.jogadores.reduce((s, j) => s + (j.nota ?? 3), 0) / t.jogadores.length : 0,
       altos: (t.jogadores || []).filter((j) => j.altura === 'alto').length,
     })),
