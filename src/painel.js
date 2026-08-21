@@ -69,6 +69,15 @@ function registrarPainel(app, deps = {}) {
     res.json(db.upsertJogador(grupo, nome, numero?.trim() || null));
   });
 
+  api.post('/jogador/renomear', (req, res) => {
+    const { jogador_id, nome } = req.body || {};
+    if (!jogador_id || !nome) return res.status(400).json({ erro: 'jogador_id e nome são obrigatórios' });
+    const resultado = db.renomearJogador(jogador_id, nome);
+    if (resultado.erro === 'nome_ocupado') return res.status(400).json({ erro: 'Já existe alguém com esse nome no elenco.' });
+    if (resultado.erro) return res.status(400).json(resultado);
+    res.json(resultado);
+  });
+
   api.delete('/jogador/:id', (req, res) => {
     res.json({ ok: db.removerJogador(parseInt(req.params.id, 10)) });
   });

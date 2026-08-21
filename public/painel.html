@@ -386,7 +386,7 @@ function desenharElenco() {
       </select></td>
       <td class="num"><strong>${fmt(j.notaTime)}</strong></td>
       <td class="num">${j.presencas}</td>
-      <td><button data-del="${j.id}" title="remover do elenco">✕</button></td>
+      <td><button data-ren="${j.id}" title="renomear (mantém votos, notas e presença)">✏️</button> <button data-del="${j.id}" title="remover do elenco">✕</button></td>
     </tr>`);
 
     if (jogadorAberto === j.id) {
@@ -454,6 +454,20 @@ function desenharElenco() {
       await api('/voto', { method: 'POST', body: { jogador_id: jogadorAberto, votante: votanteAtual(), fundamento: sel.dataset.voto, nota: parseInt(sel.value, 10) } });
       toast('Voto salvo ✔');
       await carregarElenco();
+    });
+  });
+  document.querySelectorAll('#tabElenco [data-ren]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const j = elenco.jogadores.find((x) => x.id === parseInt(btn.dataset.ren, 10));
+      const novo = (prompt('Nome novo (o antigo vira apelido, nada se perde):', j.nome) || '').trim();
+      if (!novo || novo === j.nome) return;
+      try {
+        const r = await api('/jogador/renomear', { method: 'POST', body: { jogador_id: j.id, nome: novo } });
+        toast(`${r.antes} agora é ${r.depois} ✔`);
+        await recarregarTudo();
+      } catch (e) {
+        toast(e.message);
+      }
     });
   });
   document.querySelectorAll('#tabElenco [data-del]').forEach((btn) => {

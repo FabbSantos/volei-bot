@@ -1013,6 +1013,23 @@ function definirAltura(jogadorId, altura) {
   return { altura: valor };
 }
 
+// Troca o nome no elenco sem perder nada: votos, notas, presença e vínculo
+// continuam, e o nome antigo vira apelido — assim as listas passadas (e o
+// WhatsApp de quem ainda aparece com ele) seguem casando
+function renomearJogador(jogadorId, novoNome) {
+  const nome = String(novoNome || '').trim();
+  if (!nome) return { erro: 'nome_vazio' };
+  const jogador = db.prepare('SELECT * FROM jogadores WHERE id = ?').get(jogadorId);
+  if (!jogador) return { erro: 'nao_achei' };
+  if (normalizarTexto(jogador.nome) === normalizarTexto(nome)) return { antes: jogador.nome, depois: nome };
+  const conflito = db.prepare('SELECT 1 FROM jogadores WHERE chat_id = ? AND nome = ? AND id <> ?')
+    .get(jogador.chat_id, nome, jogadorId);
+  if (conflito) return { erro: 'nome_ocupado' };
+  db.prepare('UPDATE jogadores SET nome = ? WHERE id = ?').run(nome, jogadorId);
+  adicionarApelido(jogadorId, jogador.nome);
+  return { antes: jogador.nome, depois: nome };
+}
+
 function removerJogador(jogadorId) {
   db.prepare('DELETE FROM apelidos WHERE jogador_id = ?').run(jogadorId);
   db.prepare('DELETE FROM historico_habilidade WHERE jogador_id = ?').run(jogadorId);
@@ -1509,6 +1526,7 @@ module.exports = {
   listasParaLembrete,
   marcarLembreteEnviado,
   upsertJogador,
+  renomearJogador,
   removerJogador,
   adicionarApelido,
   removerApelido,
