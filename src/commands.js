@@ -2,19 +2,35 @@ const fs = require('fs');
 const path = require('path');
 const db = require('./db');
 
-// Acha uma figurinha na pasta assets pelo nome-base, em qualquer formato de
-// imagem — ex: acharFigurinha('agiota-pago') pega assets/agiota-pago.jpg
-function acharFigurinha(nomeBase) {
+// Todas as figurinhas de um tema: agiota-pago.png, agiota-pago-2.gif,
+// agiota-pago_festa.webp... (gif e webp animado viram figurinha animada)
+function listarFigurinhas(nomeBase) {
   const pasta = path.join(__dirname, '..', 'assets');
   let arquivos;
   try {
     arquivos = fs.readdirSync(pasta);
   } catch {
-    return null;
+    return [];
   }
-  const padrao = new RegExp(`^${nomeBase}\\.(png|jpe?g|webp)$`, 'i');
-  const achado = arquivos.find((a) => padrao.test(a));
-  return achado ? path.join(pasta, achado) : null;
+  const base = String(nomeBase).toLowerCase();
+  return arquivos
+    .filter((a) => {
+      const nome = a.toLowerCase();
+      const ext = nome.slice(nome.lastIndexOf('.'));
+      if (!['.png', '.jpg', '.jpeg', '.webp', '.gif'].includes(ext)) return false;
+      const semExt = nome.slice(0, nome.lastIndexOf('.'));
+      // aceita o nome exato ou com sufixo separado por - ou _
+      return semExt === base || semExt.startsWith(base + '-') || semExt.startsWith(base + '_');
+    })
+    .sort()
+    .map((a) => path.join(pasta, a));
+}
+
+// Uma figurinha por vez, sorteada — assim não fica repetitivo
+function acharFigurinha(nomeBase) {
+  const todas = listarFigurinhas(nomeBase);
+  if (todas.length === 0) return null;
+  return todas[Math.floor(Math.random() * todas.length)];
 }
 
 // Figurinha comemorativa dos pagamentos — env FIGURINHA_QUITADO ganha do padrão
@@ -682,6 +698,7 @@ module.exports = {
   TEXTO_AJUDA_COMUM,
   TEXTO_AJUDA_ADMIN_GRUPO,
   acharFigurinha,
+  listarFigurinhas,
   acharFigurinhaQuitado,
   montarLembretePagamento,
   montarLembreteSubiu,

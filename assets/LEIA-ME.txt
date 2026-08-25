@@ -1,10 +1,33 @@
-Coloque aqui a imagem "agiota-pago" (qualquer meme seu) — o bot manda
-ela como FIGURINHA no grupo quando um admin dá #quitado em alguém.
+FIGURINHAS DO BOT
+=================
 
-Formato: agiota-pago.png, .jpg, .jpeg ou .webp — qualquer um serve.
-De preferência quadrada (512x512 fica ótimo como sticker).
+O bot manda figurinha em dois momentos:
 
-Segunda figurinha: "cade-meu-pix" (mesmas extensões) — sai junto com o
-recado diário de cobrança nos grupos com lista aberta e gente devendo.
-Também dá pra apontar outro caminho com a variável de ambiente FIGURINHA_QUITADO.
-Sem a imagem, o bot manda só o texto "pagou o agiota. 🤝" — nada quebra.
+  agiota-pago*   -> todo pagamento marcado (#pago, #pagomes, #pagode,
+                    #pagomesde e #quitado)
+  cade-meu-pix*  -> recado diario de cobranca (o cron das 15h e os
+                    comandos #cobrarde / #cobrarsubiude)
+
+VARIAS FIGURINHAS POR TEMA
+--------------------------
+Pode ter quantas quiser: o bot sorteia uma a cada envio. Basta o arquivo
+comecar com o nome do tema, com sufixo separado por "-" ou "_":
+
+  assets/agiota-pago.jpg
+  assets/agiota-pago-2.png
+  assets/agiota-pago_dinheiro.gif
+  assets/cade-meu-pix.png
+  assets/cade-meu-pix-cobranca.webp
+
+FORMATOS
+--------
+  .png .jpg .jpeg  -> figurinha normal
+  .gif .webp       -> figurinha ANIMADA (o bot usa o metodo proprio e o
+                      sharp converte; gif animado vira sticker animado)
+
+Dica: quadrada (512x512) fica melhor. Gif curto e leve (ate ~2s, poucos MB)
+converte mais rapido e nao trava o envio.
+
+Sem nenhum arquivo do tema, o bot so manda o texto — nada quebra.
+A variavel FIGURINHA_QUITADO, se existir, aponta um arquivo fixo para o
+tema agiota-pago (ignora o sorteio).

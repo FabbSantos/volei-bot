@@ -282,7 +282,7 @@ async function enviarLembretesDePagamento() {
       const figurinha = acharFigurinha('cade-meu-pix');
       if (figurinha && fs.existsSync(figurinha)) {
         try {
-          await client.sendImageAsSticker(lista.chat_id, figurinha);
+          await enviarFigurinhaNoChat(client, lista.chat_id, figurinha);
         } catch (err) {
           console.warn(`[lembrete] figurinha falhou: ${err.message}`);
         }
@@ -301,6 +301,15 @@ setInterval(() => {
 
 // O wppconnect devolve ids como Wid (objeto) ou string, dependendo da chamada —
 // normaliza tudo pra string tipo "5521999999999@c.us"
+// Figurinha animada (.gif / .webp) precisa do método próprio; estática
+// (.png/.jpg) vai pelo normal. Quem converte é o sharp, dentro do wppconnect.
+function enviarFigurinhaNoChat(client, chatId, caminho) {
+  const animada = /[.](gif|webp)$/i.test(caminho);
+  return animada
+    ? client.sendImageAsStickerGif(chatId, caminho)
+    : client.sendImageAsSticker(chatId, caminho);
+}
+
 function widParaString(wid) {
   if (!wid) return null;
   if (typeof wid === 'string') return wid;
@@ -430,7 +439,7 @@ function start(client) {
             origem: 'privado',
             reply: (texto) => client.sendText(message.from, texto),
             enviarPara: (chatId, texto) => client.sendText(chatId, texto),
-            enviarFigurinhaPara: (chatId, caminho) => client.sendImageAsSticker(chatId, caminho),
+            enviarFigurinhaPara: (chatId, caminho) => enviarFigurinhaNoChat(client, chatId, caminho),
             getAdminsDoGrupo: (chatId) => listarAdminsDoGrupo(client, chatId),
           });
         } else {
@@ -464,7 +473,7 @@ function start(client) {
           origem: 'grupoadmin',
           reply: (texto) => client.sendText(message.from, texto),
           enviarPara: (chatId, texto) => client.sendText(chatId, texto),
-          enviarFigurinhaPara: (chatId, caminho) => client.sendImageAsSticker(chatId, caminho),
+          enviarFigurinhaPara: (chatId, caminho) => enviarFigurinhaNoChat(client, chatId, caminho),
           getAdminsDoGrupo: (chatId) => listarAdminsDoGrupo(client, chatId),
         });
         return;
@@ -489,7 +498,7 @@ function start(client) {
         reply: (texto) => client.sendText(message.from, texto),
         enviarFigurinha: async (caminho) => {
           try {
-            await client.sendImageAsSticker(message.from, caminho);
+            await enviarFigurinhaNoChat(client, message.from, caminho);
           } catch (err) {
             console.warn(`[figurinha] falha ao enviar: ${err.message}`);
           }
