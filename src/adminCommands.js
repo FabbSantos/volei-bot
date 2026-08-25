@@ -4,6 +4,7 @@ const {
   TEXTO_AJUDA_COMUM,
   TEXTO_AJUDA_ADMIN_GRUPO,
   acharFigurinha,
+  acharFigurinhaCobranca,
   acharFigurinhaQuitado,
   montarLembretePagamento,
   montarLembreteSubiu,
@@ -416,7 +417,7 @@ async function processarComandoAdmin(msg) {
         r.grupo.chat_id,
         soPromovidos ? montarLembreteSubiu(alvo) : montarLembretePagamento(alvo)
       );
-      const figurinha = acharFigurinha('cade-meu-pix');
+      const figurinha = acharFigurinhaCobranca(alvo);
       if (msg.enviarFigurinhaPara && figurinha && fs.existsSync(figurinha)) {
         await msg.enviarFigurinhaPara(r.grupo.chat_id, figurinha);
       }

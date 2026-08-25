@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const wppconnect = require('@wppconnect-team/wppconnect');
 const db = require('./db');
-const { processarMensagem, acharFigurinha, montarLembretePagamento } = require('./commands');
+const { processarMensagem, acharFigurinhaCobranca, montarLembretePagamento } = require('./commands');
 const { processarComandoAdmin } = require('./adminCommands');
 const { notificarFalha } = require('./notify');
 const { registrarPainel } = require('./painel');
@@ -313,7 +313,7 @@ async function enviarLembretesDePagamento() {
     try {
       await client.sendText(lista.chat_id, montarLembretePagamento(resumo.pendentes));
       // Figurinha "cadê meu pix" na sequência, se a imagem existir nos assets
-      const figurinha = acharFigurinha('cade-meu-pix');
+      const figurinha = acharFigurinhaCobranca(resumo.pendentes);
       if (figurinha && fs.existsSync(figurinha)) {
         try {
           await enviarFigurinhaNoChat(client, lista.chat_id, figurinha);

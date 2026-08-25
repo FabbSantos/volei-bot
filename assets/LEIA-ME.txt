@@ -31,3 +31,13 @@ converte mais rapido e nao trava o envio.
 Sem nenhum arquivo do tema, o bot so manda o texto — nada quebra.
 A variavel FIGURINHA_QUITADO, se existir, aponta um arquivo fixo para o
 tema agiota-pago (ignora o sorteio).
+
+FIGURINHA DEDICADA A ALGUEM
+---------------------------
+Da pra ter figurinha com dedicatoria: quando a pessoa esta na mira da
+cobranca, ela ganha do sorteio (e nao aparece pros outros). Hoje:
+
+  Ghemison -> cade-meu-pix-antonio.jpeg
+
+Pra adicionar outra, e uma linha em src/commands.js, na lista
+FIGURINHAS_PESSOAIS: { pessoa: 'Nome', tema: 'cade-meu-pix', arquivo: 'cade-meu-pix-oquefor' }
