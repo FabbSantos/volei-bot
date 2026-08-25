@@ -44,9 +44,9 @@ app.get('/qr', (req, res) => {
 
 registrarPainel(app, {
   // Usa sempre o cliente vigente — o painel publica times no grupo por aqui
-  enviarPara: (chatId, texto) => {
+  enviarPara: (chatId, texto, opcoes) => {
     if (!clienteAtual) return Promise.reject(new Error('bot desconectado'));
-    return clienteAtual.sendText(chatId, texto);
+    return clienteAtual.sendText(chatId, texto, opcoes);
   },
 });
 
@@ -311,7 +311,9 @@ async function enviarLembretesDePagamento() {
     // ainda hoje, o lembrete sai no próximo ciclo
     if (resumo.pendentes.length === 0) continue;
     try {
-      await client.sendText(lista.chat_id, montarLembretePagamento(resumo.pendentes));
+      // Marca quem tem WhatsApp conhecido — cutucão de verdade, com notificação
+      const recado = montarLembretePagamento(resumo.pendentesComZap);
+      await client.sendText(lista.chat_id, recado.texto, { mentionedList: recado.mencoes });
       // Figurinha "cadê meu pix" na sequência, se a imagem existir nos assets
       const figurinha = acharFigurinhaCobranca(resumo.pendentes);
       if (figurinha && fs.existsSync(figurinha)) {
@@ -472,7 +474,7 @@ function start(client) {
             body: message.body,
             origem: 'privado',
             reply: (texto) => client.sendText(message.from, texto),
-            enviarPara: (chatId, texto) => client.sendText(chatId, texto),
+            enviarPara: (chatId, texto, opcoes) => client.sendText(chatId, texto, opcoes),
             enviarFigurinhaPara: (chatId, caminho) => enviarFigurinhaNoChat(client, chatId, caminho),
             getAdminsDoGrupo: (chatId) => listarAdminsDoGrupo(client, chatId),
           });
@@ -506,7 +508,7 @@ function start(client) {
           body: message.body,
           origem: 'grupoadmin',
           reply: (texto) => client.sendText(message.from, texto),
-          enviarPara: (chatId, texto) => client.sendText(chatId, texto),
+          enviarPara: (chatId, texto, opcoes) => client.sendText(chatId, texto, opcoes),
           enviarFigurinhaPara: (chatId, caminho) => enviarFigurinhaNoChat(client, chatId, caminho),
           getAdminsDoGrupo: (chatId) => listarAdminsDoGrupo(client, chatId),
         });

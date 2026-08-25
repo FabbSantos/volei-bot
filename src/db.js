@@ -579,10 +579,21 @@ function resumoPagamentos(listaId) {
     pendentes: principal
       .filter((e) => !estaEmDia(e))
       .map((e) => (e.mensalista ? `${e.nome} (mês)` : e.nome)),
+    // Mesma lista com o WhatsApp de cada um (quando dá pra marcar): o
+    // convidado cadastrado na mão não tem número de verdade
+    pendentesComZap: principal
+      .filter((e) => !estaEmDia(e))
+      .map((e) => ({
+        nome: e.mensalista ? `${e.nome} (mês)` : e.nome,
+        numero: numeroSintetico(e.numero) ? null : e.numero,
+      })),
     // Quem subiu da espera e ainda não pagou — prazo próprio (sexta 17h)
     promovidosPendentes: principal
       .filter((e) => e.promovido && !estaEmDia(e))
       .map((e) => e.nome),
+    promovidosPendentesComZap: principal
+      .filter((e) => e.promovido && !estaEmDia(e))
+      .map((e) => ({ nome: e.nome, numero: numeroSintetico(e.numero) ? null : e.numero })),
     valorCentavos,
     // Dinheiro da LISTA (avulsos + extras ➕ de mensalista), pelos snapshots —
     // mensalidade é caixa separado, aparece no #mensalistasde

@@ -41,3 +41,15 @@ cobranca, ela ganha do sorteio (e nao aparece pros outros). Hoje:
 
 Pra adicionar outra, e uma linha em src/commands.js, na lista
 FIGURINHAS_PESSOAIS: { pessoa: 'Nome', tema: 'cade-meu-pix', arquivo: 'cade-meu-pix-oquefor' }
+
+ZOEIRA DO #lista SEM LISTA ABERTA
+---------------------------------
+Quem manda #lista antes de existir lista leva uma zoeira sorteada
+(ZOEIRAS_SEM_LISTA em src/commands.js). Quem esta em ZOEIRAS_PESSOAIS leva
+a versao dedicada — hoje o Ghemison ("porra, Antonio").
+
+MARCACAO (@) NA COBRANCA
+------------------------
+O recado diario e os #cobrarde / #cobrarsubiude marcam quem esta devendo,
+quando o WhatsApp da pessoa e conhecido (entrou pelo #lista ou tem numero
+vinculado no elenco). Convidado cadastrado na mao aparece so pelo nome.

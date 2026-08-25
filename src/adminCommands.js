@@ -405,7 +405,9 @@ async function processarComandoAdmin(msg) {
     }
 
     const resumo = db.resumoPagamentos(lista.id);
-    const alvo = soPromovidos ? resumo.promovidosPendentes : resumo.pendentes;
+    // Com número junto: quem tiver WhatsApp conhecido é marcado no grupo
+    const alvo = soPromovidos ? resumo.promovidosPendentesComZap : resumo.pendentesComZap;
+    const nomesAlvo = alvo.map((p) => p.nome);
     if (alvo.length === 0) {
       return msg.reply(soPromovidos
         ? `Ninguém que subiu da espera está devendo em *${r.grupo.nome || r.grupo.chat_id}* 🎉`
@@ -413,11 +415,9 @@ async function processarComandoAdmin(msg) {
     }
 
     try {
-      await msg.enviarPara(
-        r.grupo.chat_id,
-        soPromovidos ? montarLembreteSubiu(alvo) : montarLembretePagamento(alvo)
-      );
-      const figurinha = acharFigurinhaCobranca(alvo);
+      const recado = soPromovidos ? montarLembreteSubiu(alvo) : montarLembretePagamento(alvo);
+      await msg.enviarPara(r.grupo.chat_id, recado.texto, { mentionedList: recado.mencoes });
+      const figurinha = acharFigurinhaCobranca(nomesAlvo);
       if (msg.enviarFigurinhaPara && figurinha && fs.existsSync(figurinha)) {
         await msg.enviarFigurinhaPara(r.grupo.chat_id, figurinha);
       }
