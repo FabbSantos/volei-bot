@@ -25,8 +25,16 @@ FORMATOS
   .gif .webp       -> figurinha ANIMADA (o bot usa o metodo proprio e o
                       sharp converte; gif animado vira sticker animado)
 
-Dica: quadrada (512x512) fica melhor. Gif curto e leve (ate ~2s, poucos MB)
-converte mais rapido e nao trava o envio.
+Dica: quadrada (512x512) fica melhor.
+
+LIMITES DA FIGURINHA ANIMADA (o whatsapp e o formato webp)
+  duracao   ate 10 segundos
+  tamanho   ate ~500 KB (as nossas ficam abaixo de 450)
+  quadros   ate ~45 em 512x512
+
+Meme longo nao cabe inteiro: corta o trecho da piada e reduz a taxa de
+quadros ate caber (ex.: agiota-pago-11, o bandolero, tem 42 quadros em
+9,6s — pega os 10 primeiros segundos do gif original de 22s).
 
 Sem nenhum arquivo do tema, o bot so manda o texto — nada quebra.
 A variavel FIGURINHA_QUITADO, se existir, aponta um arquivo fixo para o
