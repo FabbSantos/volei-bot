@@ -50,7 +50,7 @@ registrarPainel(app, {
   },
 });
 
-app.listen(PORT, () => {
+const servidorHttp = app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
 
@@ -164,6 +164,40 @@ async function iniciarSessao() {
       agendarReconexao(`erro ao iniciar: ${erro.message}`);
     });
 }
+
+// O Railway manda SIGTERM ao trocar de container. Sem tratar, o Node sai
+// com código 143 e o deploy antigo é carimbado como 'crashed' (e vem
+// e-mail). Saindo com 0 depois de fechar tudo, a troca fica limpa.
+let encerrando = false;
+async function encerrarComGraca(sinal) {
+  if (encerrando) return;
+  encerrando = true;
+  console.log(`[shutdown] ${sinal} recebido — encerrando com calma`);
+
+  // Rede lenta não pode segurar o desligamento: 8s e vai embora assim mesmo
+  const prazo = setTimeout(() => {
+    console.warn('[shutdown] demorou demais, saindo do jeito que dá');
+    process.exit(0);
+  }, 8000);
+  prazo.unref();
+
+  try {
+    await new Promise((resolve) => servidorHttp.close(resolve));
+  } catch (err) {
+    console.warn(`[shutdown] servidor http: ${err.message}`);
+  }
+  try {
+    if (clienteAtual) await clienteAtual.close();
+  } catch (err) {
+    console.warn(`[shutdown] navegador: ${err.message}`);
+  }
+  db.fecharBanco();
+  console.log('[shutdown] tudo fechado, até logo');
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => { encerrarComGraca('SIGTERM'); });
+process.on('SIGINT', () => { encerrarComGraca('SIGINT'); });
 
 function agendarReconexao(motivo) {
   if (reconexaoAgendada) return; // evita empilhar várias reconexões em paralelo

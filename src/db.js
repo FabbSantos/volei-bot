@@ -1494,7 +1494,19 @@ function historico(chatId) {
   ).all(chatId);
 }
 
+// Fecha o banco com calma no desligamento: o WAL faz checkpoint e o
+// arquivo no volume fica íntegro pro próximo container
+function fecharBanco() {
+  try {
+    db.close();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 module.exports = {
+  fecharBanco,
   registrarGrupoSeNovo,
   getGrupo,
   ativarGrupo,
