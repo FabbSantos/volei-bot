@@ -68,6 +68,22 @@ const REGEX_NAOPAGO_DE = /^#naopagode\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$
 // Em '<grupo> <nome>' os dois são texto livre: testa o pedaço de grupo mais
 // longo que resolve pra exatamente um grupo (assim 'Sem Espera Maria' vira
 // grupo 'Sem Espera' + nome 'Maria', e 'riachuelo Joao' vira 'riachuelo' + 'Joao')
+// Quem entra pela mão do admin normalmente é convidado — mas se a pessoa
+// for admin do grupo (achamos pelo número vinculado no elenco), o anúncio
+// ganha o crachá da NASA em vez de virar convidado
+async function ehAdminDoGrupoPeloNome(msg, chatId, nome) {
+  if (!msg.getAdminsDoGrupo) return false;
+  const jogador = db.acharJogadorDaEntrada(chatId, { nome, numero: null }, db.listarJogadores(chatId));
+  if (!jogador || !jogador.numero) return false;
+  try {
+    const admins = await msg.getAdminsDoGrupo(chatId);
+    const usuario = String(jogador.numero).split('@')[0];
+    return (admins || []).some((a) => String(a).split('@')[0] === usuario);
+  } catch {
+    return false;
+  }
+}
+
 function separarGrupoENome(resto) {
   const partes = String(resto || '').trim().split(' ').filter(Boolean);
   for (let i = partes.length - 1; i >= 1; i--) {
@@ -464,9 +480,14 @@ async function processarComandoAdmin(msg) {
       ? `na *principal* (posição ${resultado.posicao})`
       : `na *espera* (posição ${resultado.posicao})`;
 
+    const ehAdminEntrando = await ehAdminDoGrupoPeloNome(msg, r.grupo.chat_id, nome);
+    const anuncioEntrada = ehAdminEntrando
+      ? `🚀 *${nome}* usou o privilégio de ADM da NASA e entrou ${ondeEntrou}.`
+      : `✅ *${nome}* entrou ${ondeEntrou} — convidado(a).`;
+
     if (!quieto && msg.enviarPara) {
       try {
-        await msg.enviarPara(r.grupo.chat_id, `✅ *${nome}* entrou ${ondeEntrou} — convidado(a).`);
+        await msg.enviarPara(r.grupo.chat_id, anuncioEntrada);
         await msg.enviarPara(r.grupo.chat_id, db.montarListaFormatada(lista.id, lista.data_jogo));
       } catch (err) {
         await msg.reply(`⚠️ Não consegui anunciar no grupo (${err.message}).`);

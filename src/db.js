@@ -1536,6 +1536,7 @@ module.exports = {
   votarHabilidade,
   darNotaDoDia,
   listarJogadores,
+  acharJogadorDaEntrada,
   evolucaoJogadores,
   montarTimes,
   salvarTimes,
