@@ -6,6 +6,13 @@
 # o que ainda está no WAL, e o VACUUM não trava quem estiver usando o bot.
 set -euo pipefail
 
+# Sem container de pé não há o que copiar — sai quieto em vez de encher o
+# log de erro (vale pro período antes da migração e pra qualquer manutenção).
+if ! docker ps --format '{{.Names}}' | grep -qx volei-bot; then
+  echo "$(date '+%F %T') container parado, backup pulado"
+  exit 0
+fi
+
 DESTINO=/var/backups/volei-bot
 DIA=$(date +%F)
 mkdir -p "$DESTINO"
