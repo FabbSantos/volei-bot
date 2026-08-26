@@ -18,9 +18,9 @@ const ADMIN_NUMBER = process.env.ADMIN_NUMBER || null; // ex: 5521999999999@c.us
 // o bot ficaria zumbi (de pé, mas surdo)
 const ESTADOS_DESCONEXAO = ['CONFLICT', 'CLOSED', 'DISCONNECTED', 'DEPRECATED_VERSION', 'UNPAIRED', 'UNPAIRED_IDLE', 'browserClose', 'autocloseCalled', 'serverClose', 'disconnectedMobile', 'desconnectedMobile', 'qrReadFail'];
 const DELAY_BASE_MS = 15_000;
-const DELAY_MAX_MS = 5 * 60_000; // teto de 5min entre tentativas, pra não martelar o host
+const DELAY_MAX_MS = 60_000; // teto de 1min: quando o Chrome nem abre, esperar 5min só atrasa o container limpo
 const TENTATIVAS_ANTES_DE_NOTIFICAR = 2;
-const TENTATIVAS_ANTES_DE_REINICIAR = 10; // depois disso, sai do processo pro host subir um container limpo
+const TENTATIVAS_ANTES_DE_REINICIAR = 5; // depois disso, sai do processo pro host subir um container limpo
 
 let ultimoQrBase64 = null;
 let statusConexao = 'iniciando';
@@ -85,6 +85,22 @@ function limparLocksDoChrome(dir) {
   }
 }
 
+// Zera a sessão inteira (perfil do Chrome + pareamento) uma única vez no boot,
+// quando RESET_SESSAO=1. Serve pra quando o perfil no volume fica corrompido
+// depois de um crash — o Chrome trava em "database is locked" e não abre nem
+// com as travas removidas. Custo: tem que ler o QR de novo.
+let sessaoZerada = false;
+function zerarSessaoSePedido(dir) {
+  if (process.env.RESET_SESSAO !== '1' || sessaoZerada) return;
+  sessaoZerada = true; // só no primeiro boot: reconexão não apaga sessão viva
+  try {
+    fs.rmSync(dir, { recursive: true, force: true });
+    console.log(`[browser] RESET_SESSAO=1 — perfil apagado de ${dir}, vai pedir QR novo`);
+  } catch (err) {
+    console.warn(`[browser] não consegui apagar ${dir}: ${err.message}`);
+  }
+}
+
 // Só pode existir UM cliente por vez: dois clientes na mesma sessão ficam se
 // derrubando em loop (OPENING → PAIRING → CONNECTED sem fim) e nenhum responde.
 // A geração invalida eventos de clientes aposentados; o close() derruba o
@@ -107,6 +123,7 @@ async function iniciarSessao() {
   }
   if (geracao !== geracaoAtual) return; // outra reconexão passou na frente
 
+  zerarSessaoSePedido(process.env.TOKENS_DIR || 'tokens');
   limparLocksDoChrome(process.env.TOKENS_DIR || 'tokens');
   wppconnect
     .create({
@@ -141,11 +158,28 @@ async function iniciarSessao() {
         // vida agir. (O histórico da reconexão já é descartado por timestamp,
         // então não há mais rajada pra justificar timeout longo.)
         protocolTimeout: 90_000,
+        // Dieta de processos/threads: o container do Railway tem teto de PIDs
+        // e o Chrome padrão estoura ("pthread_create: Resource temporarily
+        // unavailable" / "Zygote could not fork") mesmo em container novo.
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
+          '--disable-software-rasterizer',
+          '--renderer-process-limit=1',
+          '--disable-features=site-per-process,IsolateOrigins,Translate,BackForwardCache,MediaRouter,OptimizationHints',
+          '--disable-background-networking',
+          '--disable-background-timer-throttling',
+          '--disable-breakpad',
+          '--disable-crash-reporter',
+          '--disable-extensions',
+          '--disable-sync',
+          '--disable-default-apps',
+          '--no-first-run',
+          '--no-default-browser-check',
+          '--mute-audio',
+          '--metrics-recording-only',
         ],
       },
     })
