@@ -1,3 +1,5 @@
+const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const express = require('express');
 const db = require('./db');
@@ -26,6 +28,20 @@ function registrarPainel(app, deps = {}) {
   // Chart.js servido localmente — nada de CDN
   app.get('/painel/chart.js', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'node_modules', 'chart.js', 'dist', 'chart.umd.js'));
+  });
+
+  // Download do banco inteiro, pra backup e pra migrar de host. Fica fora do
+  // router /api porque devolve arquivo, não JSON — mas exige o mesmo token.
+  app.get('/backup', exigirToken, (req, res) => {
+    const destino = path.join(os.tmpdir(), `volei-backup-${process.pid}.db`);
+    try {
+      db.snapshotBanco(destino);
+    } catch (err) {
+      return res.status(500).json({ erro: `Não consegui gerar o backup: ${err.message}` });
+    }
+    res.download(destino, 'volei.db', () => {
+      try { fs.rmSync(destino, { force: true }); } catch {}
+    });
   });
 
   const api = express.Router();

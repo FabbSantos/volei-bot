@@ -1,4 +1,5 @@
 const Database = require('better-sqlite3');
+const fs = require('fs');
 const path = require('path');
 
 const dbPath = process.env.DB_PATH || path.join(__dirname, '..', 'volei.db');
@@ -1507,6 +1508,17 @@ function historico(chatId) {
 
 // Fecha o banco com calma no desligamento: o WAL faz checkpoint e o
 // arquivo no volume fica íntegro pro próximo container
+// Cópia consistente do banco pra download/backup. Copiar o .db na mão perde o
+// que ainda está no WAL; VACUUM INTO gera um arquivo já compactado e íntegro,
+// sem parar de atender quem estiver usando o bot no meio.
+function snapshotBanco(destino) {
+  try {
+    fs.rmSync(destino, { force: true }); // VACUUM INTO recusa arquivo existente
+  } catch {}
+  db.prepare('VACUUM INTO ?').run(destino);
+  return destino;
+}
+
 function fecharBanco() {
   try {
     db.close();
@@ -1594,4 +1606,5 @@ module.exports = {
   LIMITE_PRINCIPAL,
   LIMITE_ESPERA,
   LIMITE_MENSALISTAS,
+  snapshotBanco,
 };
