@@ -4,7 +4,8 @@ node_modules/
 # Segredos e config local (use .env.example como modelo)
 .env
 
-# Banco SQLite local (produção usa o volume montado em /app/data)
+# Banco SQLite local (na VPS o volume é ./dados)
+dados/
 *.db
 *.db-wal
 *.db-shm

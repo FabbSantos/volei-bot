@@ -1,0 +1,29 @@
+services:
+  volei-bot:
+    build: .
+    container_name: volei-bot
+    restart: always
+    # Só o nginx enxerga a porta: o painel e o /qr entram por HTTPS, nunca
+    # direto pelo IP da máquina (o token do painel viajaria em texto puro).
+    ports:
+      - '127.0.0.1:3000:3000'
+    env_file:
+      - .env
+    environment:
+      - PORT=3000
+      - DB_PATH=/app/data/volei.db
+      - TOKENS_DIR=/app/data/tokens
+    volumes:
+      # Banco + sessão do WhatsApp. É a única coisa insubstituível da máquina.
+      - ./dados:/app/data
+    # O Chrome estoura o /dev/shm padrão do Docker (64 MB) e passa a crashar
+    # aba. Subir aqui é mais seguro que depender só de --disable-dev-shm-usage.
+    shm_size: '512mb'
+    # Zumbi do Chrome acumula até esgotar os PIDs do container; o tini do
+    # Dockerfile colhe, e o teto abaixo evita que um surto derrube a máquina.
+    pids_limit: 2048
+    logging:
+      driver: json-file
+      options:
+        max-size: '10m'
+        max-file: '3'

@@ -1,0 +1,41 @@
+name: Deploy na VPS
+
+# Mesmo hábito de hoje: push na main sobe o bot. A diferença é que agora quem
+# reinicia o container é este workflow, não o Railway.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Subir na VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            set -e
+            cd /opt/volei-bot
+            git fetch --all
+            git reset --hard origin/main
+            docker compose up -d --build
+            docker image prune -f
+
+            # O bot demora uns 20s pra abrir o Chrome e restaurar a sessão.
+            # Falhar aqui é melhor que um deploy "verde" com o bot morto.
+            for i in $(seq 1 20); do
+              sleep 5
+              estado=$(curl -s --max-time 5 http://127.0.0.1:3000/status || true)
+              echo "  $estado"
+              case "$estado" in
+                *inChat*|*isLogged*|*CONNECTED*) echo "bot no ar"; exit 0 ;;
+              esac
+            done
+            echo "bot não voltou a conectar em 100s — vê os logs:"
+            docker compose logs --tail 40 volei-bot
+            exit 1
