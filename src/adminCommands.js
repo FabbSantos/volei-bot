@@ -6,6 +6,7 @@ const {
   acharFigurinha,
   acharFigurinhaCobranca,
   acharFigurinhaQuitado,
+  listarFigurinhas,
   montarLembretePagamento,
   montarLembreteSubiu,
 } = require('./commands');
@@ -120,8 +121,11 @@ const REGEX_VAGAS_MENSALISTAS_DE = /^#vagasmensalistasde\s+(.+?)\s+(\d{1,3})$/i;
 const REGEX_VALOR_DE = /^#valorde\s+(.+?)\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?)$/i;
 const REGEX_VALOR_LISTA_DE = /^#valorlistade\s+(.+?)\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?)$/i;
 const REGEX_GRUPO_ADMIN = /^#grupoadmin\s+(\S+)(?:\s+(off))?$/i;
+const CMD_TESTE = '#teste';
 
 const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
+
+*#teste* — checa se está tudo de pé: conexão, máquina, banco, listas e figurinhas
 
 *#listargrupos* — todos os grupos, com status, tamanho, valor e chat_id
 *#ativargrupo <chat_id>* — libera um grupo pra usar o bot
@@ -165,6 +169,102 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 *#admin* — mostra essa ajuda
 
 Repetir #ativargrupo num grupo já ativo só atualiza o tamanho.`;
+
+// "3d 4h 12min" a partir de segundos — uptime legível na resposta do #teste
+function tempoLegivel(segundos) {
+  const d = Math.floor(segundos / 86400);
+  const h = Math.floor((segundos % 86400) / 3600);
+  const m = Math.floor((segundos % 3600) / 60);
+  return [d && `${d}d`, h && `${h}h`, `${m}min`].filter(Boolean).join(' ');
+}
+
+// Diagnóstico completo em uma mensagem: conexão, processo, banco, listas,
+// fuso e figurinhas. A ideia é que uma linha errada salte aos olhos — por
+// isso cada item leva ✅ ou ⚠️ em vez de só despejar número.
+function montarRelatorioDeSaude(saude) {
+  const linhas = [];
+  const problemas = [];
+
+  // --- conexão e processo
+  if (saude) {
+    const conectado = ['inChat', 'isLogged', 'CONNECTED'].includes(saude.status);
+    if (!conectado) problemas.push(`conexão em "${saude.status}"`);
+    if (saude.tentativas > 0) problemas.push(`${saude.tentativas} tentativa(s) de reconexão em curso`);
+    if (saude.esperandoQr) problemas.push('esperando leitura de QR');
+
+    linhas.push(`${conectado ? '✅' : '⚠️'} *Conexão:* ${saude.status}${saude.tentativas ? ` (${saude.tentativas} tentativa(s))` : ''}`);
+    linhas.push(`🖥 *Máquina:* ${saude.maquina}`);
+    linhas.push(`⏱ *No ar há:* ${tempoLegivel(saude.uptimeSegundos)} · ${saude.memoriaMb} MB`);
+  } else {
+    linhas.push('⚠️ *Conexão:* não consegui ler o estado do processo');
+    problemas.push('estado do processo indisponível');
+  }
+
+  // --- banco: leitura de verdade, não só "o arquivo existe"
+  let grupos = [];
+  try {
+    grupos = db.listarGrupos();
+    const caminho = process.env.DB_PATH || 'volei.db';
+    let tamanho = '';
+    try {
+      const bytes = fs.statSync(caminho).size;
+      tamanho = bytes >= 1024 * 1024
+        ? ` · ${(bytes / 1024 / 1024).toFixed(1)} MB`
+        : ` · ${Math.round(bytes / 1024)} KB`;
+    } catch {}
+    linhas.push(`✅ *Banco:* respondendo${tamanho}`);
+  } catch (err) {
+    linhas.push(`❌ *Banco:* ${err.message}`);
+    problemas.push('banco não respondeu');
+  }
+
+  // --- relógio: o lembrete depende do fuso, e já quebrou por causa disso
+  const agora = new Date();
+  const horaBr = new Intl.DateTimeFormat('pt-BR', {
+    timeZone: 'America/Sao_Paulo',
+    dateStyle: 'short',
+    timeStyle: 'short',
+    hourCycle: 'h23',
+  }).format(agora);
+  linhas.push(`🕐 *Agora em Brasília:* ${horaBr}`);
+
+  // --- listas por grupo, com o estado da cobrança do dia
+  const hoje = agora.toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  const ativos = grupos.filter((g) => g.ativo && !g.eh_admin);
+  if (ativos.length === 0) {
+    linhas.push('⚠️ *Grupos:* nenhum grupo ativo');
+  } else {
+    linhas.push(`\n📋 *Grupos ativos (${ativos.length}):*`);
+    for (const g of ativos) {
+      const lista = db.getListaMaisRecente(g.chat_id);
+      if (!lista) {
+        linhas.push(`• ${g.nome || g.chat_id} — sem lista`);
+        continue;
+      }
+      const resumo = db.resumoPagamentos(lista.id);
+      const cobranca = lista.status === 'aberta'
+        ? (lista.lembrete_em === hoje ? 'cobrança de hoje já saiu' : 'cobrança de hoje ainda não saiu')
+        : 'lista fechada, sem cobrança diária';
+      linhas.push(
+        `• ${g.nome || g.chat_id} — *${lista.data_jogo}* (${lista.status})\n` +
+        `   ${resumo.totalPessoas} na lista · ${resumo.emDia}/${resumo.totalCobrados} em dia · ${cobranca}`
+      );
+    }
+  }
+
+  // --- figurinhas: arquivo faltando só aparece na hora de enviar, tarde demais
+  const temas = ['agiota-pago', 'cade-meu-pix'];
+  const contagem = temas.map((t) => `${t}: ${listarFigurinhas(t).length}`).join(' · ');
+  const faltando = temas.filter((t) => listarFigurinhas(t).length === 0);
+  if (faltando.length) problemas.push(`sem figurinha de ${faltando.join(' e ')}`);
+  linhas.push(`\n${faltando.length ? '⚠️' : '✅'} *Figurinhas:* ${contagem}`);
+
+  const cabecalho = problemas.length === 0
+    ? '🏐 *Tudo certo por aqui.*\n'
+    : `⚠️ *Achei ${problemas.length} coisa(s) fora do lugar:*\n${problemas.map((p) => `• ${p}`).join('\n')}\n`;
+
+  return `${cabecalho}\n${linhas.join('\n')}`;
+}
 
 // Acha o grupo alvo de um comando remoto: chat_id exato ou pedaço do nome.
 // Retorna { grupo } ou { mensagem } pronta pra responder.
@@ -1025,6 +1125,10 @@ async function processarComandoAdmin(msg) {
     return msg.reply(desligar
       ? `🛠 Grupo ${chatId} deixou de ser grupo de admins.`
       : `🛠 Grupo ${chatId} agora é grupo de admins! Todo mundo lá pode usar os comandos remotos (#listade, #pagosde, #adminsde, #valorde...). Manda *#admin* lá pra ver tudo.`);
+  }
+
+  if (texto.toLowerCase() === CMD_TESTE) {
+    return msg.reply(montarRelatorioDeSaude(msg.saude ? msg.saude() : null));
   }
 
   if (texto.toLowerCase() === CMD_AJUDA_ADMIN) {
