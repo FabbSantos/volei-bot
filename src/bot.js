@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const wppconnect = require('@wppconnect-team/wppconnect');
 const db = require('./db');
@@ -34,6 +35,20 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 app.get('/status', (req, res) => {
   res.json({ status: statusConexao, tentativasReconexao });
 });
+
+// Estado que só o bot.js conhece (conexão, processo, máquina). Vai como
+// dependência pro #teste do grupo de admins — o resto do diagnóstico
+// (banco, listas, figurinhas) o adminCommands monta sozinho.
+function saudeDoProcesso() {
+  return {
+    status: statusConexao,
+    tentativas: tentativasReconexao,
+    esperandoQr: Boolean(ultimoQrBase64),
+    uptimeSegundos: Math.floor(process.uptime()),
+    memoriaMb: Math.round(process.memoryUsage().rss / 1024 / 1024),
+    maquina: process.env.HOST_APELIDO || os.hostname(),
+  };
+}
 
 app.get('/qr', (req, res) => {
   if (!ultimoQrBase64) {
@@ -511,6 +526,7 @@ function start(client) {
             enviarPara: (chatId, texto, opcoes) => client.sendText(chatId, texto, opcoes),
             enviarFigurinhaPara: (chatId, caminho) => enviarFigurinhaNoChat(client, chatId, caminho),
             getAdminsDoGrupo: (chatId) => listarAdminsDoGrupo(client, chatId),
+            saude: saudeDoProcesso,
           });
         } else {
           // Log de diagnóstico: mostra o JID exato que chegou, pra conferir
