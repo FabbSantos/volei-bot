@@ -1415,6 +1415,67 @@ function equilibrarAltura(times, alturaAlvo, tolerancia = 1) {
   }
 }
 
+// Depois do sorteio e do ajuste de altura as médias saem tortas: cada troca
+// feita por altura mexe na nota e ninguém desfazia o estrago. Esta passada faz
+// o caminho inverso — testa toda troca possível entre dois times, aplica a que
+// mais aproxima as médias, e repete até nenhuma troca melhorar. Nunca aceita
+// uma troca que piore a distribuição de altura já conquistada, então os dois
+// critérios convivem em vez de brigar.
+//
+// Determinística de propósito: a mesma lista sempre produz os mesmos times,
+// senão a prévia do #timesde não bateria com o que é enviado ao grupo.
+function equilibrarMedias(times, maxVoltas = 60) {
+  const media = (t) => (t.length ? t.reduce((s, j) => s + j.nota, 0) / t.length : 0);
+  const espalhamento = () => {
+    const medias = times.map(media);
+    return Math.max(...medias) - Math.min(...medias);
+  };
+  const desequilibrioAltura = () => {
+    let pior = 0;
+    for (const alvo of ['alto', 'baixo']) {
+      const contagens = times.map((t) => t.filter((j) => j.altura === alvo).length);
+      pior = Math.max(pior, Math.max(...contagens) - Math.min(...contagens));
+    }
+    return pior;
+  };
+
+  for (let volta = 0; volta < maxVoltas; volta++) {
+    const atual = espalhamento();
+    const alturaAtual = desequilibrioAltura();
+    let melhor = null;
+
+    for (let a = 0; a < times.length; a++) {
+      for (let b = a + 1; b < times.length; b++) {
+        for (let i = 0; i < times[a].length; i++) {
+          for (let j = 0; j < times[b].length; j++) {
+            const ja = times[a][i];
+            const jb = times[b][j];
+            if (ja.nota === jb.nota) continue; // troca que não muda média nenhuma
+
+            times[a][i] = jb;
+            times[b][j] = ja;
+            const novoEspalhamento = espalhamento();
+            const novaAltura = desequilibrioAltura();
+            times[a][i] = ja;
+            times[b][j] = jb;
+
+            if (novaAltura > alturaAtual) continue; // altura é piso, não moeda de troca
+            if (novoEspalhamento < atual - 1e-9 && (!melhor || novoEspalhamento < melhor.valor - 1e-9)) {
+              melhor = { a, b, i, j, valor: novoEspalhamento };
+            }
+          }
+        }
+      }
+    }
+
+    if (!melhor) return; // nenhuma troca melhora: chegamos no melhor alcançável
+    const { a, b, i, j } = melhor;
+    const guardado = times[a][i];
+    times[a][i] = times[b][j];
+    times[b][j] = guardado;
+  }
+}
+
 // ---- times salvos por lista -------------------------------------------------
 
 function salvarTimes(listaId, times) {
@@ -1491,6 +1552,10 @@ function montarTimes(chatId, quantidadeTimes, participantes) {
     equilibrarAltura(times, 'alto');
     equilibrarAltura(times, 'baixo');
   }
+
+  // Conserta as médias que o ajuste de altura (e o próprio zigue-zague)
+  // deixaram tortas, sem devolver os altos todos pro mesmo time
+  equilibrarMedias(times);
 
   return times.map((time, i) => ({
     numero: i + 1,
@@ -1607,4 +1672,5 @@ module.exports = {
   LIMITE_ESPERA,
   LIMITE_MENSALISTAS,
   snapshotBanco,
+  equilibrarMedias,
 };
