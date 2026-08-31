@@ -1174,29 +1174,27 @@ async function processarComandoAdmin(msg) {
       return msg.reply('Não consigo falar com o grupo agora (bot desconectado).');
     }
 
-    // Anúncio marca o grupo inteiro: é o que faz o celular de todo mundo
-    // apitar. As menções precisam do @numero no texto E da lista no envio —
-    // só a lista não destaca nada, só o texto não notifica ninguém.
+    // Marcação OCULTA: a lista de menções vai no envio, mas os @numero NÃO
+    // entram no texto. O celular de todo mundo apita e a mensagem aparece
+    // limpa — com 70 pessoas, o cabeçalho de menções seria um paredão.
+    // (@todos/@all não existe pra bot: é recurso do app, não do protocolo.)
     let mencoes = [];
-    let cabecalho = '';
     let avisoMencao = '';
     if (msg.getMembrosDoGrupo) {
       try {
         mencoes = (await msg.getMembrosDoGrupo(grupo.chat_id)) || [];
-        cabecalho = mencoes.map((m) => '@' + String(m).split('@')[0]).join(' ');
       } catch (err) {
-        avisoMencao = `\n\n⚠️ Não consegui marcar o pessoal (${err.message}) — saiu sem marcação.`;
+        avisoMencao = `\n\n⚠️ Não consegui marcar o pessoal (${err.message}) — o recado saiu sem notificação.`;
       }
     }
 
-    const corpo = cabecalho ? `${cabecalho}\n\n${recado}` : recado;
     try {
-      await msg.enviarPara(grupo.chat_id, corpo, mencoes.length ? { mentionedList: mencoes } : undefined);
+      await msg.enviarPara(grupo.chat_id, recado, mencoes.length ? { mentionedList: mencoes } : undefined);
     } catch (err) {
       return msg.reply(`⚠️ Não consegui anunciar em *${nomeGrupo}*: ${err.message}`);
     }
     return msg.reply(
-      `📣 Anunciado em *${nomeGrupo}*${mencoes.length ? `, marcando ${mencoes.length} pessoa(s)` : ''}. Saiu assim:\n\n${recado}${avisoMencao}`
+      `📣 Anunciado em *${nomeGrupo}*${mencoes.length ? `, notificando ${mencoes.length} pessoa(s)` : ''}. Saiu assim:\n\n${recado}${avisoMencao}`
     );
   }
 
