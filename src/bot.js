@@ -561,6 +561,7 @@ function start(client) {
           enviarPara: (chatId, texto, opcoes) => client.sendText(chatId, texto, opcoes),
           enviarFigurinhaPara: (chatId, caminho) => enviarFigurinhaNoChat(client, chatId, caminho),
           getAdminsDoGrupo: (chatId) => listarAdminsDoGrupo(client, chatId),
+          saude: saudeDoProcesso,
         });
         return;
       }
