@@ -177,6 +177,33 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 
 Repetir #ativargrupo num grupo já ativo só atualiza o tamanho.`;
 
+// Abertura das inscrições de mensalista: sorteia uma das versões pra não ficar
+// a mesma frase todo mês. O miolo é sempre igual (vagas, #mensalista, prazo do
+// 5º dia útil, ✅ confirma) — a piada muda, a regra não.
+const ABERTURAS_MENSALISTAS = [
+  (vagas) =>
+    `💸 *ABRIU O MENSALÃO* 💸\n\n${vagas} vaga(s) + fila de espera.\n\n` +
+    `Manda *#mensalista* pra entrar no esquema. Diferente do original, aqui tem ` +
+    `que pagar de verdade: até o *5º dia útil* com os admins. O ✅ é o que confirma a vaga.`,
+  (vagas) =>
+    `🧠 *MENSA-LISTA ABERTA* 🏐\n\n${vagas} vaga(s) + fila de espera.\n\n` +
+    `Não é concurso de inteligência, é de velocidade: manda *#mensalista* e garante a tua. ` +
+    `Pagamento até o *5º dia útil* com os admins — o ✅ confirma.`,
+  (vagas) =>
+    `💰 *MENSALÃO DO VÔLEI, NOVA EDIÇÃO*\n\n${vagas} vaga(s) + fila de espera.\n\n` +
+    `Manda *#mensalista* pra se candidatar. Pagamento até o *5º dia útil*, e aqui ` +
+    `ninguém tem foro privilegiado. O ✅ é o que vale.`,
+  (vagas) =>
+    `🧾 *Mensa-Lista: caixa aberto*\n\n${vagas} vaga(s) + fila de espera.\n\n` +
+    `*#mensalista* pra entrar. Quem não pagar até o *5º dia útil* devolve a vaga ` +
+    `pro primeiro da fila — sem CPI, sem recurso. O ✅ é o comprovante.`,
+];
+
+function anuncioAberturaMensalistas(vagas) {
+  const escolhida = ABERTURAS_MENSALISTAS[Math.floor(Math.random() * ABERTURAS_MENSALISTAS.length)];
+  return escolhida(vagas);
+}
+
 // "3d 4h 12min" a partir de segundos — uptime legível na resposta do #teste
 function tempoLegivel(segundos) {
   const d = Math.floor(segundos / 86400);
@@ -825,8 +852,8 @@ async function processarComandoAdmin(msg) {
     const resumo = db.resumoMensalistas(r.grupo.chat_id);
     const vagas = Math.max(0, resumo.limite - resumo.total);
     const anuncio = abrir
-      ? `🗓 *Inscrições de mensalista abertas!* ${vagas} vaga(s) + fila de espera.\n\nManda *#mensalista* pra garantir a tua. Pagamento até o 5º dia útil com os admins — o ✅ é o que confirma a vaga.`
-      : `🗓 *Inscrições de mensalista encerradas.* Quem garantiu, garantiu — agora é acertar o pagamento com os admins.`;
+      ? anuncioAberturaMensalistas(vagas)
+      : `🔒 *Mensalão encerrado.* Quem garantiu, garantiu — agora é acertar o pagamento com os admins. Quem ficou de fora, mês que vem tem outro.`;
     let aviso = '';
     if (!quieto && msg.enviarPara) {
       try {

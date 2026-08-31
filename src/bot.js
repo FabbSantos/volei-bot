@@ -443,15 +443,6 @@ async function listarAdminsDoGrupo(client, chatId) {
   return idsValidos;
 }
 
-// Todo mundo do grupo, pro #anuncio marcar a galera. Sem cache: anúncio é
-// raro e o custo de marcar quem já saiu do grupo é alto (a menção não resolve
-// e o WhatsApp mostra número cru no meio do recado).
-async function listarMembrosDoGrupo(client, chatId) {
-  const wids = await client.getGroupMembersIds(chatId);
-  const ids = await Promise.all((wids || []).map((w) => lidParaNumero(client, w)));
-  return ids.filter(Boolean);
-}
-
 // O WhatsApp novo endereça contatos como @lid (ID opaco de privacidade), sem
 // relação numérica com o telefone. O wa-js mapeia LID -> número real; cacheia
 // pra não consultar a página a cada mensagem.
@@ -477,18 +468,26 @@ async function lidParaNumero(client, id) {
   return jid; // sem mapeamento, segue com o lid mesmo
 }
 
-const cacheMembros = new Map(); // chatId -> { ids, expira } — membros do grupo de admins
+const cacheMembros = new Map(); // chatId -> { ids, expira } — membros do grupo
 
+// Usada pelo grupo de admins e pelo #anuncio. Num grupo endereçado por @lid,
+// resolver 70 membros de uma vez são 70 consultas simultâneas à página — a
+// mesma rajada que já estourou o protocolTimeout deste bot. Por isso vai em
+// blocos: demora igual na primeira vez, mas não afoga a página.
 async function listarMembrosDoGrupo(client, chatId) {
   const agora = Date.now();
   const cache = cacheMembros.get(chatId);
   if (cache && cache.expira > agora) return cache.ids;
 
-  const membros = await client.getGroupMembers(chatId);
-  const ids = await Promise.all(
-    (membros || []).map((c) => lidParaNumero(client, c?.id ?? c))
-  );
-  const idsValidos = ids.filter(Boolean);
+  const membros = (await client.getGroupMembers(chatId)) || [];
+  const idsValidos = [];
+  const BLOCO = 10;
+  for (let i = 0; i < membros.length; i += BLOCO) {
+    const parte = await Promise.all(
+      membros.slice(i, i + BLOCO).map((c) => lidParaNumero(client, c?.id ?? c))
+    );
+    idsValidos.push(...parte.filter(Boolean));
+  }
   cacheMembros.set(chatId, { ids: idsValidos, expira: agora + CACHE_ADMINS_TTL_MS });
   return idsValidos;
 }
