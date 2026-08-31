@@ -871,7 +871,7 @@ async function trocarGrupo() {
   try {
     grupos = await api('/grupos');
   } catch (e) {
-    document.body.innerHTML = `<main><div class="cartao"><h2>🔒 ${e.message}</h2><p class="mut">Confere o link com o token certo.</p></div></main>`;
+    document.body.innerHTML = `<main><div class="cartao"><h2>🔒 ${e.message}</h2><p class="mut">Tua sessão expirou ou a senha mudou. <a href="/painel">Entrar de novo</a>.</p></div></main>`;
     return;
   }
   const salvo = localStorage.getItem('painel.grupo');

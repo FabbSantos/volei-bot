@@ -122,10 +122,17 @@ const REGEX_VALOR_DE = /^#valorde\s+(.+?)\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?)
 const REGEX_VALOR_LISTA_DE = /^#valorlistade\s+(.+?)\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?)$/i;
 const REGEX_GRUPO_ADMIN = /^#grupoadmin\s+(\S+)(?:\s+(off))?$/i;
 const CMD_TESTE = '#teste';
+// Recado avulso pro grupo da pelada, saindo EXATAMENTE como foi escrito —
+// sem prefixo, sem emoji do bot, sem "mensagem dos admins". [\s\S] no lugar
+// do ponto pra aceitar anúncio de várias linhas.
+const REGEX_ANUNCIO = /^#anuncio\s+([\s\S]+)$/i;
+const REGEX_ANUNCIO_DE = /^#anunciarde\s+([\s\S]+)$/i;
 
 const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 
 *#teste* — checa se está tudo de pé: conexão, máquina, banco, listas e figurinhas
+*#anuncio <texto>* — manda o texto pro grupo da pelada, exatamente como escrito
+*#anunciarde <grupo> <texto>* — o mesmo, escolhendo o grupo
 
 *#listargrupos* — todos os grupos, com status, tamanho, valor e chat_id
 *#ativargrupo <chat_id>* — libera um grupo pra usar o bot
@@ -1125,6 +1132,53 @@ async function processarComandoAdmin(msg) {
     return msg.reply(desligar
       ? `🛠 Grupo ${chatId} deixou de ser grupo de admins.`
       : `🛠 Grupo ${chatId} agora é grupo de admins! Todo mundo lá pode usar os comandos remotos (#listade, #pagosde, #adminsde, #valorde...). Manda *#admin* lá pra ver tudo.`);
+  }
+
+  // #anunciarde <grupo> <texto> escolhe o grupo; #anuncio <texto> vai no único
+  // grupo ativo, e recusa quando há mais de um em vez de chutar destino.
+  const matchAnuncioDe = texto.match(REGEX_ANUNCIO_DE);
+  const matchAnuncio = matchAnuncioDe ? null : texto.match(REGEX_ANUNCIO);
+  if (matchAnuncioDe || matchAnuncio) {
+    let grupo;
+    let recado;
+
+    if (matchAnuncioDe) {
+      const separado = separarGrupoENome(matchAnuncioDe[1]);
+      if (!separado.nome) {
+        return msg.reply('Falta o texto do anúncio. Ex: *#anunciarde riachuelo Jogo de sexta cancelado*');
+      }
+      const r = resolverGrupo(separado.termo);
+      if (r.mensagem) return msg.reply(r.mensagem);
+      grupo = r.grupo;
+      recado = separado.nome;
+    } else {
+      const candidatos = db.listarGrupos().filter((g) => g.ativo && !g.eh_admin);
+      if (candidatos.length === 0) {
+        return msg.reply('Nenhum grupo ativo pra anunciar.');
+      }
+      if (candidatos.length > 1) {
+        const lista = candidatos.map((g) => `• ${g.nome || g.chat_id}`).join('\n');
+        return msg.reply(
+          `Tem ${candidatos.length} grupos ativos, não sei em qual anunciar:\n${lista}\n\nUsa *#anunciarde <grupo> <texto>*.`
+        );
+      }
+      grupo = candidatos[0];
+      recado = matchAnuncio[1];
+    }
+
+    recado = recado.trim();
+    if (!recado) return msg.reply('Anúncio vazio — escreve o texto depois do comando.');
+
+    const nomeGrupo = grupo.nome || grupo.chat_id;
+    if (!msg.enviarPara) {
+      return msg.reply('Não consigo falar com o grupo agora (bot desconectado).');
+    }
+    try {
+      await msg.enviarPara(grupo.chat_id, recado);
+    } catch (err) {
+      return msg.reply(`⚠️ Não consegui anunciar em *${nomeGrupo}*: ${err.message}`);
+    }
+    return msg.reply(`📣 Anunciado em *${nomeGrupo}*, saiu assim:\n\n${recado}`);
   }
 
   if (texto.toLowerCase() === CMD_TESTE) {

@@ -30,6 +30,11 @@ let reconexaoAgendada = false;
 let notificacaoEnviada = false; // evita spammar o Telegram a cada retry do mesmo incidente
 
 const app = express();
+// A página do painel mora em public/, que é servida sem autenticação (é de lá
+// que sai a tela do QR). Sem esta linha, /painel.html entregaria a página
+// inteira por fora do login — os dados continuariam protegidos, mas não custa
+// fechar a porta.
+app.get('/painel.html', (req, res) => res.redirect('/painel'));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
 app.get('/status', (req, res) => {
