@@ -41,9 +41,6 @@ app.get('/status', (req, res) => {
   res.json({ status: statusConexao, tentativasReconexao });
 });
 
-// Estado que só o bot.js conhece (conexão, processo, máquina). Vai como
-// dependência pro #teste do grupo de admins — o resto do diagnóstico
-// (banco, listas, figurinhas) o adminCommands monta sozinho.
 // Memória do CONTAINER inteiro, não só do Node: o Chrome roda em processo
 // separado e é ele que pesa — medir só o process.memoryUsage() mostrava 89 MB
 // enquanto o conjunto passava de 600. Fora de container, cai pro RSS mesmo.
@@ -57,6 +54,9 @@ function memoriaMb() {
   return Math.round(process.memoryUsage().rss / 1024 / 1024);
 }
 
+// Estado que só o bot.js conhece (conexão, processo, máquina). Vai como
+// dependência pro #teste do grupo de admins — o resto do diagnóstico
+// (banco, listas, figurinhas) o adminCommands monta sozinho.
 function saudeDoProcesso() {
   return {
     status: statusConexao,
@@ -443,6 +443,15 @@ async function listarAdminsDoGrupo(client, chatId) {
   return idsValidos;
 }
 
+// Todo mundo do grupo, pro #anuncio marcar a galera. Sem cache: anúncio é
+// raro e o custo de marcar quem já saiu do grupo é alto (a menção não resolve
+// e o WhatsApp mostra número cru no meio do recado).
+async function listarMembrosDoGrupo(client, chatId) {
+  const wids = await client.getGroupMembersIds(chatId);
+  const ids = await Promise.all((wids || []).map((w) => lidParaNumero(client, w)));
+  return ids.filter(Boolean);
+}
+
 // O WhatsApp novo endereça contatos como @lid (ID opaco de privacidade), sem
 // relação numérica com o telefone. O wa-js mapeia LID -> número real; cacheia
 // pra não consultar a página a cada mensagem.
@@ -547,6 +556,7 @@ function start(client) {
             enviarFigurinhaPara: (chatId, caminho) => enviarFigurinhaNoChat(client, chatId, caminho),
             getAdminsDoGrupo: (chatId) => listarAdminsDoGrupo(client, chatId),
             saude: saudeDoProcesso,
+            getMembrosDoGrupo: (chatId) => listarMembrosDoGrupo(client, chatId),
           });
         } else {
           // Log de diagnóstico: mostra o JID exato que chegou, pra conferir
@@ -582,6 +592,7 @@ function start(client) {
           enviarFigurinhaPara: (chatId, caminho) => enviarFigurinhaNoChat(client, chatId, caminho),
           getAdminsDoGrupo: (chatId) => listarAdminsDoGrupo(client, chatId),
           saude: saudeDoProcesso,
+            getMembrosDoGrupo: (chatId) => listarMembrosDoGrupo(client, chatId),
         });
         return;
       }

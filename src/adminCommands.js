@@ -1173,12 +1173,31 @@ async function processarComandoAdmin(msg) {
     if (!msg.enviarPara) {
       return msg.reply('Não consigo falar com o grupo agora (bot desconectado).');
     }
+
+    // Anúncio marca o grupo inteiro: é o que faz o celular de todo mundo
+    // apitar. As menções precisam do @numero no texto E da lista no envio —
+    // só a lista não destaca nada, só o texto não notifica ninguém.
+    let mencoes = [];
+    let cabecalho = '';
+    let avisoMencao = '';
+    if (msg.getMembrosDoGrupo) {
+      try {
+        mencoes = (await msg.getMembrosDoGrupo(grupo.chat_id)) || [];
+        cabecalho = mencoes.map((m) => '@' + String(m).split('@')[0]).join(' ');
+      } catch (err) {
+        avisoMencao = `\n\n⚠️ Não consegui marcar o pessoal (${err.message}) — saiu sem marcação.`;
+      }
+    }
+
+    const corpo = cabecalho ? `${cabecalho}\n\n${recado}` : recado;
     try {
-      await msg.enviarPara(grupo.chat_id, recado);
+      await msg.enviarPara(grupo.chat_id, corpo, mencoes.length ? { mentionedList: mencoes } : undefined);
     } catch (err) {
       return msg.reply(`⚠️ Não consegui anunciar em *${nomeGrupo}*: ${err.message}`);
     }
-    return msg.reply(`📣 Anunciado em *${nomeGrupo}*, saiu assim:\n\n${recado}`);
+    return msg.reply(
+      `📣 Anunciado em *${nomeGrupo}*${mencoes.length ? `, marcando ${mencoes.length} pessoa(s)` : ''}. Saiu assim:\n\n${recado}${avisoMencao}`
+    );
   }
 
   if (texto.toLowerCase() === CMD_TESTE) {
