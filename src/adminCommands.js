@@ -87,14 +87,27 @@ async function ehAdminDoGrupoPeloNome(msg, chatId, nome) {
 }
 
 function separarGrupoENome(resto) {
-  const partes = String(resto || '').trim().split(' ').filter(Boolean);
+  const bruto = String(resto || '').trim();
+  // Quebra em qualquer espaço em branco, não só no espaço: anúncio que começa
+  // na linha de baixo fazia o nome do grupo engolir a quebra ("riachuelo\n\n📢"
+  // virava uma palavra só e não achava grupo nenhum).
+  // Guarda também onde cada palavra começa, pra devolver o resto EXATAMENTE
+  // como veio — um join(' ') achataria as quebras de linha do anúncio.
+  const partes = [];
+  const achador = /\S+/g;
+  let achado;
+  while ((achado = achador.exec(bruto))) partes.push({ texto: achado[0], inicio: achado.index });
+
   for (let i = partes.length - 1; i >= 1; i--) {
-    const termo = partes.slice(0, i).join(' ');
+    const termo = partes.slice(0, i).map((p) => p.texto).join(' ');
     if (db.buscarGrupos(termo).length === 1) {
-      return { termo, nome: partes.slice(i).join(' ') };
+      return { termo, nome: bruto.slice(partes[i].inicio) };
     }
   }
-  return { termo: partes[0] || '', nome: partes.slice(1).join(' ') };
+  return {
+    termo: partes[0]?.texto || '',
+    nome: partes[1] ? bruto.slice(partes[1].inicio) : '',
+  };
 }
 
 function expandirPosicoes(texto) {
