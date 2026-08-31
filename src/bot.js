@@ -39,13 +39,28 @@ app.get('/status', (req, res) => {
 // Estado que só o bot.js conhece (conexão, processo, máquina). Vai como
 // dependência pro #teste do grupo de admins — o resto do diagnóstico
 // (banco, listas, figurinhas) o adminCommands monta sozinho.
+// Memória do CONTAINER inteiro, não só do Node: o Chrome roda em processo
+// separado e é ele que pesa — medir só o process.memoryUsage() mostrava 89 MB
+// enquanto o conjunto passava de 600. Fora de container, cai pro RSS mesmo.
+function memoriaMb() {
+  for (const caminho of ['/sys/fs/cgroup/memory.current', '/sys/fs/cgroup/memory/memory.usage_in_bytes']) {
+    try {
+      const bytes = parseInt(fs.readFileSync(caminho, 'utf8').trim(), 10);
+      if (Number.isFinite(bytes) && bytes > 0) return Math.round(bytes / 1024 / 1024);
+    } catch {}
+  }
+  return Math.round(process.memoryUsage().rss / 1024 / 1024);
+}
+
 function saudeDoProcesso() {
   return {
     status: statusConexao,
     tentativas: tentativasReconexao,
     esperandoQr: Boolean(ultimoQrBase64),
     uptimeSegundos: Math.floor(process.uptime()),
-    memoriaMb: Math.round(process.memoryUsage().rss / 1024 / 1024),
+    memoriaMb: memoriaMb(),
+    // HOST_APELIDO é o nome que aparece no #teste. Dentro do container o
+    // hostname é o ID do Docker, que muda a cada build e não diz nada.
     maquina: process.env.HOST_APELIDO || os.hostname(),
   };
 }
