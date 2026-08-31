@@ -81,6 +81,49 @@ function comMencoes(pessoas) {
   return { texto: partes.join(', '), mencoes };
 }
 
+// Entrou no "mensalão": sorteia a zoeira, mas nunca a informação. Posição,
+// total de vagas e o que confirma a vaga (o ✅) saem em todas as versões.
+const ENTROU_NO_MENSALAO = [
+  (nome, pos, limite) =>
+    `💸 *${nome} entrou no mensalão!* Vaga ${pos}/${limite}.\n\n` +
+    `Agora acerta o pagamento com os admins — o ✅ é o que confirma. Sem ✅, sem vaga.`,
+  (nome, pos, limite) =>
+    `🧾 *${nome} assinou o contrato.* Vaga ${pos}/${limite} da Mensa-Lista.\n\n` +
+    `Falta a parte chata: pagar com os admins. O ✅ é o carimbo.`,
+  (nome, pos, limite) =>
+    `🤝 *Propina aceita: ${nome} está dentro.* Vaga ${pos}/${limite}.\n\n` +
+    `Brincadeira — aqui o pagamento é legal e vai pros admins. O ✅ confirma.`,
+  (nome, pos, limite) =>
+    `🏛 *${nome} tomou posse na vaga ${pos}/${limite}.*\n\n` +
+    `Mandato de um mês, sem reeleição automática. Acerta com os admins que o ✅ sai.`,
+  (nome, pos, limite) =>
+    `💰 *${nome} entrou no esquema.* Vaga ${pos}/${limite}.\n\n` +
+    `Agora é acertar com os admins. Enquanto não vier o ✅, você é só um candidato.`,
+];
+
+// Ficou na fila: mesma ideia, e sempre dizendo a posição e que pode subir
+const ESPERA_MENSALISTA = [
+  (nome, pos) =>
+    `⏳ *Mensalão lotado.* ${nome} entrou na fila, posição ${pos}.\n\n` +
+    `Se alguém não pagar até o 5º dia útil, a vaga é sua.`,
+  (nome, pos) =>
+    `📋 *${nome} está na lista de espera do mensalão* (posição ${pos}).\n\n` +
+    `Fica de olho: quem não pagar no prazo devolve a vaga, e ela cai pra fila.`,
+  (nome, pos) =>
+    `🪑 *Acabaram as cadeiras.* ${nome}, você é o ${pos}º da fila.\n\n` +
+    `Calouro sobe quando um titular não paga. Acontece todo mês.`,
+];
+
+function zoeiraEntrouNoMensalao(nome, posicao, limite) {
+  const escolhida = ENTROU_NO_MENSALAO[Math.floor(Math.random() * ENTROU_NO_MENSALAO.length)];
+  return escolhida(nome, posicao, limite);
+}
+
+function zoeiraEsperaMensalista(nome, posicao) {
+  const escolhida = ESPERA_MENSALISTA[Math.floor(Math.random() * ESPERA_MENSALISTA.length)];
+  return escolhida(nome, posicao);
+}
+
 // Quem manda #lista antes da lista existir merece um cutucão carinhoso
 const ZOEIRAS_SEM_LISTA = [
   'Ansiedade 2, o retorno? 😅 Ainda não tem lista aberta, meu consagrado.',
@@ -576,9 +619,9 @@ async function processarMensagem(msg) {
       return msg.reply(`${nome}, você já está no quadro de mensalistas! 😉`);
     }
     if (resultado.espera) {
-      await msg.reply(`⏳ Vagas mensais preenchidas — ${nome} entrou na *espera* dos mensalistas (posição ${resultado.posicao}). Se abrir vaga, você sobe.`);
+      await msg.reply(zoeiraEsperaMensalista(nome, resultado.posicao));
     } else {
-      await msg.reply(`🗓 ${nome} garantiu a vaga ${resultado.posicao}/${resultado.limite} da pré-lista! Agora é só acertar o pagamento com os admins — o ✅ confirma você como mensalista.`);
+      await msg.reply(zoeiraEntrouNoMensalao(nome, resultado.posicao, resultado.limite));
     }
     return msg.reply(db.montarMensalistasFormatado(chatId));
   }
