@@ -26,16 +26,17 @@ jobs:
             docker compose up -d --build
             docker image prune -f
 
-            # O bot demora uns 20s pra abrir o Chrome e restaurar a sessão.
-            # Falhar aqui é melhor que um deploy "verde" com o bot morto.
-            for i in $(seq 1 20); do
+            # Só "inChat" (ou CONNECTED) significa que ele voltou a RECEBER mensagem.
+            # "isLogged" é autenticado mas ainda sincronizando: já aconteceu de
+            # um deploy parar aí e o bot ficar surdo sem dar erro nenhum.
+            for i in $(seq 1 36); do
               sleep 5
               estado=$(curl -s --max-time 5 http://127.0.0.1:3000/status || true)
               echo "  $estado"
               case "$estado" in
-                *inChat*|*isLogged*|*CONNECTED*) echo "bot no ar"; exit 0 ;;
+                *inChat*|*CONNECTED*) echo "bot no ar e escutando"; exit 0 ;;
               esac
             done
-            echo "bot não voltou a conectar em 100s — vê os logs:"
+            echo "bot não chegou em inChat em 3min — vê os logs:"
             docker compose logs --tail 40 volei-bot
             exit 1

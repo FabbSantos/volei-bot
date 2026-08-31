@@ -45,8 +45,16 @@ docker compose up -d
 docker compose logs -f volei-bot
 ```
 
-Espere a linha `Servidor rodando na porta 3000`. Como a imagem já está pronta,
-isso leva segundos, não minutos.
+Espere o status chegar em **`inChat`** — só esse estado significa que ele
+voltou a receber mensagem. `isLogged` é autenticado mas ainda sincronizando,
+e o bot fica surdo aí sem dar erro nenhum:
+
+```bash
+curl https://volei-bot.fabbahiense.dev/status
+```
+
+Se empacar em `isLogged` por mais de dois minutos, `docker compose down &&
+docker compose up -d` resolve — `restart` sozinho não resolve.
 
 ## 3. Parear
 
