@@ -143,8 +143,13 @@ function zerarSessaoSePedido(dir) {
 let clienteAtual = null;
 let geracaoAtual = 0;
 
+// Marca se o cliente ATUAL chegou a autenticar. Enquanto for falso, estados de
+// "desconectado" significam sessão nova esperando QR, não queda de conexão.
+let jaLogouNestaSessao = false;
+
 async function iniciarSessao() {
   const geracao = ++geracaoAtual;
+  jaLogouNestaSessao = false;
 
   const anterior = clienteAtual;
   clienteAtual = null;
@@ -174,16 +179,31 @@ async function iniciarSessao() {
         console.log('Status da sessão:', statusSession);
         statusConexao = statusSession;
 
+        if (['CONNECTED', 'inChat', 'isLogged'].includes(statusSession)) {
+          jaLogouNestaSessao = true;
+        }
         if (statusSession === 'CONNECTED' || statusSession === 'inChat') {
           ultimoQrBase64 = null;
           tentativasReconexao = 0; // conexão de volta ao normal, zera o contador
           notificacaoEnviada = false;
         }
 
-        if (ESTADOS_DESCONEXAO.includes(statusSession)) {
+        // Sessão desvinculada reporta "notLogged"/"disconnectedMobile" ENQUANTO
+        // espera alguém ler o QR. Reconectar aí é fatal: o cliente novo aposenta
+        // o antigo, o catchQR do antigo é descartado pela geração, e o /qr fica
+        // 404 pra sempre — o bot nunca consegue mostrar o QR pra ser salvo.
+        // Nesse caso quem decide é o autoclose do wppconnect (autocloseCalled),
+        // que continua na lista e agenda a próxima tentativa.
+        const esperandoPareamento =
+          !jaLogouNestaSessao &&
+          ['notLogged', 'disconnectedMobile', 'desconnectedMobile'].includes(statusSession);
+
+        if (!esperandoPareamento && ESTADOS_DESCONEXAO.includes(statusSession)) {
           agendarReconexao(`status da sessão: "${statusSession}"`);
         }
       },
+      // 5min pra ler o QR: com 60s a pessoa mal recebe o aviso e abre a página
+      autoClose: 5 * 60_000,
       headless: true,
       // Sessão do WhatsApp no volume persistente — sem isso, cada redeploy
       // apaga o pareamento e obriga a escanear o QR de novo
