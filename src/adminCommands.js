@@ -59,7 +59,7 @@ const REGEX_REINICIAR_MENSALISTAS_DE = /^#reiniciarmensalistasde\s+(.+)$/i;
 // grupo da pelada com comando; o efeito aparece lá na próxima lista
 const REGEX_MENSALISTA_DE = /^#mensalistade\s+(.+?)\s+([^\d\s].*)$/i; // grupo + nome
 // Posições aceitam lote: "3", "1-5" ou "1,3,7" — um comando, um anúncio
-const REGEX_PAGO_MES_DE = /^#pagomesde\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)(?:\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?))?$/i;
+const REGEX_PAGO_MES_DE = /^#pagomesde\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)(?:\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?))?(\s+quieto)?$/i;
 const REGEX_NAOPAGO_MES_DE = /^#naopagomesde\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$/i;
 // Pagamento da lista SEMANAL marcado daqui (equivalente remoto do #pago N)
 const REGEX_PAGO_DE = /^#pagode\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$/i;
@@ -139,13 +139,15 @@ const CMD_TESTE = '#teste';
 // sem prefixo, sem emoji do bot, sem "mensagem dos admins". [\s\S] no lugar
 // do ponto pra aceitar anúncio de várias linhas.
 const REGEX_ANUNCIO = /^#anuncio\s+([\s\S]+)$/i;
-const REGEX_ANUNCIO_DE = /^#anunciarde\s+([\s\S]+)$/i;
+// "#anunciode" entra como apelido: o nome certo é difícil de acertar de
+// primeira e errar custa um comando perdido na hora do anúncio.
+const REGEX_ANUNCIO_DE = /^#anunci(?:ar|o)de\s+([\s\S]+)$/i;
 
 const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 
 *#teste* — checa se está tudo de pé: conexão, máquina, banco, listas e figurinhas
 *#anuncio <texto>* — manda o texto pro grupo da pelada, exatamente como escrito
-*#anunciarde <grupo> <texto>* — o mesmo, escolhendo o grupo
+*#anunciarde <grupo> <texto>* — o mesmo, escolhendo o grupo (também aceita *#anunciode*)
 
 *#listargrupos* — todos os grupos, com status, tamanho, valor e chat_id
 *#ativargrupo <chat_id>* — libera um grupo pra usar o bot
@@ -919,7 +921,10 @@ async function processarComandoAdmin(msg) {
     // Pagamento confirmado é notícia pro grupo — em lote, um anúncio só.
     // Fixo já tem vaga cativa (anúncio é só a quitação); pro não-fixo o ✅
     // é o que confirma a vaga de mensalista.
-    if (marcar && msg.enviarPara) {
+    // "quieto" no fim marca sem avisar ninguém: serve pra acertar o quadro
+    // depois do fato, sem encher o grupo de anúncio atrasado.
+    const quietoMes = Boolean(matchPagoMesDe && matchPagoMesDe[4]);
+    if (marcar && !quietoMes && msg.enviarPara) {
       try {
         const nomes = marcados.map((x) => `*${x.nome}*${x.fixo ? ' 📌' : ''}`).join(', ');
         const temNaoFixo = marcados.some((x) => !x.fixo);
@@ -939,10 +944,11 @@ async function processarComandoAdmin(msg) {
     }
 
     const resumoErros = naoAchadas.length > 0 ? ` ⚠️ Posições não encontradas: ${naoAchadas.join(', ')}.` : '';
+    const ondeSaiu = quietoMes ? 'em silêncio, o grupo não foi avisado' : 'anunciado no grupo';
     await msg.reply(marcar
       ? (marcados.length === 1
-        ? `🗓 ${marcados[0].nome} pagou o mês! ✅ (anunciado no grupo)${resumoErros}`
-        : `🗓 ${marcados.length} mensalidades marcadas ✅ (anunciado no grupo).${resumoErros}`)
+        ? `🗓 ${marcados[0].nome} pagou o mês! ✅ (${ondeSaiu})${resumoErros}`
+        : `🗓 ${marcados.length} mensalidades marcadas ✅ (${ondeSaiu}).${resumoErros}`)
       : (marcados.length === 1
         ? `↩️ Mensalidade de ${marcados[0].nome} desmarcada.${resumoErros}`
         : `↩️ ${marcados.length} mensalidades desmarcadas.${resumoErros}`));
