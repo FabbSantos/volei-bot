@@ -379,7 +379,7 @@ function desenharElenco() {
     linhas.push(`<tr data-id="${j.id}" style="cursor:pointer">
       <td>${naSemana.has(j.id) && !filtroSemana ? '⭐ ' : ''}<strong>${j.nome}</strong>${
         (j.apelidos || []).length ? ` <span class="mut" title="apelidos no WhatsApp">(${j.apelidos.join(', ')})</span>` : ''}</td>
-      <td>${nivel ? `<span class="chip">${nivel}</span> <span class="mut">${fmt(j.habilidade, 1)}</span>` : '<span class="chip" style="background:#eda100;color:#0b0b0b">sem avaliação</span>'}</td>
+      <td>${nivel ? `<span class="chip">${nivel}</span> <span class="mut">${fmt(j.habilidade)}</span>` : '<span class="chip" style="background:#eda100;color:#0b0b0b">sem avaliação</span>'}</td>
       <td><select data-altura="${j.id}">
         <option value="">—</option>
         ${(elenco.alturas || []).map((a) => `<option value="${a}" ${j.altura === a ? 'selected' : ''}>${a === 'medio' ? 'médio' : a}</option>`).join('')}
@@ -411,7 +411,7 @@ function desenharElenco() {
             <select data-voto="${x}">
               <option value="">–</option>
               ${[1, 2, 3, 4, 5].map((n) => `<option ${meus[x] === n ? 'selected' : ''}>${n}</option>`).join('')}
-            </select> <span class="mut">média ${fmt(j.porFundamento[x], 1)}</span></label>`).join('')}
+            </select> <span class="mut">média ${fmt(j.porFundamento[x])}</span></label>`).join('')}
           </div>
         </details>
         <div class="mut" style="margin-top:0.4rem">já avaliaram: ${[...new Set(j.votos.map((v) => v.votante))].join(', ') || 'ninguém ainda'}</div>
@@ -541,7 +541,7 @@ function desenharSelecaoTimes() {
   caixa.innerHTML = '';
   for (const j of [...elenco.jogadores].sort((a, b) => (b.notaTime ?? -1) - (a.notaTime ?? -1))) {
     const b = document.createElement('button');
-    b.textContent = `${j.nome} (${fmt(j.notaTime, 1)})`;
+    b.textContent = `${j.nome} (${fmt(j.notaTime)})`;
     const pinta = () => {
       b.classList.toggle('sel', selecionadosTimes.has(j.nome));
       b.style.background = selecionadosTimes.has(j.nome) ? 'var(--acento)' : '';
@@ -647,7 +647,7 @@ function desenharTimes() {
       <h3>Time ${t.numero}</h3>
       <div class="media">média ${fmt(t.media)}${t.altos ? ` · ${t.altos} alto(s) 📏` : ''} · ${t.jogadores.length} jogador(es)</div>
       <ul>${t.jogadores.map((j, ji) => `<li>
-        <span>${j.nome}${j.altura === 'alto' ? ' 📏' : ''} <span class="mut">${fmt(j.nota, 1)}</span></span>
+        <span>${j.nome}${j.altura === 'alto' ? ' 📏' : ''} <span class="mut">${fmt(j.nota)}</span></span>
         <span style="display:flex;gap:0.25rem;align-items:center">
           <select data-mover="${ti}:${ji}" title="mudar de time">${timesAtuais.map((x) => `<option ${x.numero === t.numero ? 'selected' : ''}>${x.numero}</option>`).join('')}</select>
           <button data-sai="${ti}:${ji}" title="saiu / não foi">✕</button>
@@ -689,7 +689,7 @@ function desenharSubstituicao() {
   const nomesEscalados = new Set(timesAtuais.flatMap((t) => t.jogadores.map((j) => j.nome)));
   const disponiveis = elenco.jogadores.filter((j) => !idsEscalados.has(j.id) && !nomesEscalados.has(j.nome));
   $('#selEntra').innerHTML = disponiveis.length
-    ? disponiveis.map((j) => `<option value="${j.id}">${j.nome}${j.altura === 'alto' ? ' 📏' : ''} (${fmt(j.notaTime, 1)})</option>`).join('')
+    ? disponiveis.map((j) => `<option value="${j.id}">${j.nome}${j.altura === 'alto' ? ' 📏' : ''} (${fmt(j.notaTime)})</option>`).join('')
     : '<option value="">— todos já estão escalados —</option>';
   $('#selTimeDestino').innerHTML = timesAtuais.map((t) => `<option value="${t.numero}">Time ${t.numero}</option>`).join('');
 }

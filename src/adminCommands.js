@@ -49,7 +49,8 @@ const REGEX_IMPORTAR_ELENCO_DE = /^#importarelencode\s+(.+)$/i;
 const REGEX_ABRIR_LISTA_DE = /^#abrirlistade\s+(.+?)\s+(\d{1,2}\/\d{1,2})(?:\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?))?(?:\s+(.+))?$/i;
 const REGEX_PAGOS_DE = /^#pagosde\s+(.+)$/i;
 const REGEX_ADMINS_DE = /^#adminsde\s+(.+)$/i;
-const REGEX_MENSALISTAS_DE = /^#mensalistasde\s+(.+)$/i;
+// "enviar" no fim publica o quadro no grupo da pelada; sem ele, é só consulta
+const REGEX_MENSALISTAS_DE = /^#mensalistasde\s+(.+?)(\s+enviar)?$/i;
 // Pré-lista de mensalistas: abre/fecha as inscrições do mês e reinício manual
 // "quieto" no fim = muda sem anunciar no grupo
 const REGEX_ABRIR_MENSALISTAS_DE = /^#abrirmensalistasde\s+(.+?)(\s+quieto)?$/i;
@@ -146,6 +147,7 @@ const REGEX_ANUNCIO_DE = /^#anunci(?:ar|o)de\s+([\s\S]+)$/i;
 const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 
 *#teste* — checa se está tudo de pé: conexão, máquina, banco, listas e figurinhas
+*#mensalistasde <grupo> enviar* — publica o quadro de mensalistas no grupo (sem o arrecadado)
 *#anuncio <texto>* — manda o texto pro grupo da pelada, exatamente como escrito
 *#anunciarde <grupo> <texto>* — o mesmo, escolhendo o grupo (também aceita *#anunciode*)
 
@@ -836,10 +838,25 @@ async function processarComandoAdmin(msg) {
     const r = resolverGrupo(matchMensalistasDe[1]);
     if (r.mensagem) return msg.reply(r.mensagem);
     const resumo = db.resumoMensalistas(r.grupo.chat_id);
-    let resposta = `🏐 *${r.grupo.nome || r.grupo.chat_id}*\n\n${db.montarMensalistasFormatado(r.grupo.chat_id)}`;
+    const quadro = db.montarMensalistasFormatado(r.grupo.chat_id);
+
+    // O grupo recebe o quadro puro. O total arrecadado é só dos admins —
+    // mesma regra da lista semanal.
+    if (matchMensalistasDe[2]) {
+      if (!msg.enviarPara) return msg.reply('Não consigo falar com o grupo agora (bot desconectado).');
+      try {
+        await msg.enviarPara(r.grupo.chat_id, quadro);
+      } catch (err) {
+        return msg.reply(`⚠️ Não consegui publicar em *${r.grupo.nome || r.grupo.chat_id}*: ${err.message}`);
+      }
+      return msg.reply(`📣 Quadro de mensalistas publicado em *${r.grupo.nome || r.grupo.chat_id}* (sem o arrecadado).`);
+    }
+
+    let resposta = `🏐 *${r.grupo.nome || r.grupo.chat_id}*\n\n${quadro}`;
     if (resumo.arrecadadoMesCentavos > 0) {
       resposta += `\n💵 Arrecadado no mês: *${db.formatarReais(resumo.arrecadadoMesCentavos)}*`;
     }
+    resposta += `\n\n_Pra publicar isso no grupo: *#mensalistasde ${matchMensalistasDe[1]} enviar*_`;
     return msg.reply(resposta);
   }
 
