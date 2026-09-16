@@ -125,6 +125,19 @@ de lá e o bot antigo assume no mesmo minuto.
 | backups guardados | `ls -lh /var/backups/volei-bot` (14 dias, .gz) |
 | uso de memória | `docker stats volei-bot` |
 
+## Se o bot fica mudo sem dar erro
+
+Sintoma: responde nada no grupo, mas  diz  e o log não
+mostra erro nenhum. É autenticado sem terminar de sincronizar — nesse estado
+ele não recebe mensagem.
+
+Desde 15/09/2026 o próprio bot detecta e reconecta sozinho em até ~6min, e
+se insistir ele sai pro container subir limpo. Se ainda assim travar:
+
+
+
+Pra ver se já aconteceu antes: .
+
 ## Se o Chrome não abrir
 
 Sintomas no log: `pthread_create: Resource temporarily unavailable`,

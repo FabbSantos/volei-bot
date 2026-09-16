@@ -9,6 +9,7 @@ const { processarMensagem, acharFigurinhaCobranca, montarLembretePagamento } = r
 const { processarComandoAdmin } = require('./adminCommands');
 const { notificarFalha } = require('./notify');
 const { registrarPainel } = require('./painel');
+const { avaliarSincronizacao } = require('./saude');
 
 const PORT = process.env.PORT || 3000;
 const NOME_GRUPO_ALVO = process.env.NOME_GRUPO_ALVO || null; // opcional: filtrar por nome do grupo
@@ -340,7 +341,24 @@ function paginaTravou(err) {
     || msg.includes('Session closed') || msg.includes('detached');
 }
 
+// Vigia a SEGUNDA metade da reconexão: chegar em isLogged não basta, tem que
+// terminar em inChat. A regra mora em ./saude pra poder ser testada.
+let desdeQuandoIsLogged = null;
+
+function vigiarSincronizacao() {
+  if (!clienteAtual) { desdeQuandoIsLogged = null; return; }
+
+  const r = avaliarSincronizacao(statusConexao, desdeQuandoIsLogged, Date.now());
+  desdeQuandoIsLogged = r.desde;
+  if (!r.reconectar) return;
+
+  console.warn(`[saude] preso em isLogged há ${Math.round(r.paradoMs / 1000)}s — autenticado mas surdo, reconectando`);
+  agendarReconexao('travou em isLogged sem chegar em inChat');
+}
+
 async function verificarSaude() {
+  vigiarSincronizacao();
+
   const client = clienteAtual;
   if (!client) return;
   try {
