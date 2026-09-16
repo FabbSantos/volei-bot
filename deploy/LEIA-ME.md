@@ -127,16 +127,19 @@ de lá e o bot antigo assume no mesmo minuto.
 
 ## Se o bot fica mudo sem dar erro
 
-Sintoma: responde nada no grupo, mas  diz  e o log não
+Sintoma: não responde nada no grupo, mas `/status` diz `isLogged` e o log não
 mostra erro nenhum. É autenticado sem terminar de sincronizar — nesse estado
-ele não recebe mensagem.
+ele não recebe mensagem. Aconteceu em 13/09/2026 e passou dois dias assim.
 
-Desde 15/09/2026 o próprio bot detecta e reconecta sozinho em até ~6min, e
-se insistir ele sai pro container subir limpo. Se ainda assim travar:
+Desde 15/09/2026 o próprio bot detecta e reconecta sozinho em até ~6min; se
+insistir, ele sai do processo pro container subir limpo. Se ainda assim travar:
 
+```bash
+ssh volei
+cd /opt/volei-bot && docker compose down && docker compose up -d
+```
 
-
-Pra ver se já aconteceu antes: .
+Pra ver se já aconteceu antes: `docker compose logs volei-bot | grep saude`.
 
 ## Se o Chrome não abrir
 
