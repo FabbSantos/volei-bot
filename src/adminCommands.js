@@ -49,7 +49,7 @@ const REGEX_IMPORTAR_ELENCO_DE = /^#importarelencode\s+(.+)$/i;
 const REGEX_ABRIR_LISTA_DE = /^#abrirlistade\s+(.+?)\s+(\d{1,2}\/\d{1,2})(?:\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?))?(?:\s+(.+))?$/i;
 // Pelada extra, fora das sextas: mesma sintaxe do #abrirlistade, mas só os
 // fixos entram sozinhos — e pagando, porque a mensalidade não cobre ela
-const REGEX_ABRIR_SURPRESA_DE = /^#abrirsurpresade\s+(.+?)\s+(\d{1,2}\/\d{1,2})(?:\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?))?(?:\s+(.+))?$/i;
+const REGEX_ABRIR_EXTRA_DE = /^#abrirextrade\s+(.+?)\s+(\d{1,2}\/\d{1,2})(?:\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?))?(?:\s+(.+))?$/i;
 const REGEX_PAGOS_DE = /^#pagosde\s+(.+)$/i;
 const REGEX_ADMINS_DE = /^#adminsde\s+(.+)$/i;
 // "enviar" no fim publica o quadro no grupo da pelada; sem ele, é só consulta
@@ -161,7 +161,7 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 
 📡 *Consulta/gestão remota (<grupo> = pedaço do nome ou chat_id):*
 *#abrirlistade <grupo> 07/08 17 Sexta 3h* — abre a lista de lá (valor e nome opcionais) e anuncia no grupo
-*#abrirsurpresade <grupo> 29/09 15* — pelada extra: só os fixos entram sozinhos, e pagam como todo mundo (a mensalidade não cobre)
+*#abrirextrade <grupo> 29/09 15* — pelada extra: só os fixos entram sozinhos, e pagam como todo mundo (a mensalidade não cobre)
 *#editarlistade <grupo> 07/08 Nome* — corrige data/nome da lista atual (nome opcional)
 *#encerrarlistade <grupo>* — encerra a lista (trava nomes) e anuncia; com *quieto* no fim, não anuncia
 *#reabrirlistade <grupo>* — destranca a lista encerrada (aceita *quieto*)
@@ -391,13 +391,13 @@ async function processarComandoAdmin(msg) {
       : `Não achei nenhum grupo com esse chat_id. Confere com *#listargrupos*.`);
   }
 
-  const matchSurpresaDe = texto.match(REGEX_ABRIR_SURPRESA_DE);
-  if (matchSurpresaDe) {
-    const r = resolverGrupo(matchSurpresaDe[1]);
+  const matchExtraDe = texto.match(REGEX_ABRIR_EXTRA_DE);
+  if (matchExtraDe) {
+    const r = resolverGrupo(matchExtraDe[1]);
     if (r.mensagem) return msg.reply(r.mensagem);
-    const dataJogo = matchSurpresaDe[2];
-    const valorCriacao = matchSurpresaDe[3] ? db.paraCentavos(matchSurpresaDe[3]) : null;
-    const nomeLista = matchSurpresaDe[4]?.trim() || 'Pelada Surpresa';
+    const dataJogo = matchExtraDe[2];
+    const valorCriacao = matchExtraDe[3] ? db.paraCentavos(matchExtraDe[3]) : null;
+    const nomeLista = matchExtraDe[4]?.trim() || 'Pelada Extra';
     const nomeGrupo = r.grupo.nome || r.grupo.chat_id;
 
     // Uma lista aberta por grupo: o #lista cai sempre na mais recente. Com a
@@ -406,7 +406,7 @@ async function processarComandoAdmin(msg) {
     if (aberta) {
       return msg.reply(
         `A lista de *${aberta.data_jogo}* ainda está aberta em *${nomeGrupo}*. ` +
-        `Fecha ela antes (*#encerrarlistade ${matchSurpresaDe[1]} quieto*) — ` +
+        `Fecha ela antes (*#encerrarlistade ${matchExtraDe[1]} quieto*) — ` +
         `com duas abertas, o #lista do pessoal cai na mais nova e metade entra na errada.`
       );
     }
