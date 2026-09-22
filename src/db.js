@@ -315,9 +315,17 @@ function criarLista(chatId, dataJogo, nome = null, valorCriacao = null, opts = {
   // Mensalistas EFETIVOS entram automaticamente no topo de toda lista nova:
   // fixos sempre; não-fixo só depois de pagar o mês (inscrito na pré-lista é
   // candidato, não mensalista). Espera e inadimplente não são semeados.
-  for (const m of listarMensalistas(chatId).filter((m) => !m.espera && (m.fixo || m.pago_mes))) {
+  //
+  // Pelada extra (opts.soFixos): a mensalidade cobre as sextas, não ela. Só os
+  // fixos entram sozinhos, e como participantes COMUNS — sem a marca de
+  // mensalista, cada um precisa do próprio ✅ da pelada, igual aos avulsos.
+  const soFixos = Boolean(opts.soFixos);
+  const semeados = listarMensalistas(chatId).filter((m) =>
+    !m.espera && (soFixos ? m.fixo : (m.fixo || m.pago_mes))
+  );
+  for (const m of semeados) {
     const resultado = adicionarEntrada(listaId, m.nome, m.numero);
-    if (!resultado.erro) {
+    if (!resultado.erro && !soFixos) {
       db.prepare('UPDATE entradas SET mensalista = 1 WHERE lista_id = ? AND numero = ?')
         .run(listaId, m.numero);
     }
