@@ -450,8 +450,22 @@ setInterval(() => {
 // Uma vez por dia (a partir de LEMBRETE_HORA, horário de Brasília), toda lista
 // ABERTA que ainda tem devedor recebe o recado do agiota no grupo. O carimbo
 // lembrete_em na lista garante no máximo um por dia, mesmo com deploy/restart.
+// LEMBRETE_HORA=off (ou 'nao', ou vazio) desliga o recado automático: a cobrança
+// passa a ser só sob demanda, com #cobrarde. Desligar por aqui é explícito —
+// pôr uma hora impossível como 25 também funcionaria, mas ninguém entenderia
+// o porquê seis meses depois.
+// Variável AUSENTE continua valendo o padrão de sempre (10h) — quem nunca
+// configurou não pode ser surpreendido com o recado desligado. Vazia desliga
+// de propósito: hoje `LEMBRETE_HORA=` faz parseInt virar NaN, `hora < NaN` dá
+// false, e o recado sairia de madrugada.
+const LEMBRETE_DESLIGADO = process.env.LEMBRETE_HORA !== undefined
+  && ['off', 'nao', 'não', 'no', '0', ''].includes(String(process.env.LEMBRETE_HORA).trim().toLowerCase());
 const LEMBRETE_HORA = parseInt(process.env.LEMBRETE_HORA || '10', 10);
 const TZ_BRASILIA = 'America/Sao_Paulo';
+
+console.log(LEMBRETE_DESLIGADO
+  ? '[lembrete] recado diário DESLIGADO — cobrança só com #cobrarde'
+  : `[lembrete] recado diário ativo a partir das ${LEMBRETE_HORA}h de Brasília`);
 
 function agoraBrasilia() {
   const agora = new Date();
@@ -468,6 +482,7 @@ function agoraBrasilia() {
 }
 
 async function enviarLembretesDePagamento() {
+  if (LEMBRETE_DESLIGADO) return;
   const client = clienteAtual;
   if (!client) return; // desconectado — tenta de novo no próximo ciclo
 
