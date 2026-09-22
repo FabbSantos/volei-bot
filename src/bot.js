@@ -121,6 +121,68 @@ function limparLocksDoChrome(dir) {
   }
 }
 
+// O perfil do Chrome mora no volume e o Chrome quase nunca sai limpo (kill na
+// reconexão, OOM, restart do container): o perfil fica marcado "Crashed" e o
+// boot seguinte RESTAURA as abas da sessão anterior — somando mais abas a cada
+// reinício. Em 22/09/2026 eram 71 alvos no navegador: 20 abas do WhatsApp Web
+// disputando a mesma conta e 38 about:blank. Com elas abertas, a aba do bot
+// retinha o log interno do WhatsApp Web e a RAM subia ~0,5 GB/h até a página
+// travar. Fechar as abas extras ao vivo derrubou o heap da aba do bot de 3,1 GB
+// pra 71 MB, e ele parou de crescer. Apagar os arquivos de restauração antes de
+// abrir o navegador corta a pilha na raiz. O pareamento mora no
+// IndexedDB/Local Storage e não é tocado
+// ("Session Storage" também fica: é outra coisa, do site).
+const ARQUIVOS_DE_RESTAURACAO = new Set(['Current Session', 'Current Tabs', 'Last Session', 'Last Tabs']);
+
+function limparSessaoRestauravel(dir) {
+  let removidos = 0;
+  const varrer = (pasta) => {
+    let itens;
+    try {
+      itens = fs.readdirSync(pasta, { withFileTypes: true });
+    } catch {
+      return; // pasta ainda não existe (primeiro boot)
+    }
+    for (const item of itens) {
+      const caminho = path.join(pasta, item.name);
+      if ((item.isDirectory() && item.name === 'Sessions') || ARQUIVOS_DE_RESTAURACAO.has(item.name)) {
+        try {
+          fs.rmSync(caminho, { recursive: true, force: true });
+          removidos++;
+        } catch {}
+      } else if (item.isDirectory()) {
+        varrer(caminho);
+      }
+    }
+  };
+  varrer(dir);
+  if (removidos > 0) {
+    console.log(`[browser] ${removidos} arquivo(s) de restauração de abas removido(s) de ${dir}`);
+  }
+}
+
+// Segunda linha de defesa: se mesmo assim o navegador subir com abas a mais,
+// fecha todas menos a que o wppconnect usa. Duas abas do WhatsApp na mesma
+// conta disputam a mesma sessão.
+async function fecharAbasExtras(client) {
+  const principal = client.page;
+  if (!principal) return;
+  const abas = await principal.browser().pages();
+  let fechadas = 0;
+  for (const aba of abas) {
+    // O puppeteer guarda a Page em cache por alvo, então a identidade já basta.
+    // A checagem pelo alvo é seguro: errar aqui fecharia a aba do próprio bot.
+    if (aba === principal || aba.target() === principal.target()) continue;
+    try {
+      await aba.close();
+      fechadas++;
+    } catch {}
+  }
+  if (fechadas > 0) {
+    console.log(`[browser] ${fechadas} aba(s) extra(s) fechada(s), sobrou só a do bot`);
+  }
+}
+
 // Zera a sessão inteira (perfil do Chrome + pareamento) uma única vez no boot,
 // quando RESET_SESSAO=1. Serve pra quando o perfil no volume fica corrompido
 // depois de um crash — o Chrome trava em "database is locked" e não abre nem
@@ -166,6 +228,7 @@ async function iniciarSessao() {
 
   zerarSessaoSePedido(process.env.TOKENS_DIR || 'tokens');
   limparLocksDoChrome(process.env.TOKENS_DIR || 'tokens');
+  limparSessaoRestauravel(process.env.TOKENS_DIR || 'tokens');
   wppconnect
     .create({
       session: 'volei-bot',
@@ -246,6 +309,7 @@ async function iniciarSessao() {
         return;
       }
       clienteAtual = client;
+      fecharAbasExtras(client).catch((err) => console.warn(`[browser] falha ao fechar abas extras: ${err.message}`));
       start(client);
     })
     .catch((erro) => {
