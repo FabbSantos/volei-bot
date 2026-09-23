@@ -1,0 +1,7129 @@
+
+>>> [g1@g.us] Fabricio: #lista
+<<< 🔒 Esse grupo ainda não foi liberado pra usar o bot. Fala com quem administra.
+
+>>> [g1@g.us] Fabricio: bora #quintou
+
+>>> [g2@g.us] Diego: oi
+
+>>> [adm@g.us] Fabricio: oi
+
+>>> [admin/privado] #listargrupos
+<<< 📋 *Grupos cadastrados (3):*
+
+⛔ inativo — Admins do vôlei — 18 vagas + 6 espera
+   chat_id: adm@g.us
+
+⛔ inativo — Quadra 7 — 18 vagas + 6 espera
+   chat_id: g2@g.us
+
+⛔ inativo — Vôlei Riachuelo — 18 vagas + 6 espera
+   chat_id: g1@g.us
+
+>>> [admin/privado] #ativargrupo g1@g.us 4 —2
+<<< ✅ Grupo g1@g.us ativado! Lista com *4* vagas + *2* de espera. Já pode usar #listaDD/MM lá dentro.
+
+>>> [admin/privado] #ativargrupo g2@g.us
+<<< ✅ Grupo g2@g.us ativado! Lista com *18* vagas + *6* de espera. Já pode usar #listaDD/MM lá dentro.
+
+>>> [admin/grupoadmin] #grupoadmin adm@g.us
+<<< Por segurança, *#grupoadmin* só funciona no privado com o admin do bot.
+
+>>> [admin/privado] #grupoadmin adm@g.us
+<<< 🛠 Grupo adm@g.us agora é grupo de admins! Todo mundo lá pode usar os comandos remotos (#listade, #pagosde, #adminsde, #valorde...). Manda *#admin* lá pra ver tudo.
+
+>>> [admin/grupoadmin] #admin
+<<< 🔧 *Comandos de admin (privado ou grupo de admins)*
+
+*#teste* — checa se está tudo de pé: conexão, máquina, banco, listas e figurinhas
+*#mensalistasde <grupo> enviar* — publica o quadro de mensalistas no grupo (sem o arrecadado)
+*#anuncio <texto>* — manda o texto pro grupo da pelada, exatamente como escrito
+*#anunciarde <grupo> <texto>* — o mesmo, escolhendo o grupo (também aceita *#anunciode*)
+
+*#listargrupos* — todos os grupos, com status, tamanho, valor e chat_id
+*#ativargrupo <chat_id>* — libera um grupo pra usar o bot
+*#ativargrupo <chat_id> 18 --6* — libera e dimensiona (padrão: 18 + 6)
+*#desativargrupo <chat_id>* — bloqueia um grupo (ex: inadimplência)
+
+📡 *Consulta/gestão remota (<grupo> = pedaço do nome ou chat_id):*
+*#abrirlistade <grupo> 07/08 17 Sexta 3h* — abre a lista de lá (valor e nome opcionais) e anuncia no grupo
+*#abrirextrade <grupo> 29/09 15* — pelada extra: só os fixos entram sozinhos, e pagam como todo mundo (a mensalidade não cobre)
+*#editarlistade <grupo> 07/08 Nome* — corrige data/nome da lista atual (nome opcional)
+*#encerrarlistade <grupo>* — encerra a lista (trava nomes) e anuncia; com *quieto* no fim, não anuncia
+*#reabrirlistade <grupo>* — destranca a lista encerrada (aceita *quieto*)
+*#cancelarlistade <grupo>* — APAGA a lista mais recente (criada errada/teste) e anuncia
+*#listade <grupo>* — lista atual do grupo
+*#pagosde <grupo>* — quem pagou, quem falta e quanto arrecadou
+*#mensalistasde <grupo>* — quadro de mensalistas do mês + arrecadação
+*#adminsde <grupo>* — admins do grupo no WhatsApp (são eles que marcam #pago lá)
+
+🗓 *Gestão de mensalistas daqui mesmo:*
+*#abrirmensalistasde <grupo>* / *#fecharmensalistasde <grupo>* — abre/fecha as inscrições do mês (anuncia no grupo; com *quieto* no fim, não anuncia)
+*#reiniciarmensalistasde <grupo>* — zera os não-fixos e fecha as inscrições
+*#pagomesde <grupo> 1-5* — marca o mês (aceita 3, 1-5 ou 1,3,7; valor opcional no fim); anuncia no grupo
+*#naopagomesde <grupo> 3* — desmarca o mês (aceita faixa também)
+*#pagode <grupo> 1-3* — marca o ✅ da LISTA semanal daqui (aceita faixa); anuncia no grupo
+*#naopagode <grupo> 3* — desmarca o ✅ da lista
+*#adicionarde <grupo> Nome* — coloca convidado na lista (aceita *quieto*)
+*#renomearde <grupo> 5 Nome Certo* — corrige o nome de quem está na posição 5 (silencioso)
+*#removerde <grupo> 14* — tira da lista semanal (aceita faixa); a espera sobe e o grupo é avisado
+*#cobrarde <grupo>* — solta o recado do agiota agora (mira = principal sem pagar)
+*#cobrarsubiude <grupo>* — cobra só quem subiu da espera (prazo sexta 17h)
+*#timesde <grupo> 3* — PRÉVIA dos times (só você vê); mostra os salvos se já existirem
+*#timesde <grupo> 3 enviar* — posta no grupo · *... refazer* — remonta do zero
+*#importarelencode <grupo>* — importa o elenco/notas da planilha antiga (uma vez)
+*#fixode <grupo> 3* — liga/desliga a vaga cativa (📌)
+*#mensalistade <grupo> Nome* — cadastra candidato (melhor a pessoa mandar #mensalista no grupo: aí o WhatsApp dela fica vinculado)
+*#removermensalistade <grupo> 3* — tira do quadro (aceita faixa: 6-9 ou 6,8)
+*#valormesde <grupo> 53* — mensalidade · *#vagasmensalistasde <grupo> 12* — vagas
+*#valorde <grupo> 25* — valor padrão por pessoa (vale pras próximas listas)
+*#valorlistade <grupo> 30* — valor só da lista aberta agora (ex: sexta de 3h)
+
+*#grupoadmin <chat_id>* — (só no privado) define o grupo de admins; com "off" no fim, desfaz
+*#admin* — mostra essa ajuda
+
+Repetir #ativargrupo num grupo já ativo só atualiza o tamanho.
+
+>>> [admin/grupoadmin] #comandos
+<<< 🏐 *Comandos do bot*
+
+*#lista* — entra na lista ativa usando seu nome do WhatsApp
+*#lista Nome* — entra na lista com um nome específico (ex: #lista João)
+*#mostralista* — mostra a lista atual
+*#remover* — sai da lista (também tira quem você adicionou com #lista Nome)
+*#valor* — mostra o valor por pessoa da lista atual
+*#mensalista* — vira candidato a mensalista (vaga garantida no topo das listas)
+*#mensalistas* — mostra o quadro de mensalistas do mês
+*#comandos* — mostra essa ajuda
+
+💰 *Só pra admins (do grupo ou do grupo de admins):*
+*#listaDD/MM* — abre a lista pro dia; valor e nome opcionais: #lista07/08 17 Sexta 3h
+*#encerrarlista* — fecha a lista, para de aceitar nomes
+*#editarlista 07/08 Nome* — corrige a data/nome da lista (nome opcional)
+*#cancelarlista* — APAGA a lista mais recente (criada errada/teste); libera a data
+*#remover N* — remove quem está na posição N (ou #remover Nome)
+*#pago N* — marca ✅ de quem está na posição N (ou responde o comprovante com *#pago*)
+*#naopago N* — desmarca (ou respondendo a mensagem com *#naopago*)
+*#valor 25* — define o valor por pessoa da lista atual (aceita 25,50)
+*#valorpadrao 25* — valor padrão pras próximas listas do grupo
+
+🗓 *Mensalistas (admins):*
+*#pagomes N* — marca o mês pago do mensalista N (valor opcional: #pagomes 3 53)
+*#naopagomes N* — desmarca o mês
+*#fixo N* — liga/desliga vaga cativa (📌) do mensalista N
+*#removermensalista N* — tira a pessoa do quadro
+*#valormes 53* — mensalidade padrão · *#vagasmensalistas 12* — total de vagas
+
+⛔ *Inadimplentes (admins):*
+*#inadimplente N* — marca quem está na posição N da lista (ou #inadimplente Nome 17)
+*#quitado Nome* — tira da lista de inadimplentes (ou #quitado N)
+<<< 🔧 *Comandos de admin (privado ou grupo de admins)*
+
+*#teste* — checa se está tudo de pé: conexão, máquina, banco, listas e figurinhas
+*#mensalistasde <grupo> enviar* — publica o quadro de mensalistas no grupo (sem o arrecadado)
+*#anuncio <texto>* — manda o texto pro grupo da pelada, exatamente como escrito
+*#anunciarde <grupo> <texto>* — o mesmo, escolhendo o grupo (também aceita *#anunciode*)
+
+*#listargrupos* — todos os grupos, com status, tamanho, valor e chat_id
+*#ativargrupo <chat_id>* — libera um grupo pra usar o bot
+*#ativargrupo <chat_id> 18 --6* — libera e dimensiona (padrão: 18 + 6)
+*#desativargrupo <chat_id>* — bloqueia um grupo (ex: inadimplência)
+
+📡 *Consulta/gestão remota (<grupo> = pedaço do nome ou chat_id):*
+*#abrirlistade <grupo> 07/08 17 Sexta 3h* — abre a lista de lá (valor e nome opcionais) e anuncia no grupo
+*#abrirextrade <grupo> 29/09 15* — pelada extra: só os fixos entram sozinhos, e pagam como todo mundo (a mensalidade não cobre)
+*#editarlistade <grupo> 07/08 Nome* — corrige data/nome da lista atual (nome opcional)
+*#encerrarlistade <grupo>* — encerra a lista (trava nomes) e anuncia; com *quieto* no fim, não anuncia
+*#reabrirlistade <grupo>* — destranca a lista encerrada (aceita *quieto*)
+*#cancelarlistade <grupo>* — APAGA a lista mais recente (criada errada/teste) e anuncia
+*#listade <grupo>* — lista atual do grupo
+*#pagosde <grupo>* — quem pagou, quem falta e quanto arrecadou
+*#mensalistasde <grupo>* — quadro de mensalistas do mês + arrecadação
+*#adminsde <grupo>* — admins do grupo no WhatsApp (são eles que marcam #pago lá)
+
+🗓 *Gestão de mensalistas daqui mesmo:*
+*#abrirmensalistasde <grupo>* / *#fecharmensalistasde <grupo>* — abre/fecha as inscrições do mês (anuncia no grupo; com *quieto* no fim, não anuncia)
+*#reiniciarmensalistasde <grupo>* — zera os não-fixos e fecha as inscrições
+*#pagomesde <grupo> 1-5* — marca o mês (aceita 3, 1-5 ou 1,3,7; valor opcional no fim); anuncia no grupo
+*#naopagomesde <grupo> 3* — desmarca o mês (aceita faixa também)
+*#pagode <grupo> 1-3* — marca o ✅ da LISTA semanal daqui (aceita faixa); anuncia no grupo
+*#naopagode <grupo> 3* — desmarca o ✅ da lista
+*#adicionarde <grupo> Nome* — coloca convidado na lista (aceita *quieto*)
+*#renomearde <grupo> 5 Nome Certo* — corrige o nome de quem está na posição 5 (silencioso)
+*#removerde <grupo> 14* — tira da lista semanal (aceita faixa); a espera sobe e o grupo é avisado
+*#cobrarde <grupo>* — solta o recado do agiota agora (mira = principal sem pagar)
+*#cobrarsubiude <grupo>* — cobra só quem subiu da espera (prazo sexta 17h)
+*#timesde <grupo> 3* — PRÉVIA dos times (só você vê); mostra os salvos se já existirem
+*#timesde <grupo> 3 enviar* — posta no grupo · *... refazer* — remonta do zero
+*#importarelencode <grupo>* — importa o elenco/notas da planilha antiga (uma vez)
+*#fixode <grupo> 3* — liga/desliga a vaga cativa (📌)
+*#mensalistade <grupo> Nome* — cadastra candidato (melhor a pessoa mandar #mensalista no grupo: aí o WhatsApp dela fica vinculado)
+*#removermensalistade <grupo> 3* — tira do quadro (aceita faixa: 6-9 ou 6,8)
+*#valormesde <grupo> 53* — mensalidade · *#vagasmensalistasde <grupo> 12* — vagas
+*#valorde <grupo> 25* — valor padrão por pessoa (vale pras próximas listas)
+*#valorlistade <grupo> 30* — valor só da lista aberta agora (ex: sexta de 3h)
+
+*#grupoadmin <chat_id>* — (só no privado) define o grupo de admins; com "off" no fim, desfaz
+*#admin* — mostra essa ajuda
+
+Repetir #ativargrupo num grupo já ativo só atualiza o tamanho.
+
+>>> [g1@g.us] Marcel Garcia: #comandos
+<<< 🏐 *Comandos do bot*
+
+*#lista* — entra na lista ativa usando seu nome do WhatsApp
+*#lista Nome* — entra na lista com um nome específico (ex: #lista João)
+*#mostralista* — mostra a lista atual
+*#remover* — sai da lista (também tira quem você adicionou com #lista Nome)
+*#valor* — mostra o valor por pessoa da lista atual
+*#mensalista* — vira candidato a mensalista (vaga garantida no topo das listas)
+*#mensalistas* — mostra o quadro de mensalistas do mês
+*#comandos* — mostra essa ajuda
+
+>>> [g1@g.us] Fabricio: #comandos
+<<< 🏐 *Comandos do bot*
+
+*#lista* — entra na lista ativa usando seu nome do WhatsApp
+*#lista Nome* — entra na lista com um nome específico (ex: #lista João)
+*#mostralista* — mostra a lista atual
+*#remover* — sai da lista (também tira quem você adicionou com #lista Nome)
+*#valor* — mostra o valor por pessoa da lista atual
+*#mensalista* — vira candidato a mensalista (vaga garantida no topo das listas)
+*#mensalistas* — mostra o quadro de mensalistas do mês
+*#comandos* — mostra essa ajuda
+
+💰 *Só pra admins (do grupo ou do grupo de admins):*
+*#listaDD/MM* — abre a lista pro dia; valor e nome opcionais: #lista07/08 17 Sexta 3h
+*#encerrarlista* — fecha a lista, para de aceitar nomes
+*#editarlista 07/08 Nome* — corrige a data/nome da lista (nome opcional)
+*#cancelarlista* — APAGA a lista mais recente (criada errada/teste); libera a data
+*#remover N* — remove quem está na posição N (ou #remover Nome)
+*#pago N* — marca ✅ de quem está na posição N (ou responde o comprovante com *#pago*)
+*#naopago N* — desmarca (ou respondendo a mensagem com *#naopago*)
+*#valor 25* — define o valor por pessoa da lista atual (aceita 25,50)
+*#valorpadrao 25* — valor padrão pras próximas listas do grupo
+
+🗓 *Mensalistas (admins):*
+*#pagomes N* — marca o mês pago do mensalista N (valor opcional: #pagomes 3 53)
+*#naopagomes N* — desmarca o mês
+*#fixo N* — liga/desliga vaga cativa (📌) do mensalista N
+*#removermensalista N* — tira a pessoa do quadro
+*#valormes 53* — mensalidade padrão · *#vagasmensalistas 12* — total de vagas
+
+⛔ *Inadimplentes (admins):*
+*#inadimplente N* — marca quem está na posição N da lista (ou #inadimplente Nome 17)
+*#quitado Nome* — tira da lista de inadimplentes (ou #quitado N)
+
+🧪 *Comandos de teste (TEST_MODE ligado)*
+*#testarencher N* — adiciona N pessoas fake na lista (ex: #testarencher 15)
+*#testarlimpar* — apaga todo mundo da lista ativa, sem precisar recriar
+
+>>> [g1@g.us] Ghemison: #lista
+<<< De novo, Antônio? Sem lista aberta. Vai pagar a passada primeiro. 💸
+
+_Quando um admin abrir com *#listaDD/MM*, pode mandar *#lista* que eu te coloco._
+
+>>> [g1@g.us] Marcel Garcia: #lista
+<<< Nenhuma lista aberta. Respira, toma uma água e volta quando abrir. 💧
+
+_Quando um admin abrir com *#listaDD/MM*, pode mandar *#lista* que eu te coloco._
+
+>>> [g1@g.us] Marcel Garcia: #mostralista
+<<< Nenhuma lista criada ainda. Manda *#listaDD/MM* pra abrir uma.
+
+>>> [g1@g.us] Marcel Garcia: #lista05/10
+<<< 🔒 Só admin pode abrir lista.
+
+>>> [g1@g.us] Fabricio: #lista05/10 20 Sexta
+<<< ✅ Lista *Sexta* aberta pro dia *05/10* — R$ 20,00 por pessoa! Manda *#lista* pra entrar.
+
+>>> [g1@g.us] Fabricio: #lista 05/10
+<<< Já existe uma lista pro dia 05/10. Manda *#mostralista* pra ver.
+
+>>> [g1@g.us] Fabricio: #lista
+<<< ✅ Fabricio entrou! Você está na posição 1 da lista principal.
+<<< 📋 *Sexta — 05/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (1/4)
+1. Fabricio
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/2)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 0/1 em dia ✅
+
+>>> [g1@g.us] Marcel Garcia: #lista
+<<< ✅ Marcel Garcia entrou! Você está na posição 2 da lista principal.
+<<< 📋 *Sexta — 05/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (2/4)
+1. Fabricio
+2. Marcel Garcia
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/2)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 0/2 em dia ✅
+
+>>> [g1@g.us] Diego: #lista
+<<< ✅ Diego entrou! Você está na posição 3 da lista principal.
+<<< 📋 *Sexta — 05/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (3/4)
+1. Fabricio
+2. Marcel Garcia
+3. Diego
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/2)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 0/3 em dia ✅
+
+>>> [g1@g.us] Bianca: #lista
+<<< ✅ Bianca entrou! Você está na posição 4 da lista principal.
+<<< 🚨 Lista encheu! Vamos começar a lista de espera.
+<<< 📋 *Sexta — 05/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Fabricio
+2. Marcel Garcia
+3. Diego
+4. Bianca
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/2)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 0/4 em dia ✅
+
+>>> [g1@g.us] Marcel Garcia: #lista
+<<< Marcel Garcia, você já tá na lista! 😉
+
+>>> [g1@g.us] Kamila: #lista Joao Convidado
+<<< ✅ Joao Convidado entrou! Você está na posição 1 da lista de espera.
+<<< 📋 *Sexta — 05/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Fabricio
+2. Marcel Garcia
+3. Diego
+4. Bianca
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (1/2)
+5. Joao Convidado
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 0/4 em dia ✅
+
+>>> [g1@g.us] Thiago Prata: #lista
+<<< ✅ Thiago Prata entrou! Você está na posição 2 da lista de espera.
+<<< 🚨 Tudo lotado! Encerrando as vagas por hoje.
+<<< 📋 *Sexta — 05/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Fabricio
+2. Marcel Garcia
+3. Diego
+4. Bianca
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (2/2)
+5. Joao Convidado
+6. Thiago Prata
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 0/4 em dia ✅
+
+>>> [g1@g.us] Vini: #lista
+<<< Vini, infelizmente já lotou tudo hoje 🏐
+
+>>> [g1@g.us] Marcel Garcia: #pago 2
+<<< 🔒 Só admin do grupo pode marcar pagamento.
+
+>>> [g1@g.us] Fabricio: #pago 2
+<<< 💰 Marcel Garcia pagou! ✅
+<<< [figurinha] <raiz>/assets/agiota-pago-9.webp
+<<< 📋 *Sexta — 05/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Fabricio
+2. Marcel Garcia ✅
+3. Diego
+4. Bianca
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (2/2)
+5. Joao Convidado
+6. Thiago Prata
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 1/4 em dia ✅
+
+>>> [g1@g.us] Fabricio: #pago
+<<< 💰 Diego pagou! ✅
+<<< [figurinha] <raiz>/assets/agiota-pago-7.webp
+<<< 📋 *Sexta — 05/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Fabricio
+2. Marcel Garcia ✅
+3. Diego ✅
+4. Bianca
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (2/2)
+5. Joao Convidado
+6. Thiago Prata
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 2/4 em dia ✅
+
+>>> [g1@g.us] Fabricio: #pago
+<<< Usa *#pago N* (posição da lista) ou responde a mensagem do comprovante com *#pago*.
+
+>>> [g1@g.us] Fabricio: #pago
+<<< Quem mandou essa mensagem não está na lista atual.
+
+>>> [g1@g.us] Fabricio: #naopago 2
+<<< ↩️ Pagamento de Marcel Garcia desmarcado.
+<<< 📋 *Sexta — 05/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Fabricio
+2. Marcel Garcia
+3. Diego ✅
+4. Bianca
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (2/2)
+5. Joao Convidado
+6. Thiago Prata
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 1/4 em dia ✅
+
+>>> [g1@g.us] Fabricio: #pago 99
+<<< Não achei ninguém na posição 99. Confere com *#mostralista*.
+
+>>> [g1@g.us] Fabricio: #pago 1
+<<< 💰 Fabricio pagou! ✅
+<<< [figurinha] <raiz>/assets/agiota-pago-11.webp
+<<< 📋 *Sexta — 05/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Fabricio ✅
+2. Marcel Garcia
+3. Diego ✅
+4. Bianca
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (2/2)
+5. Joao Convidado
+6. Thiago Prata
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 2/4 em dia ✅
+
+>>> [g1@g.us] Diego: #valor
+<<< 💰 Valor por pessoa desta lista: *R$ 20,00*
+
+>>> [g1@g.us] Diego: #valor 25
+<<< 🔒 Só admin do grupo pode definir o valor.
+
+>>> [g1@g.us] Fabricio: #valor 25,50
+<<< 💰 Valor desta lista: *R$ 25,50* por pessoa.
+
+>>> [g1@g.us] Fabricio: #valorpadrão 30
+<<< 💰 Valor padrão do grupo: *R$ 30,00* por pessoa. Vale pras próximas listas — pra mudar a lista atual, usa *#valor 30*.
+
+>>> [g1@g.us] Fabricio: #valorpadrao 0
+<<< 💰 Valor padrão removido — próximas listas nascem sem cobrança.
+
+>>> [g1@g.us] Fabricio: #valor 0
+<<< 💰 Valor removido — lista sem cobrança.
+
+>>> [g1@g.us] Fabricio: #valor 20
+<<< 💰 Valor desta lista: *R$ 20,00* por pessoa.
+
+>>> [g1@g.us] Bianca: #remover
+<<< ❌ Bianca saiu da lista.
+<<< ⬆️ Joao Convidado subiu da espera pra lista principal!
+<<< 📋 *Sexta — 05/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Fabricio ✅
+2. Marcel Garcia
+3. Diego ✅
+4. Joao Convidado
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (1/2)
+5. Thiago Prata
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 2/4 em dia ✅
+
+>>> [g1@g.us] Bianca: #remover
+<<< Você não está na lista atual.
+
+>>> [g1@g.us] Diego: #remover 1
+<<< 🔒 Só admin pode remover os outros. Pra sair da lista, manda *#remover* sozinho.
+
+>>> [g1@g.us] Kamila: #remover Joao Convidado
+<<< ❌ Joao Convidado saiu da lista.
+<<< ⬆️ Thiago Prata subiu da espera pra lista principal!
+<<< 📋 *Sexta — 05/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Fabricio ✅
+2. Marcel Garcia
+3. Diego ✅
+4. Thiago Prata
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/2)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 2/4 em dia ✅
+
+>>> [g1@g.us] Diego: #remover Vini
+<<< Não achei "Vini" na lista. Confere com *#mostralista*.
+
+>>> [g1@g.us] Fabricio: #remover Ninguem
+<<< Não achei "Ninguem" na lista. Confere com *#mostralista*.
+
+>>> [g1@g.us] Fabricio: #remover 9
+<<< Não achei ninguém na posição 9. Confere com *#mostralista*.
+
+>>> [g1@g.us] Fabricio: #editarlista 06/10 Pelada Boa
+<<< ✏️ Lista corrigida: *05/10* → *06/10* (Pelada Boa). Ninguém saiu da lista.
+<<< 📋 *Pelada Boa — 06/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Fabricio ✅
+2. Marcel Garcia
+3. Diego ✅
+4. Thiago Prata
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/2)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 2/4 em dia ✅
+
+>>> [g1@g.us] Diego: #editarlista 06/10
+<<< 🔒 Só admin pode editar a lista.
+
+>>> [g1@g.us] Marcel Garcia: #mensalista
+<<< 🗓 As inscrições de mensalista estão fechadas no momento. Os admins abrem no começo do mês — fica ligado no grupo!
+
+>>> [admin/grupoadmin] #abrirmensalistasde riachuelo
+--> [g1@g.us] 💰 *MENSALÃO DO VÔLEI, NOVA EDIÇÃO*
+
+12 vaga(s) + fila de espera.
+
+Manda *#mensalista* pra se candidatar. Pagamento até o *5º dia útil*, e aqui ninguém tem foro privilegiado. O ✅ é o que vale.
+<<< 🗓 Inscrições de *Vôlei Riachuelo* abertas e anunciadas no grupo.
+<<< 🗓 *Mensalistas — 09/2026* (0/12) · inscrições abertas
+━━━━━━━━━━━━━━━
+_(nenhum ainda — manda #mensalista pra entrar)_
+0 fixa(s) + 0 mensais · 12 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [g1@g.us] Marcel Garcia: #mensalista
+<<< 🧾 *Marcel Garcia assinou o contrato.* Vaga 1/12 da Mensa-Lista.
+
+Falta a parte chata: pagar com os admins. O ✅ é o carimbo.
+<<< 🗓 *Mensalistas — 09/2026* (1/12) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia
+0 fixa(s) + 1 mensais · 11 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [g1@g.us] Marcel Garcia: #mensalista
+<<< Marcel Garcia, você já está no quadro de mensalistas! 😉
+
+>>> [g1@g.us] Diego: #mensalista Diego B
+<<< 🏛 *Diego B tomou posse na vaga 2/12.*
+
+Mandato de um mês, sem reeleição automática. Acerta com os admins que o ✅ sai.
+<<< 🗓 *Mensalistas — 09/2026* (2/12) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia
+2. Diego B
+0 fixa(s) + 2 mensais · 10 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [g1@g.us] Fabricio: #vagasmensalistas 2
+<<< 🗓 Vagas de mensalista: *2*.
+
+>>> [g1@g.us] Fabricio: #vagasmensalistas 0
+<<< O número de vagas precisa ser pelo menos 1.
+
+>>> [g1@g.us] Aces: #mensalista
+<<< 🪑 *Acabaram as cadeiras.* Aces, você é o 3º da fila.
+
+Calouro sobe quando um titular não paga. Acontece todo mês.
+<<< 🗓 *Mensalistas — 09/2026* (2/2) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia
+2. Diego B
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Aces
+0 fixa(s) + 2 mensais · 0 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [g1@g.us] Vini: #mensalista
+<<< 📋 *Vini está na lista de espera do mensalão* (posição 4).
+
+Fica de olho: quem não pagar no prazo devolve a vaga, e ela cai pra fila.
+<<< 🗓 *Mensalistas — 09/2026* (2/2) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia
+2. Diego B
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Aces
+4. Vini
+0 fixa(s) + 2 mensais · 0 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [g1@g.us] Vini: #mensalistas
+<<< 🗓 *Mensalistas — 09/2026* (2/2) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia
+2. Diego B
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Aces
+4. Vini
+0 fixa(s) + 2 mensais · 0 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [g1@g.us] Marcel Garcia: #pagomes 1
+<<< 🔒 Só admin do grupo pode marcar mensalidade.
+
+>>> [g1@g.us] Fabricio: #pagomes 1
+<<< 🗓 Marcel Garcia pagou o mês! ✅
+<<< [figurinha] <raiz>/assets/agiota-pago-3.webp
+<<< 🗓 *Mensalistas — 09/2026* (2/2) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia ✅
+2. Diego B
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Aces
+4. Vini
+0 fixa(s) + 2 mensais · 0 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [g1@g.us] Fabricio: #valormes 53
+<<< 💰 Mensalidade do grupo: *R$ 53,00* (usada como padrão no #pagomes).
+
+>>> [g1@g.us] Fabricio: #pagomes 2
+<<< 🗓 Diego B pagou o mês! ✅
+<<< [figurinha] <raiz>/assets/agiota-pago-9.webp
+<<< 🗓 *Mensalistas — 09/2026* (2/2) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia ✅
+2. Diego B ✅
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Aces
+4. Vini
+━━━━━━━━━━━━━━━
+💰 Mensalidade: R$ 53,00 — 2/2 pagos
+0 fixa(s) + 2 mensais · 0 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [g1@g.us] Fabricio: #pagomes 3 40
+<<< 🗓 Aces pagou o mês! ✅
+<<< [figurinha] <raiz>/assets/agiota-pago-8.webp
+<<< 🗓 *Mensalistas — 09/2026* (2/2) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia ✅
+2. Diego B ✅
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Aces ✅
+4. Vini
+━━━━━━━━━━━━━━━
+💰 Mensalidade: R$ 53,00 — 2/2 pagos
+0 fixa(s) + 2 mensais · 0 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [g1@g.us] Fabricio: #naopagomes 3
+<<< ↩️ Mensalidade de Aces desmarcada.
+<<< 🗓 *Mensalistas — 09/2026* (2/2) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia ✅
+2. Diego B ✅
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Aces
+4. Vini
+━━━━━━━━━━━━━━━
+💰 Mensalidade: R$ 53,00 — 2/2 pagos
+0 fixa(s) + 2 mensais · 0 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [g1@g.us] Fabricio: #pagomes 9
+<<< Não achei mensalista na posição 9. Confere com *#mensalistas*.
+
+>>> [g1@g.us] Fabricio: #fixo 1
+<<< 📌 Marcel Garcia agora é fixo — vaga cativa de mensalista.
+<<< 🗓 *Mensalistas — 09/2026* (2/2) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia 📌 ✅
+2. Diego B ✅
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Aces
+4. Vini
+━━━━━━━━━━━━━━━
+💰 Mensalidade: R$ 53,00 — 2/2 pagos
+1 fixa(s) + 1 mensais · 0 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [g1@g.us] Fabricio: #fixo 9
+<<< Não achei mensalista na posição 9. Confere com *#mensalistas*.
+
+>>> [g1@g.us] Fabricio: #removermensalista 2
+<<< ❌ Diego B saiu do quadro de mensalistas.
+<<< ⬆️ Aces subiu da espera pra vaga mensal — falta o pagamento pra confirmar.
+<<< 🗓 *Mensalistas — 09/2026* (2/2) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia 📌 ✅
+2. Aces
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Vini
+━━━━━━━━━━━━━━━
+💰 Mensalidade: R$ 53,00 — 1/2 pagos
+1 fixa(s) + 1 mensais · 0 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [g1@g.us] Fabricio: #removermensalista 9
+<<< Não achei mensalista na posição 9. Confere com *#mensalistas*.
+
+>>> [g1@g.us] Fabricio: #valormes 0
+<<< 💰 Mensalidade removida.
+
+>>> [g1@g.us] Fabricio: #valormes 53
+<<< 💰 Mensalidade do grupo: *R$ 53,00* (usada como padrão no #pagomes).
+
+>>> [g1@g.us] Fabricio: #inadimplente 3 17
+<<< ⛔ Diego entrou na lista de inadimplentes (deve R$ 17,00). Não entra em lista nova até um admin dar *#quitado Diego*.
+
+>>> [g1@g.us] Fabricio: #inadimplente 3
+<<< Diego já está na lista de inadimplentes.
+
+>>> [g1@g.us] Fabricio: #inadimplente Fulano de Tal
+<<< ⛔ Fulano de Tal entrou na lista de inadimplentes. Não entra em lista nova até um admin dar *#quitado Fulano de Tal*.
+
+>>> [g1@g.us] Fabricio: #inadimplente 99
+<<< Não achei ninguém na posição 99. Confere com *#mostralista* ou usa *#inadimplente Nome*.
+
+>>> [g1@g.us] Marcel Garcia: #inadimplente Fulano
+<<< 🔒 Só admin do grupo pode marcar inadimplente.
+
+>>> [g1@g.us] Fabricio: #mostralista
+<<< 📋 *Pelada Boa — 06/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Fabricio ✅
+2. Marcel Garcia
+3. Diego ✅
+4. Thiago Prata
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/2)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 2/4 em dia ✅
+━━━━━━━━━━━━━━━
+⛔ *INADIMPLENTES*
+• Diego (R$ 17,00)
+• Fulano de Tal
+
+>>> [g1@g.us] Pedro: #lista Fulano de Tal
+<<< ⛔ Fulano de Tal, você está na lista de inadimplentes — acerta com um admin antes de entrar.
+
+>>> [g1@g.us] Fabricio: #quitado fulano
+<<< ✅ Fulano de Tal pagou o agiota. 🤝
+<<< [figurinha] <raiz>/assets/agiota-pago-4.webp
+
+>>> [g1@g.us] Fabricio: #quitado 1
+<<< ✅ Diego pagou o agiota. 🤝
+<<< [figurinha] <raiz>/assets/agiota-pago-11.webp
+
+>>> [g1@g.us] Fabricio: #quitado ninguem
+<<< Não achei essa pessoa na lista de inadimplentes.
+
+>>> [g1@g.us] Marcel Garcia: #testarencher 3
+<<< 🔒 Só admin do grupo pode usar comandos de teste.
+
+>>> [g1@g.us] Fabricio: #testarencher 3
+<<< 🧪 2 pessoa(s) fake adicionada(s).
+<<< 🚨 Tudo lotado! Encerrando as vagas por hoje.
+<<< 📋 *Pelada Boa — 06/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Fabricio ✅
+2. Marcel Garcia
+3. Diego ✅
+4. Thiago Prata
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (2/2)
+5. Teste 1
+6. Teste 2
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 2/4 em dia ✅
+
+>>> [g1@g.us] Fabricio: #testarlimpar
+<<< 🧪 Lista limpa! 6 entrada(s) removida(s). A lista *06/10* continua aberta, zerada.
+
+>>> [g1@g.us] Fabricio: #pago 3 4
+<<< Não entendi o formato 🤔 Manda *#comandos* pra ver como usar cada um.
+
+>>> [g1@g.us] Fabricio: #valor25
+
+>>> [g1@g.us] Fabricio: #listaXX
+
+>>> [g1@g.us] Fabricio: #encerrarlista
+<<< 🔒 Lista do dia *06/10* encerrada. Não aceita mais nomes.
+
+>>> [g1@g.us] Diego: #encerrarlista
+<<< 🔒 Só admin pode encerrar a lista.
+
+>>> [g1@g.us] Fabricio: #encerrarlista
+<<< Não tem lista aberta pra encerrar.
+
+>>> [g1@g.us] Marcel Garcia: #lista
+<<< Você chegou tão cedo que a quadra ainda tá sonhando. Sem lista por enquanto. 😴
+
+_Quando um admin abrir com *#listaDD/MM*, pode mandar *#lista* que eu te coloco._
+
+>>> [g1@g.us] Marcel Garcia: #mostralista
+<<< Nenhuma lista aberta agora. A última foi *06/10* (encerrada).
+
+>>> [g1@g.us] Fabricio: #pago 1
+<<< Não achei ninguém na posição 1. Confere com *#mostralista*.
+
+>>> [g1@g.us] Diego: #cancelarlista
+<<< 🔒 Só admin pode cancelar a lista.
+
+>>> [g1@g.us] Fabricio: #cancelarlista
+<<< 🚫 Lista *Pelada Boa* de *06/10* cancelada e apagada (0 entrada(s)). A data ficou livre pra recriar.
+
+>>> [g1@g.us] Fabricio: #cancelarlista
+<<< Não tem lista pra cancelar.
+
+>>> [g1@g.us] Fabricio: #mostralista
+<<< Nenhuma lista criada ainda. Manda *#listaDD/MM* pra abrir uma.
+
+>>> [admin/grupoadmin] #abrirlistade riachuelo 12/10 17 Sexta 3h
+--> [g1@g.us] ✅ Lista *Sexta 3h* aberta pro dia *12/10* — R$ 17,00 por pessoa! Manda *#lista* pra entrar.
+
+📋 *Sexta 3h — 12/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (1/4)
+1. Marcel Garcia — Mensal ✅
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/2)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 17,00 por pessoa — 1/1 em dia ✅
+<<< ✅ Lista *Sexta 3h* de *12/10* aberta em *Vôlei Riachuelo* — R$ 17,00/pessoa, com os mensalistas no topo. Anunciada lá no grupo.
+
+>>> [admin/grupoadmin] #abrirlistade riachuelo 12/10
+<<< Já existe lista pro dia 12/10 em *Vôlei Riachuelo*. Vê com *#listade*.
+
+>>> [admin/grupoadmin] #abrirextrade riachuelo 13/10 15
+<<< A lista de *12/10* ainda está aberta em *Vôlei Riachuelo*. Fecha ela antes (*#encerrarlistade riachuelo quieto*) — com duas abertas, o #lista do pessoal cai na mais nova e metade entra na errada.
+
+>>> [admin/grupoadmin] #listade riachuelo
+<<< 🏐 *Vôlei Riachuelo*
+
+📋 *Sexta 3h — 12/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (1/4)
+1. Marcel Garcia — Mensal ✅
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/2)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 17,00 por pessoa — 1/1 em dia ✅
+
+>>> [admin/grupoadmin] #adicionarde riachuelo Maria Convidada
+--> [g1@g.us] ✅ *Maria Convidada* entrou na *principal* (posição 2) — convidado(a).
+--> [g1@g.us] 📋 *Sexta 3h — 12/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (2/4)
+1. Marcel Garcia — Mensal ✅
+2. Maria Convidada
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/2)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 17,00 por pessoa — 1/2 em dia ✅
+<<< ✅ *Maria Convidada* colocado na *principal* (posição 2) na lista de 12/10 (anunciado no grupo).
+<<< 📋 *Sexta 3h — 12/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (2/4)
+1. Marcel Garcia — Mensal ✅
+2. Maria Convidada
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/2)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 17,00 por pessoa — 1/2 em dia ✅
+
+>>> [admin/grupoadmin] #adicionarde riachuelo Maria Convidada
+<<< *Maria Convidada* já está na lista de 12/10.
+
+>>> [admin/grupoadmin] #adicionarde riachuelo Bianca quieto
+<<< ✅ *Bianca* colocado na *principal* (posição 3) na lista de 12/10 — em silêncio.
+<<< 📋 *Sexta 3h — 12/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (3/4)
+1. Marcel Garcia — Mensal ✅
+2. Maria Convidada
+3. Bianca
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/2)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 17,00 por pessoa — 1/3 em dia ✅
+
+>>> [admin/grupoadmin] #adicionarde riachuelo
+<<< Falta o nome. Ex: *#adicionarde riachuelo Joao Convidado*
+
+>>> [g1@g.us] Kamila: #lista
+<<< ✅ Kamila entrou! Você está na posição 4 da lista principal.
+<<< 🚨 Lista encheu! Vamos começar a lista de espera.
+<<< 📋 *Sexta 3h — 12/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Marcel Garcia — Mensal ✅
+2. Maria Convidada
+3. Bianca
+4. Kamila
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/2)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 17,00 por pessoa — 1/4 em dia ✅
+
+>>> [g1@g.us] Thiago Prata: #lista
+<<< ✅ Thiago Prata entrou! Você está na posição 1 da lista de espera.
+<<< 📋 *Sexta 3h — 12/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Marcel Garcia — Mensal ✅
+2. Maria Convidada
+3. Bianca
+4. Kamila
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (1/2)
+5. Thiago Prata
+━━━━━━━━━━━━━━━
+💰 R$ 17,00 por pessoa — 1/4 em dia ✅
+
+>>> [g1@g.us] Vini: #lista
+<<< ✅ Vini entrou! Você está na posição 2 da lista de espera.
+<<< 🚨 Tudo lotado! Encerrando as vagas por hoje.
+<<< 📋 *Sexta 3h — 12/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Marcel Garcia — Mensal ✅
+2. Maria Convidada
+3. Bianca
+4. Kamila
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (2/2)
+5. Thiago Prata
+6. Vini
+━━━━━━━━━━━━━━━
+💰 R$ 17,00 por pessoa — 1/4 em dia ✅
+
+>>> [admin/grupoadmin] #adicionarde riachuelo Mais Um
+<<< Lista de 12/10 lotada (principal + espera). Tira alguém com *#removerde* antes.
+
+>>> [admin/grupoadmin] #renomearde riachuelo 3 Maria Certa
+<<< ✏️ Posição 3: *Bianca* → *Maria Certa*. Posição e pagamento intactos.
+<<< 📋 *Sexta 3h — 12/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Marcel Garcia — Mensal ✅
+2. Maria Convidada
+3. Maria Certa
+4. Kamila
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (2/2)
+5. Thiago Prata
+6. Vini
+━━━━━━━━━━━━━━━
+💰 R$ 17,00 por pessoa — 1/4 em dia ✅
+
+>>> [admin/grupoadmin] #renomearde riachuelo 30 Ninguem
+<<< Não achei ninguém na posição 30 da lista 12/10. Confere com *#listade*.
+
+>>> [admin/grupoadmin] #pagode riachuelo 1,3
+--> [g1@g.us] 💰 Pagamento confirmado: *Marcel Garcia*, *Maria Certa* ✅
+--> [g1@g.us] [figurinha] <raiz>/assets/agiota-pago-7.webp
+<<< 💰 2 pagamento(s) marcados ✅ (anunciado no grupo).
+<<< 📋 *Sexta 3h — 12/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Marcel Garcia — Mensal ✅ ➕
+2. Maria Convidada
+3. Maria Certa ✅
+4. Kamila
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (2/2)
+5. Thiago Prata
+6. Vini
+━━━━━━━━━━━━━━━
+💰 R$ 17,00 por pessoa — 2/4 em dia ✅
+
+>>> [admin/grupoadmin] #naopagode riachuelo 1
+<<< ↩️ 1 pagamento(s) desmarcados.
+<<< 📋 *Sexta 3h — 12/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Marcel Garcia — Mensal ✅
+2. Maria Convidada
+3. Maria Certa ✅
+4. Kamila
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (2/2)
+5. Thiago Prata
+6. Vini
+━━━━━━━━━━━━━━━
+💰 R$ 17,00 por pessoa — 2/4 em dia ✅
+
+>>> [admin/grupoadmin] #pagode riachuelo 40
+<<< Não achei ninguém nessa(s) posição(ões) na lista 12/10. Confere com *#listade*.
+
+>>> [admin/grupoadmin] #pagosde riachuelo
+<<< 💰 *Pagamentos — Vôlei Riachuelo*
+📋 *Sexta 3h* — 12/10
+
+✅ 2/4 em dia (espera não deve ainda)
+🗓 1 mensalista(s) — contam pelo mês pago
+
+💵 Arrecadado na lista: *R$ 17,00* (R$ 17,00/pessoa)
+
+⏳ Faltam: Maria Convidada, Kamila
+
+>>> [admin/grupoadmin] #cobrarde riachuelo
+--> [g1@g.us] {"mentionedList":["5521900000005@c.us"]} ⏰ *Recado do agiota* 🏐
+
+Quem ainda não pagou a pelada da semana tem até *sexta, 12h* pra acertar — depois disso sai da lista e a espera assume a vaga.
+Quem subir da espera tem até *sexta, 17h* pra pagar.
+
+⏳ Na mira do agiota: Maria Convidada, @5521900000005
+
+Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. 🤝
+--> [g1@g.us] [figurinha] <raiz>/assets/cade-meu-pix-7.webp
+<<< 📣 Cobrança mandada pro grupo (2 na mira). O lembrete diário automático não foi afetado.
+
+>>> [admin/grupoadmin] #removerde riachuelo 2-3
+--> [g1@g.us] ❌ Saiu(ram) da lista: *Maria Convidada*, *Maria Certa*.
+⬆️ Da espera pra principal: *Thiago Prata*, *Vini*!
+--> [g1@g.us] 📋 *Sexta 3h — 12/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Marcel Garcia — Mensal ✅
+2. Kamila
+3. Thiago Prata
+4. Vini
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/2)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 17,00 por pessoa — 1/4 em dia ✅
+<<< ❌ 2 removido(s) da lista 12/10 (anunciado no grupo). ⚠️ Atenção: Maria Certa já tinha(m) pago ✅!
+
+>>> [admin/grupoadmin] #removerde riachuelo 40
+<<< Não achei ninguém nessa(s) posição(ões) na lista 12/10. Confere com *#listade*.
+
+>>> [admin/grupoadmin] #cobrarsubiude riachuelo
+--> [g1@g.us] {"mentionedList":["5521900000006@c.us","5521900000007@c.us"]} 📣 *Atenção, reforços!* 🏐
+
+@5521900000006, @5521900000007: vocês subiram da espera pra lista!
+O prazo de vocês é até *sexta, 17h* pra fazer o pagamento — senão a vaga passa pro próximo da espera.
+
+Manda o comprovante aqui que os admins dão o ✅. O agiota tá de olho. 👀
+--> [g1@g.us] [figurinha] <raiz>/assets/cade-meu-pix-2.webp
+<<< 📣 Cobrança mandada pro grupo (2 na mira, só quem subiu da espera). O lembrete diário automático não foi afetado.
+
+>>> [admin/grupoadmin] #editarlistade riachuelo 14/10 Sexta Nova
+<<< ✏️ Lista corrigida: *12/10* (Sexta 3h) → *14/10* (Sexta Nova). Ninguém saiu da lista.
+
+📋 *Sexta Nova — 14/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Marcel Garcia — Mensal ✅
+2. Kamila
+3. Thiago Prata
+4. Vini
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/2)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 17,00 por pessoa — 1/4 em dia ✅
+
+>>> [admin/grupoadmin] #encerrarlistade riachuelo quieto
+<<< 🔒 Lista de *14/10* de *Vôlei Riachuelo* encerrada — em silêncio, o grupo não foi avisado. Cobrança, times e #pagode seguem funcionando.
+<<< 📋 *Sexta Nova — 14/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Marcel Garcia — Mensal ✅
+2. Kamila
+3. Thiago Prata
+4. Vini
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/2)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 17,00 por pessoa — 1/4 em dia ✅
+
+>>> [admin/grupoadmin] #encerrarlistade riachuelo
+<<< *Vôlei Riachuelo* não tem lista aberta pra encerrar.
+
+>>> [admin/grupoadmin] #reabrirlistade riachuelo
+--> [g1@g.us] 🔓 Lista de *14/10* reaberta — pode mandar *#lista* de novo.
+<<< 🔓 Lista de *14/10* de *Vôlei Riachuelo* reaberta (anunciado no grupo).
+
+>>> [admin/grupoadmin] #reabrirlistade riachuelo quieto
+<<< 🔓 Lista de *14/10* de *Vôlei Riachuelo* reaberta — em silêncio.
+
+>>> [admin/grupoadmin] #abrirextrade riachuelo 15/10 15
+<<< A lista de *14/10* ainda está aberta em *Vôlei Riachuelo*. Fecha ela antes (*#encerrarlistade riachuelo quieto*) — com duas abertas, o #lista do pessoal cai na mais nova e metade entra na errada.
+
+>>> [admin/grupoadmin] #encerrarlistade riachuelo
+--> [g1@g.us] 🔒 Lista *Sexta Nova* do dia *14/10* encerrada — não aceita mais nomes.
+<<< 🔒 Lista de *14/10* de *Vôlei Riachuelo* encerrada (anunciado no grupo). Cobrança, times e #pagode seguem funcionando.
+<<< 📋 *Sexta Nova — 14/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (4/4)
+1. Marcel Garcia — Mensal ✅
+2. Kamila
+3. Thiago Prata
+4. Vini
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/2)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 17,00 por pessoa — 1/4 em dia ✅
+
+>>> [admin/grupoadmin] #abrirextrade riachuelo 15/10 15
+--> [g1@g.us] ⚡ *Pelada Extra* dia *15/10* — R$ 15,00 por pessoa!
+
+⚠️ Essa é extra: *não entra na mensalidade*. Mensalista que quiser jogar manda *#lista* e paga a pelada, igual todo mundo.
+
+📋 *Pelada Extra — 15/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (1/4)
+1. Marcel Garcia
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/2)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 15,00 por pessoa — 0/1 em dia ✅
+<<< ⚡ *Pelada Extra* de *15/10* aberta em *Vôlei Riachuelo* — R$ 15,00/pessoa. Só os fixos entraram sozinhos, e pagam como todo mundo. Anunciada lá no grupo.
+
+>>> [admin/grupoadmin] #abrirextrade riachuelo 15/10
+<<< A lista de *15/10* ainda está aberta em *Vôlei Riachuelo*. Fecha ela antes (*#encerrarlistade riachuelo quieto*) — com duas abertas, o #lista do pessoal cai na mais nova e metade entra na errada.
+
+>>> [admin/grupoadmin] #pagosde riachuelo
+<<< 💰 *Pagamentos — Vôlei Riachuelo*
+📋 *Pelada Extra* — 15/10
+
+✅ 0/1 em dia (espera não deve ainda)
+
+💵 Arrecadado na lista: *R$ 0,00* (R$ 15,00/pessoa)
+
+⏳ Faltam: Marcel Garcia
+
+>>> [admin/grupoadmin] #mensalistasde riachuelo
+<<< 🏐 *Vôlei Riachuelo*
+
+🗓 *Mensalistas — 09/2026* (2/2) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia 📌 ✅
+2. Aces
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Vini
+━━━━━━━━━━━━━━━
+💰 Mensalidade: R$ 53,00 — 1/2 pagos
+1 fixa(s) + 1 mensais · 0 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+_Pra publicar isso no grupo: *#mensalistasde riachuelo enviar*_
+
+>>> [admin/grupoadmin] #mensalistasde riachuelo enviar
+--> [g1@g.us] 🗓 *Mensalistas — 09/2026* (2/2) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia 📌 ✅
+2. Aces
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Vini
+━━━━━━━━━━━━━━━
+💰 Mensalidade: R$ 53,00 — 1/2 pagos
+1 fixa(s) + 1 mensais · 0 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+<<< 📣 Quadro de mensalistas publicado em *Vôlei Riachuelo* (sem o arrecadado).
+
+>>> [admin/grupoadmin] #mensalistade riachuelo Pedro Remoto
+<<< ⏳ Vagas cheias — Pedro Remoto entrou na espera dos mensalistas (posição 4).
+<<< 🗓 *Mensalistas — 09/2026* (2/2) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia 📌 ✅
+2. Aces
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Vini
+4. Pedro Remoto
+━━━━━━━━━━━━━━━
+💰 Mensalidade: R$ 53,00 — 1/2 pagos
+1 fixa(s) + 1 mensais · 0 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [admin/grupoadmin] #mensalistade riachuelo Pedro Remoto
+<<< Pedro Remoto já está no quadro de *Vôlei Riachuelo*.
+
+>>> [admin/grupoadmin] #pagomesde riachuelo 1-2
+--> [g1@g.us] 🗓 *Pagaram o mês:* *Marcel Garcia* 📌, *Aces* ✅
+Mensalistas confirmados — vaga garantida nas próximas listas!
+--> [g1@g.us] [figurinha] <raiz>/assets/agiota-pago-5.webp
+<<< 🗓 2 mensalidades marcadas ✅ (anunciado no grupo).
+<<< 🗓 *Mensalistas — 09/2026* (2/2) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia 📌 ✅
+2. Aces ✅
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Vini
+4. Pedro Remoto
+━━━━━━━━━━━━━━━
+💰 Mensalidade: R$ 53,00 — 2/2 pagos
+1 fixa(s) + 1 mensais · 0 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [admin/grupoadmin] #pagomesde riachuelo 3 60 quieto
+<<< 🗓 Vini pagou o mês! ✅ (em silêncio, o grupo não foi avisado)
+<<< 🗓 *Mensalistas — 09/2026* (2/2) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia 📌 ✅
+2. Aces ✅
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Vini ✅
+4. Pedro Remoto
+━━━━━━━━━━━━━━━
+💰 Mensalidade: R$ 53,00 — 2/2 pagos
+1 fixa(s) + 1 mensais · 0 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [admin/grupoadmin] #pagomesde riachuelo 1
+--> [g1@g.us] 🗓 *Marcel Garcia* (fixo 📌) pagou o mês! ✅
+--> [g1@g.us] [figurinha] <raiz>/assets/agiota-pago-9.webp
+<<< 🗓 Marcel Garcia pagou o mês! ✅ (anunciado no grupo)
+<<< 🗓 *Mensalistas — 09/2026* (2/2) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia 📌 ✅
+2. Aces ✅
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Vini ✅
+4. Pedro Remoto
+━━━━━━━━━━━━━━━
+💰 Mensalidade: R$ 53,00 — 2/2 pagos
+1 fixa(s) + 1 mensais · 0 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [admin/grupoadmin] #naopagomesde riachuelo 1,9
+<<< ↩️ Mensalidade de Marcel Garcia desmarcada. ⚠️ Posições não encontradas: 9.
+<<< 🗓 *Mensalistas — 09/2026* (2/2) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia 📌
+2. Aces ✅
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Vini ✅
+4. Pedro Remoto
+━━━━━━━━━━━━━━━
+💰 Mensalidade: R$ 53,00 — 1/2 pagos
+1 fixa(s) + 1 mensais · 0 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [admin/grupoadmin] #pagomesde riachuelo 30
+<<< Não achei mensalista nessa(s) posição(ões) em *Vôlei Riachuelo*. Confere com *#mensalistasde*.
+
+>>> [admin/grupoadmin] #fixode riachuelo 2
+<<< 📌 Aces agora é fixo — vaga cativa.
+<<< 🗓 *Mensalistas — 09/2026* (2/2) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Marcel Garcia 📌
+2. Aces 📌 ✅
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Vini ✅
+4. Pedro Remoto
+━━━━━━━━━━━━━━━
+💰 Mensalidade: R$ 53,00 — 1/2 pagos
+2 fixa(s) + 0 mensais · 0 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [admin/grupoadmin] #fixode riachuelo 20
+<<< Não achei mensalista na posição 20 de *Vôlei Riachuelo*.
+
+>>> [admin/grupoadmin] #removermensalistade riachuelo 1,9
+<<< ❌ Marcel Garcia saiu do quadro de mensalistas. ⚠️ Posições não encontradas: 9.
+<<< ⬆️ Vini subiu da espera pra vaga mensal — falta o pagamento pra confirmar.
+<<< 🗓 *Mensalistas — 09/2026* (2/2) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Aces 📌 ✅
+2. Vini ✅
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Pedro Remoto
+━━━━━━━━━━━━━━━
+💰 Mensalidade: R$ 53,00 — 2/2 pagos
+1 fixa(s) + 1 mensais · 0 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [admin/grupoadmin] #valormesde riachuelo 60
+<<< 💰 Mensalidade de *Vôlei Riachuelo*: R$ 60,00 (padrão do #pagomesde).
+
+>>> [admin/grupoadmin] #vagasmensalistasde riachuelo 10
+<<< 🗓 Vagas de mensalista de *Vôlei Riachuelo*: *10*.
+
+>>> [admin/grupoadmin] #vagasmensalistasde riachuelo 0
+<<< O número de vagas precisa ser pelo menos 1.
+
+>>> [admin/grupoadmin] #valorde riachuelo 22
+<<< 💰 Valor padrão de *Vôlei Riachuelo*: R$ 22,00 por pessoa. Vale pras próximas listas — pra lista aberta agora, usa *#valorlistade*.
+
+>>> [admin/grupoadmin] #valorde riachuelo 0
+<<< 💰 Valor padrão de *Vôlei Riachuelo* removido — próximas listas sem cobrança.
+
+>>> [admin/grupoadmin] #valorlistade riachuelo 33
+<<< 💰 Lista *15/10* de *Vôlei Riachuelo*: R$ 33,00 por pessoa.
+
+>>> [admin/grupoadmin] #valorlistade riachuelo 0
+<<< 💰 Valor da lista *15/10* de *Vôlei Riachuelo* removido — sem cobrança.
+
+>>> [admin/grupoadmin] #valorlistade quadra 25
+<<< *Quadra 7* ainda não tem lista. Pro padrão das próximas, usa *#valorde*.
+
+>>> [admin/grupoadmin] #valorde quadra 7
+<<< "quadra 7" parece ser o nome do grupo — faltou o valor. Ex: *#valorde quadra 7 25*
+
+>>> [admin/grupoadmin] #pagomesde quadra 7
+<<< "quadra 7" parece ser o nome do grupo — faltou a posição do mensalista. Ex: *#pagomesde quadra 7 3*
+
+>>> [admin/grupoadmin] #fixode quadra 7
+<<< "quadra 7" parece ser o nome do grupo — faltou a posição do mensalista. Ex: *#fixode quadra 7 3*
+
+>>> [admin/grupoadmin] #adminsde riachuelo
+<<< 👑 *Admins de Vôlei Riachuelo* (2) — são eles que podem marcar #pago lá:
+• 5521900000001
+• 5521900000004
+
+>>> [admin/grupoadmin] #fecharmensalistasde riachuelo
+--> [g1@g.us] 🔒 *Mensalão encerrado.* Quem garantiu, garantiu — agora é acertar o pagamento com os admins. Quem ficou de fora, mês que vem tem outro.
+<<< 🗓 Inscrições de *Vôlei Riachuelo* fechadas e anunciadas no grupo.
+<<< 🗓 *Mensalistas — 09/2026* (2/10) · inscrições fechadas
+━━━━━━━━━━━━━━━
+1. Aces 📌 ✅
+2. Vini ✅
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Pedro Remoto
+━━━━━━━━━━━━━━━
+💰 Mensalidade: R$ 60,00 — 2/2 pagos
+1 fixa(s) + 1 mensais · 8 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [admin/grupoadmin] #abrirmensalistasde riachuelo quieto
+<<< 🗓 Inscrições de *Vôlei Riachuelo* abertas — em silêncio, o grupo não foi avisado.
+<<< 🗓 *Mensalistas — 09/2026* (2/10) · inscrições abertas
+━━━━━━━━━━━━━━━
+1. Aces 📌 ✅
+2. Vini ✅
+━━━━━━━━━━━━━━━
+⏳ *ESPERA*
+3. Pedro Remoto
+━━━━━━━━━━━━━━━
+💰 Mensalidade: R$ 60,00 — 2/2 pagos
+1 fixa(s) + 1 mensais · 8 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [admin/grupoadmin] #reiniciarmensalistasde riachuelo
+<<< ♻️ Quadro de mensalistas de *Vôlei Riachuelo* reiniciado: 2 não-fixo(s) removido(s), inscrições fechadas. Fixos mantidos (pendentes até pagar). Abre a rodada nova com *#abrirmensalistasde*.
+<<< 🗓 *Mensalistas — 09/2026* (1/10) · inscrições fechadas
+━━━━━━━━━━━━━━━
+1. Aces 📌 ✅
+━━━━━━━━━━━━━━━
+💰 Mensalidade: R$ 60,00 — 1/1 pagos
+1 fixa(s) + 0 mensais · 9 vaga(s) livre(s)
+_📌 fixo · ✅ mês pago_
+
+>>> [admin/grupoadmin] #importarelencode riachuelo
+<<< 📥 Elenco da planilha importado pra *Vôlei Riachuelo*: 18 jogador(es) com os votos dos 4 votantes (I=2, M=3, A=4 na escala 1-5).
+📅 Pelada de 31/07 registrada — 18 jogador(es) já começam com presença 1.
+Refina as notas no painel!
+
+>>> [admin/grupoadmin] #importarelencode riachuelo
+<<< 📥 Elenco da planilha importado pra *Vôlei Riachuelo*: 18 jogador(es) com os votos dos 4 votantes (I=2, M=3, A=4 na escala 1-5).
+📅 A pelada de 31/07 já estava registrada.
+Refina as notas no painel!
+
+>>> [admin/grupoadmin] #timesde riachuelo 2
+<<< Só 1 pessoa(s) na principal da lista 15/10 — não dá pra montar 2 times.
+
+>>> [admin/grupoadmin] #timesde riachuelo 2 enviar
+<<< Só 1 pessoa(s) na principal da lista 15/10 — não dá pra montar 2 times.
+
+>>> [admin/grupoadmin] #timesde riachuelo 2 refazer
+<<< Só 1 pessoa(s) na principal da lista 15/10 — não dá pra montar 2 times.
+
+>>> [admin/grupoadmin] #timesde riachuelo 6
+<<< Só 1 pessoa(s) na principal da lista 15/10 — não dá pra montar 6 times.
+
+>>> [admin/grupoadmin] #timesde quadra 7
+<<< *Quadra 7* ainda não tem lista.
+
+>>> [admin/grupoadmin] #anuncio Jogo confirmado!
+<<< Tem 2 grupos ativos, não sei em qual anunciar:
+• Quadra 7
+• Vôlei Riachuelo
+
+Usa *#anunciarde <grupo> <texto>*.
+
+>>> [admin/grupoadmin] #anunciarde riachuelo
+
+📢 Chuva forte,
+jogo cancelado
+--> [g1@g.us] {"mentionedList":["5521900000001@c.us","5521900000002@c.us","5521900000003@c.us"]} 📢 Chuva forte,
+jogo cancelado
+<<< 📣 Anunciado em *Vôlei Riachuelo*, notificando 3 pessoa(s). Saiu assim:
+
+📢 Chuva forte,
+jogo cancelado
+
+>>> [admin/grupoadmin] #anunciode riachuelo
+<<< Falta o texto do anúncio. Ex: *#anunciarde riachuelo Jogo de sexta cancelado*
+
+>>> [admin/grupoadmin] #anuncio   
+
+>>> [admin/grupoadmin] #listade
+<<< Não entendi o formato 🤔 Exemplos:
+*#ativargrupo <chat_id> 18 --6*
+*#listade quinta* · *#pagosde quinta* · *#valorde quinta 25*
+Manda *#admin* pra ver a sintaxe de tudo.
+
+>>> [admin/grupoadmin] #listade inexistente
+<<< Não achei nenhum grupo com "inexistente". Vê os nomes e chat_ids com *#listargrupos*.
+
+>>> [admin/grupoadmin] #listade a
+<<< Achei 2 grupos com "a":
+• Quadra 7 — g2@g.us
+• Vôlei Riachuelo — g1@g.us
+
+Sê mais específico ou usa o chat_id.
+
+>>> [admin/grupoadmin] #pago 3
+<<< Esse comando funciona dentro do grupo da pelada. Aqui os equivalentes são remotos: *#listade <grupo>*, *#pagosde <grupo>*, *#valorlistade <grupo> 30*... Manda *#admin* pra ver tudo.
+
+>>> [admin/grupoadmin] #ativargrupo x 18 -6
+<<< Não entendi o formato 🤔 Exemplos:
+*#ativargrupo <chat_id> 18 --6*
+*#listade quinta* · *#pagosde quinta* · *#valorde quinta 25*
+Manda *#admin* pra ver a sintaxe de tudo.
+
+>>> [admin/grupoadmin] #ativargrupo naoexiste@g.us
+<<< Não achei nenhum grupo com esse chat_id. Confere com *#listargrupos*.
+
+>>> [admin/grupoadmin] #ativargrupo x@g.us 0
+<<< O tamanho da lista precisa ser pelo menos 1. Ex: *#ativargrupo <chat_id> 18 --6*
+
+>>> [admin/grupoadmin] #teste
+<<< 🏐 *Tudo certo por aqui.*
+
+✅ *Conexão:* inChat
+🖥 *Máquina:* maquina-de-teste
+⏱ *No ar há:* 1d 2h 3min · 512 MB
+✅ *Banco:* respondendo · <tamanho>
+🕐 *Agora em Brasília:* 18/09/2026, 12:18
+
+📋 *Grupos ativos (2):*
+• Quadra 7 — sem lista
+• Vôlei Riachuelo — *15/10* (aberta)
+   1 na lista · 0/1 em dia · cobrança de hoje ainda não saiu
+
+✅ *Figurinhas:* agiota-pago: 10 · cade-meu-pix: 9
+
+>>> [admin/grupoadmin] #listargrupos
+<<< 📋 *Grupos cadastrados (3):*
+
+🛠 admin — Admins do vôlei — 18 vagas + 6 espera
+   chat_id: adm@g.us
+
+✅ ativo — Quadra 7 — 18 vagas + 6 espera
+   chat_id: g2@g.us
+
+✅ ativo — Vôlei Riachuelo — 4 vagas + 2 espera
+   chat_id: g1@g.us
+
+>>> [admin/privado] #grupoadmin g1@g.us
+<<< Esse grupo tem uma lista aberta — parece grupo de pelada, não de admins. Se tiver certeza, encerra a lista lá primeiro.
+
+>>> [admin/grupoadmin] #cancelarlistade riachuelo
+--> [g1@g.us] 🚫 A lista *Pelada Extra* de *15/10* foi cancelada.
+<<< 🚫 Lista de *15/10* de *Vôlei Riachuelo* cancelada e apagada (1 entrada(s)). A data ficou livre pra recriar.
+
+>>> [admin/grupoadmin] #cancelarlistade quadra
+<<< *Quadra 7* não tem lista pra cancelar.
+
+>>> [admin/grupoadmin] #desativargrupo g2@g.us
+<<< ⛔ Grupo g2@g.us desativado. Comandos de lista vão parar de responder lá.
+
+>>> [admin/grupoadmin] #desativargrupo nada@g.us
+<<< Não achei nenhum grupo com esse chat_id. Confere com *#listargrupos*.
+
+>>> [g2@g.us] Diego: #lista
+<<< 🔒 Esse grupo ainda não foi liberado pra usar o bot. Fala com quem administra.
+
+>>> [admin/privado] #grupoadmin adm@g.us off
+<<< 🛠 Grupo adm@g.us deixou de ser grupo de admins.
+
+>>> [admin/grupoadmin] #cobrarde riachuelo
+--> [g1@g.us] {"mentionedList":["5521900000002@c.us","5521900000005@c.us","5521900000006@c.us","5521900000007@c.us"]} ⏰ *Recado do agiota* 🏐
+
+Quem ainda não pagou a pelada da semana tem até *sexta, 12h* pra acertar — depois disso sai da lista e a espera assume a vaga.
+Quem subir da espera tem até *sexta, 17h* pra pagar.
+
+⏳ Na mira do agiota: @5521900000002, @5521900000005, @5521900000006, @5521900000007
+
+Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. 🤝
+--> [g1@g.us] [figurinha] <raiz>/assets/cade-meu-pix-7.webp
+<<< 📣 Cobrança mandada pro grupo (4 na mira). O lembrete diário automático não foi afetado.
+
+>>> GET /painel
+<<< 401 <!doctype html>
+<html lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel do vôlei</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; min-height:100vh; display:grid; place-items:center;
+         background:#121…
+
+>>> GET /api/grupos
+<<< 401 {
+ "erro": "Não autenticado. Abre /painel e entra com a senha."
+}
+
+>>> GET /api/grupos
+<<< 200 [
+ {
+  "id": 1,
+  "chat_id": "g1@g.us",
+  "nome": "Vôlei Riachuelo",
+  "ativo": 1,
+  "primeira_mensagem_em": "2026-09-18T15:00:01.000Z",
+  "limite_principal": 4,
+  "limite_espera": 2,
+  "eh_admin": 0,
+  "valor_padrao_centavos": 0,
+  "limite_mensalistas": 10,
+  "valor_mes_centavos": 6000,
+  "mes_processado": "2026-09",
+  "pre_lista_aberta": 0
+ }
+]
+
+>>> GET /api/elenco?grupo=g1%40g.us
+<<< 200 {
+ "fundamentos": [
+  "ataque",
+  "defesa",
+  "levantamento",
+  "saque"
+ ],
+ "alturas": [
+  "alto",
+  "medio",
+  "baixo"
+ ],
+ "votantes": [
+  "Bianca",
+  "Diego",
+  "Fabrício",
+  "Marcel"
+ ],
+ "jogadores": [
+  {
+   "id": 17,
+   "chat_id": "g1@g.us",
+   "nome": "Aces",
+   "numero": "5521900000008@c.us",
+   "criado_em": "2026-09-18T15:12:37.000Z",
+   "altura": null,
+   "apelidos": [
+    "A6"
+   ],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 4
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 4
+    }
+   ],
+   "porFundamento": {
+    "ataque": 4,
+    "defesa": 4,
+    "levantamento": 4,
+    "saque": 4
+   },
+   "habilidade": 4,
+   "mediaDia": null,
+   "notaTime": 4,
+   "presencas": 1
+  },
+  {
+   "id": 7,
+   "chat_id": "g1@g.us",
+   "nome": "Andressa não Urach",
+   "numero": null,
+   "criado_em": "2026-09-18T15:08:49.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 2
+    }
+   ],
+   "porFundamento": {
+    "ataque": 2,
+    "defesa": 2,
+    "levantamento": 2,
+    "saque": 2
+   },
+   "habilidade": 2,
+   "mediaDia": null,
+   "notaTime": 2,
+   "presencas": 1
+  },
+  {
+   "id": 5,
+   "chat_id": "g1@g.us",
+   "nome": "Camila Vitorino",
+   "numero": null,
+   "criado_em": "2026-09-18T15:08:01.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 2
+    }
+   ],
+   "porFundamento": {
+    "ataque": 2,
+    "defesa": 2,
+    "levantamento": 2,
+    "saque": 2
+   },
+   "habilidade": 2,
+   "mediaDia": null,
+   "notaTime": 2,
+   "presencas": 1
+  },
+  {
+   "id": 11,
+   "chat_id": "g1@g.us",
+   "nome": "Camila W.",
+   "numero": null,
+   "criado_em": "2026-09-18T15:10:13.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 4
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3.5,
+    "defesa": 3.5,
+    "levantamento": 3.5,
+    "saque": 3.5
+   },
+   "habilidade": 3.5,
+   "mediaDia": null,
+   "notaTime": 3.5,
+   "presencas": 1
+  },
+  {
+   "id": 9,
+   "chat_id": "g1@g.us",
+   "nome": "Carlos Brugger",
+   "numero": null,
+   "criado_em": "2026-09-18T15:09:25.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3,
+    "defesa": 3,
+    "levantamento": 3,
+    "saque": 3
+   },
+   "habilidade": 3,
+   "mediaDia": null,
+   "notaTime": 3,
+   "presencas": 1
+  },
+  {
+   "id": 4,
+   "chat_id": "g1@g.us",
+   "nome": "Diego Borges",
+   "numero": null,
+   "criado_em": "2026-09-18T15:07:39.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 2.75,
+    "defesa": 2.75,
+    "levantamento": 2.75,
+    "saque": 2.75
+   },
+   "habilidade": 2.75,
+   "mediaDia": null,
+   "notaTime": 2.75,
+   "presencas": 1
+  },
+  {
+   "id": 14,
+   "chat_id": "g1@g.us",
+   "nome": "Dvd",
+   "numero": null,
+   "criado_em": "2026-09-18T15:11:19.000Z",
+   "altura": null,
+   "apelidos": [
+    "David"
+   ],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3,
+    "defesa": 3,
+    "levantamento": 3,
+    "saque": 3
+   },
+   "habilidade": 3,
+   "mediaDia": null,
+   "notaTime": 3,
+   "presencas": 1
+  },
+  {
+   "id": 2,
+   "chat_id": "g1@g.us",
+   "nome": "Fabrício Bahiense",
+   "numero": null,
+   "criado_em": "2026-09-18T15:06:51.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3,
+    "defesa": 3,
+    "levantamento": 3,
+    "saque": 3
+   },
+   "habilidade": 3,
+   "mediaDia": null,
+   "notaTime": 3,
+   "presencas": 1
+  },
+  {
+   "id": 3,
+   "chat_id": "g1@g.us",
+   "nome": "Kamila Vianna",
+   "numero": "5521900000005@c.us",
+   "criado_em": "2026-09-18T15:07:09.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 2.75,
+    "defesa": 2.75,
+    "levantamento": 2.75,
+    "saque": 2.75
+   },
+   "habilidade": 2.75,
+   "mediaDia": null,
+   "notaTime": 2.75,
+   "presencas": 2
+  },
+  {
+   "id": 1,
+   "chat_id": "g1@g.us",
+   "nome": "Marcel Garcia",
+   "numero": "5521900000002@c.us",
+   "criado_em": "2026-09-18T15:06:33.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3,
+    "defesa": 3,
+    "levantamento": 3,
+    "saque": 3
+   },
+   "habilidade": 3,
+   "mediaDia": null,
+   "notaTime": 3,
+   "presencas": 2
+  },
+  {
+   "id": 8,
+   "chat_id": "g1@g.us",
+   "nome": "Marcelle",
+   "numero": null,
+   "criado_em": "2026-09-18T15:09:07.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 2
+    }
+   ],
+   "porFundamento": {
+    "ataque": 2,
+    "defesa": 2,
+    "levantamento": 2,
+    "saque": 2
+   },
+   "habilidade": 2,
+   "mediaDia": null,
+   "notaTime": 2,
+   "presencas": 1
+  },
+  {
+   "id": 12,
+   "chat_id": "g1@g.us",
+   "nome": "Pedro Moura",
+   "numero": null,
+   "criado_em": "2026-09-18T15:10:43.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 2
+    }
+   ],
+   "porFundamento": {
+    "ataque": 2,
+    "defesa": 2,
+    "levantamento": 2,
+    "saque": 2
+   },
+   "habilidade": 2,
+   "mediaDia": null,
+   "notaTime": 2,
+   "presencas": 1
+  },
+  {
+   "id": 13,
+   "chat_id": "g1@g.us",
+   "nome": "Ryan Araújo",
+   "numero": null,
+   "criado_em": "2026-09-18T15:11:01.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3,
+    "defesa": 3,
+    "levantamento": 3,
+    "saque": 3
+   },
+   "habilidade": 3,
+   "mediaDia": null,
+   "notaTime": 3,
+   "presencas": 1
+  },
+  {
+   "id": 18,
+   "chat_id": "g1@g.us",
+   "nome": "Stephanie Bastos",
+   "numero": null,
+   "criado_em": "2026-09-18T15:12:55.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 2
+    }
+   ],
+   "porFundamento": {
+    "ataque": 2,
+    "defesa": 2,
+    "levantamento": 2,
+    "saque": 2
+   },
+   "habilidade": 2,
+   "mediaDia": null,
+   "notaTime": 2,
+   "presencas": 1
+  },
+  {
+   "id": 15,
+   "chat_id": "g1@g.us",
+   "nome": "Thiago",
+   "numero": null,
+   "criado_em": "2026-09-18T15:11:37.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 2.75,
+    "defesa": 2.75,
+    "levantamento": 2.75,
+    "saque": 2.75
+   },
+   "habilidade": 2.75,
+   "mediaDia": null,
+   "notaTime": 2.75,
+   "presencas": 1
+  },
+  {
+   "id": 6,
+   "chat_id": "g1@g.us",
+   "nome": "Thiago Prata",
+   "numero": "5521900000006@c.us",
+   "criado_em": "2026-09-18T15:08:19.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 4
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3.5,
+    "defesa": 3.5,
+    "levantamento": 3.5,
+    "saque": 3.5
+   },
+   "habilidade": 3.5,
+   "mediaDia": null,
+   "notaTime": 3.5,
+   "presencas": 2
+  },
+  {
+   "id": 16,
+   "chat_id": "g1@g.us",
+   "nome": "Vini",
+   "numero": "5521900000007@c.us",
+   "criado_em": "2026-09-18T15:12:07.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 4
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3.5,
+    "defesa": 3.5,
+    "levantamento": 3.5,
+    "saque": 3.5
+   },
+   "habilidade": 3.5,
+   "mediaDia": null,
+   "notaTime": 3.5,
+   "presencas": 2
+  },
+  {
+   "id": 10,
+   "chat_id": "g1@g.us",
+   "nome": "W. Luketa",
+   "numero": null,
+   "criado_em": "2026-09-18T15:09:43.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3.25,
+    "defesa": 3.25,
+    "levantamento": 3.25,
+    "saque": 3.25
+   },
+   "habilidade": 3.25,
+   "mediaDia": null,
+   "notaTime": 3.25,
+   "presencas": 1
+  }
+ ],
+ "listaAtual": {
+  "id": 2,
+  "data_jogo": "14/10",
+  "nome": "Sexta Nova",
+  "status": "encerrada"
+ },
+ "preListaAberta": false,
+ "idsNaSemana": [
+  1,
+  3,
+  6,
+  16
+ ],
+ "novosNaSemana": [],
+ "naEspera": 0,
+ "nomesPrincipal": [
+  "Marcel Garcia",
+  "Kamila Vianna",
+  "Thiago Prata",
+  "Vini"
+ ]
+}
+
+>>> POST /api/jogador {"grupo":"g1@g.us","nome":"Novato Painel","numero":"5521900000010@c.us"}
+<<< 200 {
+ "id": 19,
+ "chat_id": "g1@g.us",
+ "nome": "Novato Painel",
+ "numero": "5521900000010@c.us",
+ "criado_em": "2026-09-18T15:18:34.000Z",
+ "altura": null
+}
+
+>>> POST /api/jogador {"grupo":"g1@g.us"}
+<<< 400 {
+ "erro": "grupo e nome são obrigatórios"
+}
+
+>>> POST /api/jogador/renomear {"jogador_id":1,"nome":"Marcel G."}
+<<< 200 {
+ "antes": "Marcel Garcia",
+ "depois": "Marcel G."
+}
+
+>>> POST /api/jogador/renomear {"jogador_id":1,"nome":"Fabrício Bahiense"}
+<<< 400 {
+ "erro": "Já existe alguém com esse nome no elenco."
+}
+
+>>> POST /api/apelido {"jogador_id":2,"apelido":"Fabricio"}
+<<< 200 {
+ "ok": true
+}
+
+>>> DELETE /api/apelido?jogador_id=2&apelido=Fabricio
+<<< 200 {
+ "ok": true
+}
+
+>>> POST /api/altura {"jogador_id":3,"altura":"alto"}
+<<< 200 {
+ "altura": "alto"
+}
+
+>>> POST /api/altura {"jogador_id":4,"altura":"invalida"}
+<<< 200 {
+ "altura": null
+}
+
+>>> POST /api/voto {"jogador_id":3,"votante":"Fabrício","fundamento":"ataque","nota":5}
+<<< 200 {
+ "ok": true
+}
+
+>>> POST /api/voto {"jogador_id":3,"votante":"Fabrício","fundamento":"chute","nota":5}
+<<< 400 {
+ "erro": "fundamento_invalido"
+}
+
+>>> POST /api/prelista {"grupo":"g1@g.us","aberta":true}
+<<< 200 {
+ "aberta": true
+}
+
+>>> POST /api/prelista {"grupo":"nada@g.us","aberta":true}
+<<< 400 {
+ "erro": "grupo não encontrado"
+}
+
+>>> POST /api/lista/status {"grupo":"g1@g.us","aberta":false}
+<<< 200 {
+ "data_jogo": "14/10",
+ "status": "encerrada"
+}
+
+>>> POST /api/lista/status {"grupo":"g2@g.us","aberta":false}
+<<< 400 {
+ "erro": "grupo sem lista"
+}
+
+>>> GET /api/listas?grupo=g1%40g.us
+<<< 200 [
+ {
+  "id": 2,
+  "chat_id": "g1@g.us",
+  "data_jogo": "14/10",
+  "status": "encerrada",
+  "criada_em": "2026-09-18T15:03:10.000Z",
+  "valor_centavos": 1700,
+  "nome": "Sexta Nova",
+  "lembrete_em": null,
+  "naEspera": 0,
+  "entradas": [
+   {
+    "nome": "Marcel Garcia",
+    "tipo": "principal",
+    "mensalista": true,
+    "jogador_id": 1,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Kamila",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 3,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Thiago Prata",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 6,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Vini",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 16,
+    "nota": null,
+    "observacao": null
+   }
+  ]
+ },
+ {
+  "id": 4,
+  "chat_id": "g1@g.us",
+  "data_jogo": "31/07",
+  "status": "encerrada",
+  "criada_em": "2026-07-31T21:00:00.000Z",
+  "valor_centavos": 0,
+  "nome": "Pelada da planilha",
+  "lembrete_em": null,
+  "naEspera": 0,
+  "entradas": [
+   {
+    "nome": "Aces",
+    "tipo": "principal",
+    "mensalista": true,
+    "jogador_id": 17,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Marcel Garcia",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 1,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Fabrício Bahiense",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 2,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Kamila Vianna",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 3,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Diego Borges",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 4,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Camila Vitorino",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 5,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Thiago Prata",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 6,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Andressa não Urach",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 7,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Marcelle",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 8,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Carlos Brugger",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 9,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "W. Luketa",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 10,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Camila W.",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 11,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Pedro Moura",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 12,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Ryan Araújo",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 13,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Dvd",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 14,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Thiago",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 15,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Vini",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 16,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Aces",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 17,
+    "nota": null,
+    "observacao": null
+   },
+   {
+    "nome": "Stephanie Bastos",
+    "tipo": "principal",
+    "mensalista": false,
+    "jogador_id": 18,
+    "nota": null,
+    "observacao": null
+   }
+  ]
+ }
+]
+
+>>> POST /api/notadia {"jogador_id":3,"lista_id":2,"nota":4.5,"observacao":" bom "}
+<<< 200 {
+ "ok": true
+}
+
+>>> POST /api/notadia {"jogador_id":3,"lista_id":2,"nota":9}
+<<< 400 {
+ "erro": "nota_invalida"
+}
+
+>>> GET /api/evolucao?grupo=g1%40g.us
+<<< 200 {
+ "listas": [
+  {
+   "id": 4,
+   "data_jogo": "31/07",
+   "nome": "Pelada da planilha",
+   "criada_em": "2026-07-31T21:00:00.000Z"
+  },
+  {
+   "id": 2,
+   "data_jogo": "14/10",
+   "nome": "Sexta Nova",
+   "criada_em": "2026-09-18T15:03:10.000Z"
+  }
+ ],
+ "series": [
+  {
+   "jogador": "Aces",
+   "jogador_id": 17,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 1,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": null,
+     "observacao": null,
+     "presente": false,
+     "presencaAcumulada": 1,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": 4,
+   "mudancasDeNivel": [
+    {
+     "habilidade": 4,
+     "em": "2026-09-18T15:12:39.000Z"
+    }
+   ]
+  },
+  {
+   "jogador": "Andressa não Urach",
+   "jogador_id": 7,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 1,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": null,
+     "observacao": null,
+     "presente": false,
+     "presencaAcumulada": 1,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": 2,
+   "mudancasDeNivel": [
+    {
+     "habilidade": 2,
+     "em": "2026-09-18T15:08:51.000Z"
+    }
+   ]
+  },
+  {
+   "jogador": "Camila Vitorino",
+   "jogador_id": 5,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 1,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": null,
+     "observacao": null,
+     "presente": false,
+     "presencaAcumulada": 1,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": 2,
+   "mudancasDeNivel": [
+    {
+     "habilidade": 2,
+     "em": "2026-09-18T15:08:03.000Z"
+    }
+   ]
+  },
+  {
+   "jogador": "Camila W.",
+   "jogador_id": 11,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 1,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": null,
+     "observacao": null,
+     "presente": false,
+     "presencaAcumulada": 1,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": 3.5,
+   "mudancasDeNivel": [
+    {
+     "habilidade": 3,
+     "em": "2026-09-18T15:10:15.000Z"
+    },
+    {
+     "habilidade": 3.2,
+     "em": "2026-09-18T15:10:20.000Z"
+    },
+    {
+     "habilidade": 3.3333333333333335,
+     "em": "2026-09-18T15:10:22.000Z"
+    },
+    {
+     "habilidade": 3.4285714285714284,
+     "em": "2026-09-18T15:10:24.000Z"
+    },
+    {
+     "habilidade": 3.5,
+     "em": "2026-09-18T15:10:26.000Z"
+    },
+    {
+     "habilidade": 3.4444444444444446,
+     "em": "2026-09-18T15:10:28.000Z"
+    },
+    {
+     "habilidade": 3.4,
+     "em": "2026-09-18T15:10:30.000Z"
+    },
+    {
+     "habilidade": 3.3636363636363638,
+     "em": "2026-09-18T15:10:32.000Z"
+    },
+    {
+     "habilidade": 3.3333333333333335,
+     "em": "2026-09-18T15:10:34.000Z"
+    },
+    {
+     "habilidade": 3.3846153846153846,
+     "em": "2026-09-18T15:10:36.000Z"
+    },
+    {
+     "habilidade": 3.4285714285714284,
+     "em": "2026-09-18T15:10:38.000Z"
+    },
+    {
+     "habilidade": 3.466666666666667,
+     "em": "2026-09-18T15:10:40.000Z"
+    },
+    {
+     "habilidade": 3.5,
+     "em": "2026-09-18T15:10:42.000Z"
+    }
+   ]
+  },
+  {
+   "jogador": "Carlos Brugger",
+   "jogador_id": 9,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 1,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": null,
+     "observacao": null,
+     "presente": false,
+     "presencaAcumulada": 1,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": 3,
+   "mudancasDeNivel": [
+    {
+     "habilidade": 3,
+     "em": "2026-09-18T15:09:27.000Z"
+    }
+   ]
+  },
+  {
+   "jogador": "Diego Borges",
+   "jogador_id": 4,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 1,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": null,
+     "observacao": null,
+     "presente": false,
+     "presencaAcumulada": 1,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": 2.75,
+   "mudancasDeNivel": [
+    {
+     "habilidade": 3,
+     "em": "2026-09-18T15:07:41.000Z"
+    },
+    {
+     "habilidade": 2.923076923076923,
+     "em": "2026-09-18T15:07:54.000Z"
+    },
+    {
+     "habilidade": 2.857142857142857,
+     "em": "2026-09-18T15:07:56.000Z"
+    },
+    {
+     "habilidade": 2.8,
+     "em": "2026-09-18T15:07:58.000Z"
+    },
+    {
+     "habilidade": 2.75,
+     "em": "2026-09-18T15:08:00.000Z"
+    }
+   ]
+  },
+  {
+   "jogador": "Dvd",
+   "jogador_id": 14,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 1,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": null,
+     "observacao": null,
+     "presente": false,
+     "presencaAcumulada": 1,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": 3,
+   "mudancasDeNivel": [
+    {
+     "habilidade": 3,
+     "em": "2026-09-18T15:11:21.000Z"
+    }
+   ]
+  },
+  {
+   "jogador": "Fabrício Bahiense",
+   "jogador_id": 2,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 1,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": null,
+     "observacao": null,
+     "presente": false,
+     "presencaAcumulada": 1,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": 3,
+   "mudancasDeNivel": [
+    {
+     "habilidade": 3,
+     "em": "2026-09-18T15:06:53.000Z"
+    }
+   ]
+  },
+  {
+   "jogador": "Kamila Vianna",
+   "jogador_id": 3,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 1,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": 4.5,
+     "observacao": "bom",
+     "presente": true,
+     "presencaAcumulada": 2,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": 2.875,
+   "mudancasDeNivel": [
+    {
+     "habilidade": 3,
+     "em": "2026-09-18T15:07:11.000Z"
+    },
+    {
+     "habilidade": 2.8,
+     "em": "2026-09-18T15:07:16.000Z"
+    },
+    {
+     "habilidade": 2.6666666666666665,
+     "em": "2026-09-18T15:07:18.000Z"
+    },
+    {
+     "habilidade": 2.5714285714285716,
+     "em": "2026-09-18T15:07:20.000Z"
+    },
+    {
+     "habilidade": 2.5,
+     "em": "2026-09-18T15:07:22.000Z"
+    },
+    {
+     "habilidade": 2.5555555555555554,
+     "em": "2026-09-18T15:07:24.000Z"
+    },
+    {
+     "habilidade": 2.6,
+     "em": "2026-09-18T15:07:26.000Z"
+    },
+    {
+     "habilidade": 2.6363636363636362,
+     "em": "2026-09-18T15:07:28.000Z"
+    },
+    {
+     "habilidade": 2.6666666666666665,
+     "em": "2026-09-18T15:07:30.000Z"
+    },
+    {
+     "habilidade": 2.6923076923076925,
+     "em": "2026-09-18T15:07:32.000Z"
+    },
+    {
+     "habilidade": 2.7142857142857144,
+     "em": "2026-09-18T15:07:34.000Z"
+    },
+    {
+     "habilidade": 2.7333333333333334,
+     "em": "2026-09-18T15:07:36.000Z"
+    },
+    {
+     "habilidade": 2.75,
+     "em": "2026-09-18T15:07:38.000Z"
+    },
+    {
+     "habilidade": 2.875,
+     "em": "2026-09-18T15:18:38.000Z"
+    }
+   ]
+  },
+  {
+   "jogador": "Marcel G.",
+   "jogador_id": 1,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 1,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 2,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": 3,
+   "mudancasDeNivel": [
+    {
+     "habilidade": 3,
+     "em": "2026-09-18T15:06:35.000Z"
+    }
+   ]
+  },
+  {
+   "jogador": "Marcelle",
+   "jogador_id": 8,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 1,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": null,
+     "observacao": null,
+     "presente": false,
+     "presencaAcumulada": 1,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": 2,
+   "mudancasDeNivel": [
+    {
+     "habilidade": 2,
+     "em": "2026-09-18T15:09:09.000Z"
+    }
+   ]
+  },
+  {
+   "jogador": "Novato Painel",
+   "jogador_id": 19,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": false,
+     "presencaAcumulada": 0,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": null,
+     "observacao": null,
+     "presente": false,
+     "presencaAcumulada": 0,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": null,
+   "mudancasDeNivel": []
+  },
+  {
+   "jogador": "Pedro Moura",
+   "jogador_id": 12,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 1,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": null,
+     "observacao": null,
+     "presente": false,
+     "presencaAcumulada": 1,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": 2,
+   "mudancasDeNivel": [
+    {
+     "habilidade": 2,
+     "em": "2026-09-18T15:10:45.000Z"
+    }
+   ]
+  },
+  {
+   "jogador": "Ryan Araújo",
+   "jogador_id": 13,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 1,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": null,
+     "observacao": null,
+     "presente": false,
+     "presencaAcumulada": 1,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": 3,
+   "mudancasDeNivel": [
+    {
+     "habilidade": 3,
+     "em": "2026-09-18T15:11:03.000Z"
+    }
+   ]
+  },
+  {
+   "jogador": "Stephanie Bastos",
+   "jogador_id": 18,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 1,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": null,
+     "observacao": null,
+     "presente": false,
+     "presencaAcumulada": 1,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": 2,
+   "mudancasDeNivel": [
+    {
+     "habilidade": 2,
+     "em": "2026-09-18T15:12:57.000Z"
+    }
+   ]
+  },
+  {
+   "jogador": "Thiago",
+   "jogador_id": 15,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 1,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": null,
+     "observacao": null,
+     "presente": false,
+     "presencaAcumulada": 1,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": 2.75,
+   "mudancasDeNivel": [
+    {
+     "habilidade": 2,
+     "em": "2026-09-18T15:11:39.000Z"
+    },
+    {
+     "habilidade": 2.2,
+     "em": "2026-09-18T15:11:44.000Z"
+    },
+    {
+     "habilidade": 2.3333333333333335,
+     "em": "2026-09-18T15:11:46.000Z"
+    },
+    {
+     "habilidade": 2.4285714285714284,
+     "em": "2026-09-18T15:11:48.000Z"
+    },
+    {
+     "habilidade": 2.5,
+     "em": "2026-09-18T15:11:50.000Z"
+    },
+    {
+     "habilidade": 2.5555555555555554,
+     "em": "2026-09-18T15:11:52.000Z"
+    },
+    {
+     "habilidade": 2.6,
+     "em": "2026-09-18T15:11:54.000Z"
+    },
+    {
+     "habilidade": 2.6363636363636362,
+     "em": "2026-09-18T15:11:56.000Z"
+    },
+    {
+     "habilidade": 2.6666666666666665,
+     "em": "2026-09-18T15:11:58.000Z"
+    },
+    {
+     "habilidade": 2.6923076923076925,
+     "em": "2026-09-18T15:12:00.000Z"
+    },
+    {
+     "habilidade": 2.7142857142857144,
+     "em": "2026-09-18T15:12:02.000Z"
+    },
+    {
+     "habilidade": 2.7333333333333334,
+     "em": "2026-09-18T15:12:04.000Z"
+    },
+    {
+     "habilidade": 2.75,
+     "em": "2026-09-18T15:12:06.000Z"
+    }
+   ]
+  },
+  {
+   "jogador": "Thiago Prata",
+   "jogador_id": 6,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 1,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 2,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": 3.5,
+   "mudancasDeNivel": [
+    {
+     "habilidade": 4,
+     "em": "2026-09-18T15:08:21.000Z"
+    },
+    {
+     "habilidade": 3.8,
+     "em": "2026-09-18T15:08:26.000Z"
+    },
+    {
+     "habilidade": 3.6666666666666665,
+     "em": "2026-09-18T15:08:28.000Z"
+    },
+    {
+     "habilidade": 3.5714285714285716,
+     "em": "2026-09-18T15:08:30.000Z"
+    },
+    {
+     "habilidade": 3.5,
+     "em": "2026-09-18T15:08:32.000Z"
+    },
+    {
+     "habilidade": 3.5555555555555554,
+     "em": "2026-09-18T15:08:34.000Z"
+    },
+    {
+     "habilidade": 3.6,
+     "em": "2026-09-18T15:08:36.000Z"
+    },
+    {
+     "habilidade": 3.6363636363636362,
+     "em": "2026-09-18T15:08:38.000Z"
+    },
+    {
+     "habilidade": 3.6666666666666665,
+     "em": "2026-09-18T15:08:40.000Z"
+    },
+    {
+     "habilidade": 3.6153846153846154,
+     "em": "2026-09-18T15:08:42.000Z"
+    },
+    {
+     "habilidade": 3.5714285714285716,
+     "em": "2026-09-18T15:08:44.000Z"
+    },
+    {
+     "habilidade": 3.533333333333333,
+     "em": "2026-09-18T15:08:46.000Z"
+    },
+    {
+     "habilidade": 3.5,
+     "em": "2026-09-18T15:08:48.000Z"
+    }
+   ]
+  },
+  {
+   "jogador": "Vini",
+   "jogador_id": 16,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 1,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 2,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": 3.5,
+   "mudancasDeNivel": [
+    {
+     "habilidade": 4,
+     "em": "2026-09-18T15:12:09.000Z"
+    },
+    {
+     "habilidade": 3.8,
+     "em": "2026-09-18T15:12:14.000Z"
+    },
+    {
+     "habilidade": 3.6666666666666665,
+     "em": "2026-09-18T15:12:16.000Z"
+    },
+    {
+     "habilidade": 3.5714285714285716,
+     "em": "2026-09-18T15:12:18.000Z"
+    },
+    {
+     "habilidade": 3.5,
+     "em": "2026-09-18T15:12:20.000Z"
+    },
+    {
+     "habilidade": 3.5555555555555554,
+     "em": "2026-09-18T15:12:22.000Z"
+    },
+    {
+     "habilidade": 3.6,
+     "em": "2026-09-18T15:12:24.000Z"
+    },
+    {
+     "habilidade": 3.6363636363636362,
+     "em": "2026-09-18T15:12:26.000Z"
+    },
+    {
+     "habilidade": 3.6666666666666665,
+     "em": "2026-09-18T15:12:28.000Z"
+    },
+    {
+     "habilidade": 3.6153846153846154,
+     "em": "2026-09-18T15:12:30.000Z"
+    },
+    {
+     "habilidade": 3.5714285714285716,
+     "em": "2026-09-18T15:12:32.000Z"
+    },
+    {
+     "habilidade": 3.533333333333333,
+     "em": "2026-09-18T15:12:34.000Z"
+    },
+    {
+     "habilidade": 3.5,
+     "em": "2026-09-18T15:12:36.000Z"
+    }
+   ]
+  },
+  {
+   "jogador": "W. Luketa",
+   "jogador_id": 10,
+   "pontos": [
+    {
+     "lista_id": 4,
+     "data_jogo": "31/07",
+     "nota": null,
+     "observacao": null,
+     "presente": true,
+     "presencaAcumulada": 1,
+     "nivel": null
+    },
+    {
+     "lista_id": 2,
+     "data_jogo": "14/10",
+     "nota": null,
+     "observacao": null,
+     "presente": false,
+     "presencaAcumulada": 1,
+     "nivel": null
+    }
+   ],
+   "nivelAtual": 3.25,
+   "mudancasDeNivel": [
+    {
+     "habilidade": 4,
+     "em": "2026-09-18T15:09:45.000Z"
+    },
+    {
+     "habilidade": 3.8,
+     "em": "2026-09-18T15:09:50.000Z"
+    },
+    {
+     "habilidade": 3.6666666666666665,
+     "em": "2026-09-18T15:09:52.000Z"
+    },
+    {
+     "habilidade": 3.5714285714285716,
+     "em": "2026-09-18T15:09:54.000Z"
+    },
+    {
+     "habilidade": 3.5,
+     "em": "2026-09-18T15:09:56.000Z"
+    },
+    {
+     "habilidade": 3.4444444444444446,
+     "em": "2026-09-18T15:09:58.000Z"
+    },
+    {
+     "habilidade": 3.4,
+     "em": "2026-09-18T15:10:00.000Z"
+    },
+    {
+     "habilidade": 3.3636363636363638,
+     "em": "2026-09-18T15:10:02.000Z"
+    },
+    {
+     "habilidade": 3.3333333333333335,
+     "em": "2026-09-18T15:10:04.000Z"
+    },
+    {
+     "habilidade": 3.3076923076923075,
+     "em": "2026-09-18T15:10:06.000Z"
+    },
+    {
+     "habilidade": 3.2857142857142856,
+     "em": "2026-09-18T15:10:08.000Z"
+    },
+    {
+     "habilidade": 3.2666666666666666,
+     "em": "2026-09-18T15:10:10.000Z"
+    },
+    {
+     "habilidade": 3.25,
+     "em": "2026-09-18T15:10:12.000Z"
+    }
+   ]
+  }
+ ]
+}
+
+>>> POST /api/times {"grupo":"g1@g.us","quantidade":2,"nomes":["Marcel Garcia","Diego","Aces","Vini","Kamila Vianna","Desconhecido"]}
+<<< 200 [
+ {
+  "numero": 1,
+  "jogadores": [
+   {
+    "nome": "Aces",
+    "nota": 4,
+    "conhecido": true,
+    "altura": null
+   },
+   {
+    "nome": "Diego",
+    "nota": 2.75,
+    "conhecido": true,
+    "altura": null
+   },
+   {
+    "nome": "Desconhecido",
+    "nota": 3,
+    "conhecido": false,
+    "altura": null
+   }
+  ],
+  "media": 3.25,
+  "altos": 0
+ },
+ {
+  "numero": 2,
+  "jogadores": [
+   {
+    "nome": "Vini",
+    "nota": 3.5,
+    "conhecido": true,
+    "altura": null
+   },
+   {
+    "nome": "Kamila Vianna",
+    "nota": 3.3625,
+    "conhecido": true,
+    "altura": "alto"
+   },
+   {
+    "nome": "Marcel Garcia",
+    "nota": 3,
+    "conhecido": true,
+    "altura": null
+   }
+  ],
+  "media": 3.2875,
+  "altos": 1
+ }
+]
+
+>>> GET /api/times/salvos?grupo=g1%40g.us
+<<< 200 {
+ "lista": {
+  "id": 2,
+  "data_jogo": "14/10",
+  "nome": "Sexta Nova"
+ },
+ "times": [
+  {
+   "numero": 1,
+   "jogadores": [
+    {
+     "nome": "Aces",
+     "nota": 4,
+     "altura": null,
+     "conhecido": true,
+     "jogador_id": 17
+    },
+    {
+     "nome": "Diego",
+     "nota": 2.75,
+     "altura": null,
+     "conhecido": true,
+     "jogador_id": 4
+    },
+    {
+     "nome": "Desconhecido",
+     "nota": 3,
+     "altura": null,
+     "conhecido": false,
+     "jogador_id": null
+    }
+   ],
+   "media": 3.25,
+   "altos": 0
+  },
+  {
+   "numero": 2,
+   "jogadores": [
+    {
+     "nome": "Vini",
+     "nota": 3.5,
+     "altura": null,
+     "conhecido": true,
+     "jogador_id": 16
+    },
+    {
+     "nome": "Kamila Vianna",
+     "nota": 3.3625,
+     "altura": "alto",
+     "conhecido": true,
+     "jogador_id": 3
+    },
+    {
+     "nome": "Marcel Garcia",
+     "nota": 3,
+     "altura": null,
+     "conhecido": true,
+     "jogador_id": 1
+    }
+   ],
+   "media": 3.2875,
+   "altos": 1
+  }
+ ],
+ "atualizadoEm": "2026-09-18T15:18:40.000Z"
+}
+
+>>> POST /api/times/salvar {"grupo":"g1@g.us","times":[{"jogadores":[{"nome":"Diego","nota":4}]},{"jogadores":[{"nome":"Aces"}]}]}
+<<< 200 {
+ "atualizadoEm": "2026-09-18T15:18:41.000Z",
+ "times": [
+  {
+   "numero": 1,
+   "jogadores": [
+    {
+     "nome": "Diego",
+     "nota": 4,
+     "altura": null,
+     "conhecido": false,
+     "jogador_id": 4
+    }
+   ],
+   "media": 4,
+   "altos": 0
+  },
+  {
+   "numero": 2,
+   "jogadores": [
+    {
+     "nome": "Aces",
+     "nota": 3,
+     "altura": null,
+     "conhecido": false,
+     "jogador_id": 17
+    }
+   ],
+   "media": 3,
+   "altos": 0
+  }
+ ]
+}
+
+>>> POST /api/times/anunciar {"grupo":"g1@g.us","dataJogo":"14/10","times":[{"jogadores":["Diego"]},{"jogadores":["Aces"]}]}
+<<< 200 {
+ "ok": true
+}
+
+>>> DELETE /api/times/salvos?grupo=g1%40g.us
+<<< 200 {
+ "ok": true
+}
+
+>>> GET /api/elenco?grupo=g1%40g.us
+<<< 200 {
+ "fundamentos": [
+  "ataque",
+  "defesa",
+  "levantamento",
+  "saque"
+ ],
+ "alturas": [
+  "alto",
+  "medio",
+  "baixo"
+ ],
+ "votantes": [
+  "Bianca",
+  "Diego",
+  "Fabrício",
+  "Marcel"
+ ],
+ "jogadores": [
+  {
+   "id": 17,
+   "chat_id": "g1@g.us",
+   "nome": "Aces",
+   "numero": "5521900000008@c.us",
+   "criado_em": "2026-09-18T15:12:37.000Z",
+   "altura": null,
+   "apelidos": [
+    "A6"
+   ],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 4
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 4
+    }
+   ],
+   "porFundamento": {
+    "ataque": 4,
+    "defesa": 4,
+    "levantamento": 4,
+    "saque": 4
+   },
+   "habilidade": 4,
+   "mediaDia": null,
+   "notaTime": 4,
+   "presencas": 1
+  },
+  {
+   "id": 7,
+   "chat_id": "g1@g.us",
+   "nome": "Andressa não Urach",
+   "numero": null,
+   "criado_em": "2026-09-18T15:08:49.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 2
+    }
+   ],
+   "porFundamento": {
+    "ataque": 2,
+    "defesa": 2,
+    "levantamento": 2,
+    "saque": 2
+   },
+   "habilidade": 2,
+   "mediaDia": null,
+   "notaTime": 2,
+   "presencas": 1
+  },
+  {
+   "id": 5,
+   "chat_id": "g1@g.us",
+   "nome": "Camila Vitorino",
+   "numero": null,
+   "criado_em": "2026-09-18T15:08:01.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 2
+    }
+   ],
+   "porFundamento": {
+    "ataque": 2,
+    "defesa": 2,
+    "levantamento": 2,
+    "saque": 2
+   },
+   "habilidade": 2,
+   "mediaDia": null,
+   "notaTime": 2,
+   "presencas": 1
+  },
+  {
+   "id": 11,
+   "chat_id": "g1@g.us",
+   "nome": "Camila W.",
+   "numero": null,
+   "criado_em": "2026-09-18T15:10:13.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 4
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3.5,
+    "defesa": 3.5,
+    "levantamento": 3.5,
+    "saque": 3.5
+   },
+   "habilidade": 3.5,
+   "mediaDia": null,
+   "notaTime": 3.5,
+   "presencas": 1
+  },
+  {
+   "id": 9,
+   "chat_id": "g1@g.us",
+   "nome": "Carlos Brugger",
+   "numero": null,
+   "criado_em": "2026-09-18T15:09:25.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3,
+    "defesa": 3,
+    "levantamento": 3,
+    "saque": 3
+   },
+   "habilidade": 3,
+   "mediaDia": null,
+   "notaTime": 3,
+   "presencas": 1
+  },
+  {
+   "id": 4,
+   "chat_id": "g1@g.us",
+   "nome": "Diego Borges",
+   "numero": null,
+   "criado_em": "2026-09-18T15:07:39.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 2.75,
+    "defesa": 2.75,
+    "levantamento": 2.75,
+    "saque": 2.75
+   },
+   "habilidade": 2.75,
+   "mediaDia": null,
+   "notaTime": 2.75,
+   "presencas": 1
+  },
+  {
+   "id": 14,
+   "chat_id": "g1@g.us",
+   "nome": "Dvd",
+   "numero": null,
+   "criado_em": "2026-09-18T15:11:19.000Z",
+   "altura": null,
+   "apelidos": [
+    "David"
+   ],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3,
+    "defesa": 3,
+    "levantamento": 3,
+    "saque": 3
+   },
+   "habilidade": 3,
+   "mediaDia": null,
+   "notaTime": 3,
+   "presencas": 1
+  },
+  {
+   "id": 2,
+   "chat_id": "g1@g.us",
+   "nome": "Fabrício Bahiense",
+   "numero": null,
+   "criado_em": "2026-09-18T15:06:51.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3,
+    "defesa": 3,
+    "levantamento": 3,
+    "saque": 3
+   },
+   "habilidade": 3,
+   "mediaDia": null,
+   "notaTime": 3,
+   "presencas": 1
+  },
+  {
+   "id": 3,
+   "chat_id": "g1@g.us",
+   "nome": "Kamila Vianna",
+   "numero": "5521900000005@c.us",
+   "criado_em": "2026-09-18T15:07:09.000Z",
+   "altura": "alto",
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 5
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3.25,
+    "defesa": 2.75,
+    "levantamento": 2.75,
+    "saque": 2.75
+   },
+   "habilidade": 2.875,
+   "mediaDia": 4.5,
+   "notaTime": 3.3625,
+   "presencas": 2
+  },
+  {
+   "id": 1,
+   "chat_id": "g1@g.us",
+   "nome": "Marcel G.",
+   "numero": "5521900000002@c.us",
+   "criado_em": "2026-09-18T15:06:33.000Z",
+   "altura": null,
+   "apelidos": [
+    "Marcel Garcia"
+   ],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3,
+    "defesa": 3,
+    "levantamento": 3,
+    "saque": 3
+   },
+   "habilidade": 3,
+   "mediaDia": null,
+   "notaTime": 3,
+   "presencas": 2
+  },
+  {
+   "id": 8,
+   "chat_id": "g1@g.us",
+   "nome": "Marcelle",
+   "numero": null,
+   "criado_em": "2026-09-18T15:09:07.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 2
+    }
+   ],
+   "porFundamento": {
+    "ataque": 2,
+    "defesa": 2,
+    "levantamento": 2,
+    "saque": 2
+   },
+   "habilidade": 2,
+   "mediaDia": null,
+   "notaTime": 2,
+   "presencas": 1
+  },
+  {
+   "id": 19,
+   "chat_id": "g1@g.us",
+   "nome": "Novato Painel",
+   "numero": "5521900000010@c.us",
+   "criado_em": "2026-09-18T15:18:34.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [],
+   "porFundamento": {
+    "ataque": null,
+    "defesa": null,
+    "levantamento": null,
+    "saque": null
+   },
+   "habilidade": null,
+   "mediaDia": null,
+   "notaTime": null,
+   "presencas": 0
+  },
+  {
+   "id": 12,
+   "chat_id": "g1@g.us",
+   "nome": "Pedro Moura",
+   "numero": null,
+   "criado_em": "2026-09-18T15:10:43.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 2
+    }
+   ],
+   "porFundamento": {
+    "ataque": 2,
+    "defesa": 2,
+    "levantamento": 2,
+    "saque": 2
+   },
+   "habilidade": 2,
+   "mediaDia": null,
+   "notaTime": 2,
+   "presencas": 1
+  },
+  {
+   "id": 13,
+   "chat_id": "g1@g.us",
+   "nome": "Ryan Araújo",
+   "numero": null,
+   "criado_em": "2026-09-18T15:11:01.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3,
+    "defesa": 3,
+    "levantamento": 3,
+    "saque": 3
+   },
+   "habilidade": 3,
+   "mediaDia": null,
+   "notaTime": 3,
+   "presencas": 1
+  },
+  {
+   "id": 18,
+   "chat_id": "g1@g.us",
+   "nome": "Stephanie Bastos",
+   "numero": null,
+   "criado_em": "2026-09-18T15:12:55.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 2
+    }
+   ],
+   "porFundamento": {
+    "ataque": 2,
+    "defesa": 2,
+    "levantamento": 2,
+    "saque": 2
+   },
+   "habilidade": 2,
+   "mediaDia": null,
+   "notaTime": 2,
+   "presencas": 1
+  },
+  {
+   "id": 15,
+   "chat_id": "g1@g.us",
+   "nome": "Thiago",
+   "numero": null,
+   "criado_em": "2026-09-18T15:11:37.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 2
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 2
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 2.75,
+    "defesa": 2.75,
+    "levantamento": 2.75,
+    "saque": 2.75
+   },
+   "habilidade": 2.75,
+   "mediaDia": null,
+   "notaTime": 2.75,
+   "presencas": 1
+  },
+  {
+   "id": 6,
+   "chat_id": "g1@g.us",
+   "nome": "Thiago Prata",
+   "numero": "5521900000006@c.us",
+   "criado_em": "2026-09-18T15:08:19.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 4
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3.5,
+    "defesa": 3.5,
+    "levantamento": 3.5,
+    "saque": 3.5
+   },
+   "habilidade": 3.5,
+   "mediaDia": null,
+   "notaTime": 3.5,
+   "presencas": 2
+  },
+  {
+   "id": 16,
+   "chat_id": "g1@g.us",
+   "nome": "Vini",
+   "numero": "5521900000007@c.us",
+   "criado_em": "2026-09-18T15:12:07.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 4
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3.5,
+    "defesa": 3.5,
+    "levantamento": 3.5,
+    "saque": 3.5
+   },
+   "habilidade": 3.5,
+   "mediaDia": null,
+   "notaTime": 3.5,
+   "presencas": 2
+  },
+  {
+   "id": 10,
+   "chat_id": "g1@g.us",
+   "nome": "W. Luketa",
+   "numero": null,
+   "criado_em": "2026-09-18T15:09:43.000Z",
+   "altura": null,
+   "apelidos": [],
+   "votos": [
+    {
+     "votante": "Bianca",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Bianca",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Diego",
+     "fundamento": "saque",
+     "nota": 3
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "ataque",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "defesa",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "levantamento",
+     "nota": 4
+    },
+    {
+     "votante": "Fabrício",
+     "fundamento": "saque",
+     "nota": 4
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "ataque",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "defesa",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "levantamento",
+     "nota": 3
+    },
+    {
+     "votante": "Marcel",
+     "fundamento": "saque",
+     "nota": 3
+    }
+   ],
+   "porFundamento": {
+    "ataque": 3.25,
+    "defesa": 3.25,
+    "levantamento": 3.25,
+    "saque": 3.25
+   },
+   "habilidade": 3.25,
+   "mediaDia": null,
+   "notaTime": 3.25,
+   "presencas": 1
+  }
+ ],
+ "listaAtual": {
+  "id": 2,
+  "data_jogo": "14/10",
+  "nome": "Sexta Nova",
+  "status": "encerrada"
+ },
+ "preListaAberta": true,
+ "idsNaSemana": [
+  1,
+  3,
+  6,
+  16
+ ],
+ "novosNaSemana": [],
+ "naEspera": 0,
+ "nomesPrincipal": [
+  "Marcel G.",
+  "Kamila Vianna",
+  "Thiago Prata",
+  "Vini"
+ ]
+}
+
+>>> DELETE /api/jogador/5
+<<< 200 {
+ "ok": true
+}
+
+--- enviados pelo painel:
+[g1@g.us] 🏐 *Times da pelada — 14/10*
+Montados com tecnologia da NASA 🚀
+
+⚔️ *Time 1*
+• Diego
+
+⚔️ *Time 2*
+• Aces
+
+Bom jogo! 🔥
+
+=== apelidos (apelido, criado_em, id, jogador_id)
+{"apelido":"A6","criado_em":"2026-09-18T15:13:13.000Z","id":1,"jogador_id":17}
+{"apelido":"David","criado_em":"2026-09-18T15:13:14.000Z","id":2,"jogador_id":14}
+{"apelido":"Marcel Garcia","criado_em":"2026-09-18T15:18:35.000Z","id":5,"jogador_id":1}
+
+=== entradas (id, lista_id, mensalista, nome, numero, pago, promovido, timestamp, tipo, valor_pago_centavos)
+{"id":9,"lista_id":2,"mensalista":1,"nome":"Marcel Garcia","numero":"5521900000002@c.us","pago":0,"promovido":0,"timestamp":"2026-09-18T15:03:13.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":12,"lista_id":2,"mensalista":0,"nome":"Kamila","numero":"5521900000005@c.us","pago":0,"promovido":0,"timestamp":"2026-09-18T15:03:38.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":13,"lista_id":2,"mensalista":0,"nome":"Thiago Prata","numero":"5521900000006@c.us","pago":0,"promovido":1,"timestamp":"2026-09-18T15:03:43.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":14,"lista_id":2,"mensalista":0,"nome":"Vini","numero":"5521900000007@c.us","pago":0,"promovido":1,"timestamp":"2026-09-18T15:03:48.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":16,"lista_id":4,"mensalista":1,"nome":"Aces","numero":"5521900000008@c.us","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:17.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":17,"lista_id":4,"mensalista":0,"nome":"Marcel Garcia","numero":"planilha-marcel-garcia@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:18.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":18,"lista_id":4,"mensalista":0,"nome":"Fabrício Bahiense","numero":"planilha-fabr-cio-bahiense@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:19.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":19,"lista_id":4,"mensalista":0,"nome":"Kamila Vianna","numero":"planilha-kamila-vianna@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:20.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":20,"lista_id":4,"mensalista":0,"nome":"Diego Borges","numero":"planilha-diego-borges@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:21.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":21,"lista_id":4,"mensalista":0,"nome":"Camila Vitorino","numero":"planilha-camila-vitorino@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:22.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":22,"lista_id":4,"mensalista":0,"nome":"Thiago Prata","numero":"planilha-thiago-prata@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:23.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":23,"lista_id":4,"mensalista":0,"nome":"Andressa não Urach","numero":"planilha-andressa-n-o-urach@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:24.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":24,"lista_id":4,"mensalista":0,"nome":"Marcelle","numero":"planilha-marcelle@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:25.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":25,"lista_id":4,"mensalista":0,"nome":"Carlos Brugger","numero":"planilha-carlos-brugger@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:26.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":26,"lista_id":4,"mensalista":0,"nome":"W. Luketa","numero":"planilha-w-luketa@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:27.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":27,"lista_id":4,"mensalista":0,"nome":"Camila W.","numero":"planilha-camila-w-@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:28.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":28,"lista_id":4,"mensalista":0,"nome":"Pedro Moura","numero":"planilha-pedro-moura@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:29.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":29,"lista_id":4,"mensalista":0,"nome":"Ryan Araújo","numero":"planilha-ryan-ara-jo@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:30.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":30,"lista_id":4,"mensalista":0,"nome":"Dvd","numero":"planilha-dvd@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:31.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":31,"lista_id":4,"mensalista":0,"nome":"Thiago","numero":"planilha-thiago@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:32.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":32,"lista_id":4,"mensalista":0,"nome":"Vini","numero":"planilha-vini@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:33.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":33,"lista_id":4,"mensalista":0,"nome":"Aces","numero":"planilha-aces@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:34.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":34,"lista_id":4,"mensalista":0,"nome":"Stephanie Bastos","numero":"planilha-stephanie-bastos@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:35.000Z","tipo":"principal","valor_pago_centavos":0}
+
+=== grupos (ativo, chat_id, eh_admin, id, limite_espera, limite_mensalistas, limite_principal, mes_processado, nome, pre_lista_aberta, primeira_mensagem_em, valor_mes_centavos, valor_padrao_centavos)
+{"ativo":1,"chat_id":"g1@g.us","eh_admin":0,"id":1,"limite_espera":2,"limite_mensalistas":10,"limite_principal":4,"mes_processado":"2026-09","nome":"Vôlei Riachuelo","pre_lista_aberta":1,"primeira_mensagem_em":"2026-09-18T15:00:01.000Z","valor_mes_centavos":6000,"valor_padrao_centavos":0}
+{"ativo":0,"chat_id":"g2@g.us","eh_admin":0,"id":2,"limite_espera":6,"limite_mensalistas":12,"limite_principal":18,"mes_processado":null,"nome":"Quadra 7","pre_lista_aberta":0,"primeira_mensagem_em":"2026-09-18T15:00:02.000Z","valor_mes_centavos":0,"valor_padrao_centavos":0}
+{"ativo":0,"chat_id":"adm@g.us","eh_admin":0,"id":3,"limite_espera":6,"limite_mensalistas":12,"limite_principal":18,"mes_processado":null,"nome":"Admins do vôlei","pre_lista_aberta":0,"primeira_mensagem_em":"2026-09-18T15:00:03.000Z","valor_mes_centavos":0,"valor_padrao_centavos":0}
+
+=== historico_habilidade (em, habilidade, id, jogador_id)
+{"em":"2026-09-18T15:06:35.000Z","habilidade":3,"id":1,"jogador_id":1}
+{"em":"2026-09-18T15:06:53.000Z","habilidade":3,"id":2,"jogador_id":2}
+{"em":"2026-09-18T15:07:11.000Z","habilidade":3,"id":3,"jogador_id":3}
+{"em":"2026-09-18T15:07:16.000Z","habilidade":2.8,"id":4,"jogador_id":3}
+{"em":"2026-09-18T15:07:18.000Z","habilidade":2.6666666666666665,"id":5,"jogador_id":3}
+{"em":"2026-09-18T15:07:20.000Z","habilidade":2.5714285714285716,"id":6,"jogador_id":3}
+{"em":"2026-09-18T15:07:22.000Z","habilidade":2.5,"id":7,"jogador_id":3}
+{"em":"2026-09-18T15:07:24.000Z","habilidade":2.5555555555555554,"id":8,"jogador_id":3}
+{"em":"2026-09-18T15:07:26.000Z","habilidade":2.6,"id":9,"jogador_id":3}
+{"em":"2026-09-18T15:07:28.000Z","habilidade":2.6363636363636362,"id":10,"jogador_id":3}
+{"em":"2026-09-18T15:07:30.000Z","habilidade":2.6666666666666665,"id":11,"jogador_id":3}
+{"em":"2026-09-18T15:07:32.000Z","habilidade":2.6923076923076925,"id":12,"jogador_id":3}
+{"em":"2026-09-18T15:07:34.000Z","habilidade":2.7142857142857144,"id":13,"jogador_id":3}
+{"em":"2026-09-18T15:07:36.000Z","habilidade":2.7333333333333334,"id":14,"jogador_id":3}
+{"em":"2026-09-18T15:07:38.000Z","habilidade":2.75,"id":15,"jogador_id":3}
+{"em":"2026-09-18T15:07:41.000Z","habilidade":3,"id":16,"jogador_id":4}
+{"em":"2026-09-18T15:07:54.000Z","habilidade":2.923076923076923,"id":17,"jogador_id":4}
+{"em":"2026-09-18T15:07:56.000Z","habilidade":2.857142857142857,"id":18,"jogador_id":4}
+{"em":"2026-09-18T15:07:58.000Z","habilidade":2.8,"id":19,"jogador_id":4}
+{"em":"2026-09-18T15:08:00.000Z","habilidade":2.75,"id":20,"jogador_id":4}
+{"em":"2026-09-18T15:08:21.000Z","habilidade":4,"id":22,"jogador_id":6}
+{"em":"2026-09-18T15:08:26.000Z","habilidade":3.8,"id":23,"jogador_id":6}
+{"em":"2026-09-18T15:08:28.000Z","habilidade":3.6666666666666665,"id":24,"jogador_id":6}
+{"em":"2026-09-18T15:08:30.000Z","habilidade":3.5714285714285716,"id":25,"jogador_id":6}
+{"em":"2026-09-18T15:08:32.000Z","habilidade":3.5,"id":26,"jogador_id":6}
+{"em":"2026-09-18T15:08:34.000Z","habilidade":3.5555555555555554,"id":27,"jogador_id":6}
+{"em":"2026-09-18T15:08:36.000Z","habilidade":3.6,"id":28,"jogador_id":6}
+{"em":"2026-09-18T15:08:38.000Z","habilidade":3.6363636363636362,"id":29,"jogador_id":6}
+{"em":"2026-09-18T15:08:40.000Z","habilidade":3.6666666666666665,"id":30,"jogador_id":6}
+{"em":"2026-09-18T15:08:42.000Z","habilidade":3.6153846153846154,"id":31,"jogador_id":6}
+{"em":"2026-09-18T15:08:44.000Z","habilidade":3.5714285714285716,"id":32,"jogador_id":6}
+{"em":"2026-09-18T15:08:46.000Z","habilidade":3.533333333333333,"id":33,"jogador_id":6}
+{"em":"2026-09-18T15:08:48.000Z","habilidade":3.5,"id":34,"jogador_id":6}
+{"em":"2026-09-18T15:08:51.000Z","habilidade":2,"id":35,"jogador_id":7}
+{"em":"2026-09-18T15:09:09.000Z","habilidade":2,"id":36,"jogador_id":8}
+{"em":"2026-09-18T15:09:27.000Z","habilidade":3,"id":37,"jogador_id":9}
+{"em":"2026-09-18T15:09:45.000Z","habilidade":4,"id":38,"jogador_id":10}
+{"em":"2026-09-18T15:09:50.000Z","habilidade":3.8,"id":39,"jogador_id":10}
+{"em":"2026-09-18T15:09:52.000Z","habilidade":3.6666666666666665,"id":40,"jogador_id":10}
+{"em":"2026-09-18T15:09:54.000Z","habilidade":3.5714285714285716,"id":41,"jogador_id":10}
+{"em":"2026-09-18T15:09:56.000Z","habilidade":3.5,"id":42,"jogador_id":10}
+{"em":"2026-09-18T15:09:58.000Z","habilidade":3.4444444444444446,"id":43,"jogador_id":10}
+{"em":"2026-09-18T15:10:00.000Z","habilidade":3.4,"id":44,"jogador_id":10}
+{"em":"2026-09-18T15:10:02.000Z","habilidade":3.3636363636363638,"id":45,"jogador_id":10}
+{"em":"2026-09-18T15:10:04.000Z","habilidade":3.3333333333333335,"id":46,"jogador_id":10}
+{"em":"2026-09-18T15:10:06.000Z","habilidade":3.3076923076923075,"id":47,"jogador_id":10}
+{"em":"2026-09-18T15:10:08.000Z","habilidade":3.2857142857142856,"id":48,"jogador_id":10}
+{"em":"2026-09-18T15:10:10.000Z","habilidade":3.2666666666666666,"id":49,"jogador_id":10}
+{"em":"2026-09-18T15:10:12.000Z","habilidade":3.25,"id":50,"jogador_id":10}
+{"em":"2026-09-18T15:10:15.000Z","habilidade":3,"id":51,"jogador_id":11}
+{"em":"2026-09-18T15:10:20.000Z","habilidade":3.2,"id":52,"jogador_id":11}
+{"em":"2026-09-18T15:10:22.000Z","habilidade":3.3333333333333335,"id":53,"jogador_id":11}
+{"em":"2026-09-18T15:10:24.000Z","habilidade":3.4285714285714284,"id":54,"jogador_id":11}
+{"em":"2026-09-18T15:10:26.000Z","habilidade":3.5,"id":55,"jogador_id":11}
+{"em":"2026-09-18T15:10:28.000Z","habilidade":3.4444444444444446,"id":56,"jogador_id":11}
+{"em":"2026-09-18T15:10:30.000Z","habilidade":3.4,"id":57,"jogador_id":11}
+{"em":"2026-09-18T15:10:32.000Z","habilidade":3.3636363636363638,"id":58,"jogador_id":11}
+{"em":"2026-09-18T15:10:34.000Z","habilidade":3.3333333333333335,"id":59,"jogador_id":11}
+{"em":"2026-09-18T15:10:36.000Z","habilidade":3.3846153846153846,"id":60,"jogador_id":11}
+{"em":"2026-09-18T15:10:38.000Z","habilidade":3.4285714285714284,"id":61,"jogador_id":11}
+{"em":"2026-09-18T15:10:40.000Z","habilidade":3.466666666666667,"id":62,"jogador_id":11}
+{"em":"2026-09-18T15:10:42.000Z","habilidade":3.5,"id":63,"jogador_id":11}
+{"em":"2026-09-18T15:10:45.000Z","habilidade":2,"id":64,"jogador_id":12}
+{"em":"2026-09-18T15:11:03.000Z","habilidade":3,"id":65,"jogador_id":13}
+{"em":"2026-09-18T15:11:21.000Z","habilidade":3,"id":66,"jogador_id":14}
+{"em":"2026-09-18T15:11:39.000Z","habilidade":2,"id":67,"jogador_id":15}
+{"em":"2026-09-18T15:11:44.000Z","habilidade":2.2,"id":68,"jogador_id":15}
+{"em":"2026-09-18T15:11:46.000Z","habilidade":2.3333333333333335,"id":69,"jogador_id":15}
+{"em":"2026-09-18T15:11:48.000Z","habilidade":2.4285714285714284,"id":70,"jogador_id":15}
+{"em":"2026-09-18T15:11:50.000Z","habilidade":2.5,"id":71,"jogador_id":15}
+{"em":"2026-09-18T15:11:52.000Z","habilidade":2.5555555555555554,"id":72,"jogador_id":15}
+{"em":"2026-09-18T15:11:54.000Z","habilidade":2.6,"id":73,"jogador_id":15}
+{"em":"2026-09-18T15:11:56.000Z","habilidade":2.6363636363636362,"id":74,"jogador_id":15}
+{"em":"2026-09-18T15:11:58.000Z","habilidade":2.6666666666666665,"id":75,"jogador_id":15}
+{"em":"2026-09-18T15:12:00.000Z","habilidade":2.6923076923076925,"id":76,"jogador_id":15}
+{"em":"2026-09-18T15:12:02.000Z","habilidade":2.7142857142857144,"id":77,"jogador_id":15}
+{"em":"2026-09-18T15:12:04.000Z","habilidade":2.7333333333333334,"id":78,"jogador_id":15}
+{"em":"2026-09-18T15:12:06.000Z","habilidade":2.75,"id":79,"jogador_id":15}
+{"em":"2026-09-18T15:12:09.000Z","habilidade":4,"id":80,"jogador_id":16}
+{"em":"2026-09-18T15:12:14.000Z","habilidade":3.8,"id":81,"jogador_id":16}
+{"em":"2026-09-18T15:12:16.000Z","habilidade":3.6666666666666665,"id":82,"jogador_id":16}
+{"em":"2026-09-18T15:12:18.000Z","habilidade":3.5714285714285716,"id":83,"jogador_id":16}
+{"em":"2026-09-18T15:12:20.000Z","habilidade":3.5,"id":84,"jogador_id":16}
+{"em":"2026-09-18T15:12:22.000Z","habilidade":3.5555555555555554,"id":85,"jogador_id":16}
+{"em":"2026-09-18T15:12:24.000Z","habilidade":3.6,"id":86,"jogador_id":16}
+{"em":"2026-09-18T15:12:26.000Z","habilidade":3.6363636363636362,"id":87,"jogador_id":16}
+{"em":"2026-09-18T15:12:28.000Z","habilidade":3.6666666666666665,"id":88,"jogador_id":16}
+{"em":"2026-09-18T15:12:30.000Z","habilidade":3.6153846153846154,"id":89,"jogador_id":16}
+{"em":"2026-09-18T15:12:32.000Z","habilidade":3.5714285714285716,"id":90,"jogador_id":16}
+{"em":"2026-09-18T15:12:34.000Z","habilidade":3.533333333333333,"id":91,"jogador_id":16}
+{"em":"2026-09-18T15:12:36.000Z","habilidade":3.5,"id":92,"jogador_id":16}
+{"em":"2026-09-18T15:12:39.000Z","habilidade":4,"id":93,"jogador_id":17}
+{"em":"2026-09-18T15:12:57.000Z","habilidade":2,"id":94,"jogador_id":18}
+{"em":"2026-09-18T15:18:38.000Z","habilidade":2.875,"id":95,"jogador_id":3}
+
+=== inadimplentes (chat_id, criado_em, id, nome, numero, valor_centavos)
+
+=== jogadores (altura, chat_id, criado_em, id, nome, numero)
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:06:33.000Z","id":1,"nome":"Marcel G.","numero":"5521900000002@c.us"}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:06:51.000Z","id":2,"nome":"Fabrício Bahiense","numero":null}
+{"altura":"alto","chat_id":"g1@g.us","criado_em":"2026-09-18T15:07:09.000Z","id":3,"nome":"Kamila Vianna","numero":"5521900000005@c.us"}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:07:39.000Z","id":4,"nome":"Diego Borges","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:08:19.000Z","id":6,"nome":"Thiago Prata","numero":"5521900000006@c.us"}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:08:49.000Z","id":7,"nome":"Andressa não Urach","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:09:07.000Z","id":8,"nome":"Marcelle","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:09:25.000Z","id":9,"nome":"Carlos Brugger","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:09:43.000Z","id":10,"nome":"W. Luketa","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:10:13.000Z","id":11,"nome":"Camila W.","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:10:43.000Z","id":12,"nome":"Pedro Moura","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:11:01.000Z","id":13,"nome":"Ryan Araújo","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:11:19.000Z","id":14,"nome":"Dvd","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:11:37.000Z","id":15,"nome":"Thiago","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:12:07.000Z","id":16,"nome":"Vini","numero":"5521900000007@c.us"}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:12:37.000Z","id":17,"nome":"Aces","numero":"5521900000008@c.us"}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:12:55.000Z","id":18,"nome":"Stephanie Bastos","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:18:34.000Z","id":19,"nome":"Novato Painel","numero":"5521900000010@c.us"}
+
+=== listas (chat_id, criada_em, data_jogo, id, lembrete_em, nome, status, valor_centavos)
+{"chat_id":"g1@g.us","criada_em":"2026-09-18T15:03:10.000Z","data_jogo":"14/10","id":2,"lembrete_em":null,"nome":"Sexta Nova","status":"encerrada","valor_centavos":1700}
+{"chat_id":"g1@g.us","criada_em":"2026-07-31T21:00:00.000Z","data_jogo":"31/07","id":4,"lembrete_em":null,"nome":"Pelada da planilha","status":"encerrada","valor_centavos":0}
+
+=== mensalidades (id, mensalista_id, mes, pago_em, valor_centavos)
+{"id":5,"mensalista_id":3,"mes":"2026-09","pago_em":"2026-09-18T15:05:17.000Z","valor_centavos":5300}
+
+=== mensalistas (chat_id, criado_em, espera, fixo, id, nome, numero)
+{"chat_id":"g1@g.us","criado_em":"2026-09-18T15:01:40.000Z","espera":0,"fixo":1,"id":3,"nome":"Aces","numero":"5521900000008@c.us"}
+
+=== notas_do_dia (atualizado_em, id, jogador_id, lista_id, nota, observacao)
+{"atualizado_em":"2026-09-18T15:18:39.000Z","id":1,"jogador_id":3,"lista_id":2,"nota":4.5,"observacao":"bom"}
+
+=== times_montados (atualizado_em, dados, lista_id)
+
+=== votos_habilidade (atualizado_em, fundamento, id, jogador_id, nota, votante)
+{"atualizado_em":"2026-09-18T15:13:36.000Z","fundamento":"ataque","id":1,"jogador_id":1,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:13:37.000Z","fundamento":"defesa","id":2,"jogador_id":1,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:13:38.000Z","fundamento":"levantamento","id":3,"jogador_id":1,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:13:39.000Z","fundamento":"saque","id":4,"jogador_id":1,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:13:40.000Z","fundamento":"ataque","id":5,"jogador_id":1,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:13:41.000Z","fundamento":"defesa","id":6,"jogador_id":1,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:13:42.000Z","fundamento":"levantamento","id":7,"jogador_id":1,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:13:43.000Z","fundamento":"saque","id":8,"jogador_id":1,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:13:44.000Z","fundamento":"ataque","id":9,"jogador_id":1,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:13:45.000Z","fundamento":"defesa","id":10,"jogador_id":1,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:13:46.000Z","fundamento":"levantamento","id":11,"jogador_id":1,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:13:47.000Z","fundamento":"saque","id":12,"jogador_id":1,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:13:48.000Z","fundamento":"ataque","id":13,"jogador_id":1,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:13:49.000Z","fundamento":"defesa","id":14,"jogador_id":1,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:13:50.000Z","fundamento":"levantamento","id":15,"jogador_id":1,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:13:51.000Z","fundamento":"saque","id":16,"jogador_id":1,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:13:52.000Z","fundamento":"ataque","id":17,"jogador_id":2,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:13:53.000Z","fundamento":"defesa","id":18,"jogador_id":2,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:13:54.000Z","fundamento":"levantamento","id":19,"jogador_id":2,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:13:55.000Z","fundamento":"saque","id":20,"jogador_id":2,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:13:56.000Z","fundamento":"ataque","id":21,"jogador_id":2,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:13:57.000Z","fundamento":"defesa","id":22,"jogador_id":2,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:13:58.000Z","fundamento":"levantamento","id":23,"jogador_id":2,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:13:59.000Z","fundamento":"saque","id":24,"jogador_id":2,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:00.000Z","fundamento":"ataque","id":25,"jogador_id":2,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:01.000Z","fundamento":"defesa","id":26,"jogador_id":2,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:02.000Z","fundamento":"levantamento","id":27,"jogador_id":2,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:03.000Z","fundamento":"saque","id":28,"jogador_id":2,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:04.000Z","fundamento":"ataque","id":29,"jogador_id":2,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:05.000Z","fundamento":"defesa","id":30,"jogador_id":2,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:06.000Z","fundamento":"levantamento","id":31,"jogador_id":2,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:07.000Z","fundamento":"saque","id":32,"jogador_id":2,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:18:37.000Z","fundamento":"ataque","id":33,"jogador_id":3,"nota":5,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:09.000Z","fundamento":"defesa","id":34,"jogador_id":3,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:10.000Z","fundamento":"levantamento","id":35,"jogador_id":3,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:11.000Z","fundamento":"saque","id":36,"jogador_id":3,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:12.000Z","fundamento":"ataque","id":37,"jogador_id":3,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:13.000Z","fundamento":"defesa","id":38,"jogador_id":3,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:14.000Z","fundamento":"levantamento","id":39,"jogador_id":3,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:15.000Z","fundamento":"saque","id":40,"jogador_id":3,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:16.000Z","fundamento":"ataque","id":41,"jogador_id":3,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:17.000Z","fundamento":"defesa","id":42,"jogador_id":3,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:18.000Z","fundamento":"levantamento","id":43,"jogador_id":3,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:19.000Z","fundamento":"saque","id":44,"jogador_id":3,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:20.000Z","fundamento":"ataque","id":45,"jogador_id":3,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:21.000Z","fundamento":"defesa","id":46,"jogador_id":3,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:22.000Z","fundamento":"levantamento","id":47,"jogador_id":3,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:23.000Z","fundamento":"saque","id":48,"jogador_id":3,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:24.000Z","fundamento":"ataque","id":49,"jogador_id":4,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:25.000Z","fundamento":"defesa","id":50,"jogador_id":4,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:26.000Z","fundamento":"levantamento","id":51,"jogador_id":4,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:27.000Z","fundamento":"saque","id":52,"jogador_id":4,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:28.000Z","fundamento":"ataque","id":53,"jogador_id":4,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:29.000Z","fundamento":"defesa","id":54,"jogador_id":4,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:30.000Z","fundamento":"levantamento","id":55,"jogador_id":4,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:31.000Z","fundamento":"saque","id":56,"jogador_id":4,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:32.000Z","fundamento":"ataque","id":57,"jogador_id":4,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:33.000Z","fundamento":"defesa","id":58,"jogador_id":4,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:34.000Z","fundamento":"levantamento","id":59,"jogador_id":4,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:35.000Z","fundamento":"saque","id":60,"jogador_id":4,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:36.000Z","fundamento":"ataque","id":61,"jogador_id":4,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:37.000Z","fundamento":"defesa","id":62,"jogador_id":4,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:38.000Z","fundamento":"levantamento","id":63,"jogador_id":4,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:39.000Z","fundamento":"saque","id":64,"jogador_id":4,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:56.000Z","fundamento":"ataque","id":81,"jogador_id":6,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:57.000Z","fundamento":"defesa","id":82,"jogador_id":6,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:58.000Z","fundamento":"levantamento","id":83,"jogador_id":6,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:59.000Z","fundamento":"saque","id":84,"jogador_id":6,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:00.000Z","fundamento":"ataque","id":85,"jogador_id":6,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:01.000Z","fundamento":"defesa","id":86,"jogador_id":6,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:02.000Z","fundamento":"levantamento","id":87,"jogador_id":6,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:03.000Z","fundamento":"saque","id":88,"jogador_id":6,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:04.000Z","fundamento":"ataque","id":89,"jogador_id":6,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:05.000Z","fundamento":"defesa","id":90,"jogador_id":6,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:06.000Z","fundamento":"levantamento","id":91,"jogador_id":6,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:07.000Z","fundamento":"saque","id":92,"jogador_id":6,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:08.000Z","fundamento":"ataque","id":93,"jogador_id":6,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:09.000Z","fundamento":"defesa","id":94,"jogador_id":6,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:10.000Z","fundamento":"levantamento","id":95,"jogador_id":6,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:11.000Z","fundamento":"saque","id":96,"jogador_id":6,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:12.000Z","fundamento":"ataque","id":97,"jogador_id":7,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:13.000Z","fundamento":"defesa","id":98,"jogador_id":7,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:14.000Z","fundamento":"levantamento","id":99,"jogador_id":7,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:15.000Z","fundamento":"saque","id":100,"jogador_id":7,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:16.000Z","fundamento":"ataque","id":101,"jogador_id":7,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:17.000Z","fundamento":"defesa","id":102,"jogador_id":7,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:18.000Z","fundamento":"levantamento","id":103,"jogador_id":7,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:19.000Z","fundamento":"saque","id":104,"jogador_id":7,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:20.000Z","fundamento":"ataque","id":105,"jogador_id":7,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:21.000Z","fundamento":"defesa","id":106,"jogador_id":7,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:22.000Z","fundamento":"levantamento","id":107,"jogador_id":7,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:23.000Z","fundamento":"saque","id":108,"jogador_id":7,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:24.000Z","fundamento":"ataque","id":109,"jogador_id":7,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:25.000Z","fundamento":"defesa","id":110,"jogador_id":7,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:26.000Z","fundamento":"levantamento","id":111,"jogador_id":7,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:27.000Z","fundamento":"saque","id":112,"jogador_id":7,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:28.000Z","fundamento":"ataque","id":113,"jogador_id":8,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:29.000Z","fundamento":"defesa","id":114,"jogador_id":8,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:30.000Z","fundamento":"levantamento","id":115,"jogador_id":8,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:31.000Z","fundamento":"saque","id":116,"jogador_id":8,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:32.000Z","fundamento":"ataque","id":117,"jogador_id":8,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:33.000Z","fundamento":"defesa","id":118,"jogador_id":8,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:34.000Z","fundamento":"levantamento","id":119,"jogador_id":8,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:35.000Z","fundamento":"saque","id":120,"jogador_id":8,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:36.000Z","fundamento":"ataque","id":121,"jogador_id":8,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:37.000Z","fundamento":"defesa","id":122,"jogador_id":8,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:38.000Z","fundamento":"levantamento","id":123,"jogador_id":8,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:39.000Z","fundamento":"saque","id":124,"jogador_id":8,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:40.000Z","fundamento":"ataque","id":125,"jogador_id":8,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:41.000Z","fundamento":"defesa","id":126,"jogador_id":8,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:42.000Z","fundamento":"levantamento","id":127,"jogador_id":8,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:43.000Z","fundamento":"saque","id":128,"jogador_id":8,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:44.000Z","fundamento":"ataque","id":129,"jogador_id":9,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:45.000Z","fundamento":"defesa","id":130,"jogador_id":9,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:46.000Z","fundamento":"levantamento","id":131,"jogador_id":9,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:47.000Z","fundamento":"saque","id":132,"jogador_id":9,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:48.000Z","fundamento":"ataque","id":133,"jogador_id":9,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:49.000Z","fundamento":"defesa","id":134,"jogador_id":9,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:50.000Z","fundamento":"levantamento","id":135,"jogador_id":9,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:51.000Z","fundamento":"saque","id":136,"jogador_id":9,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:52.000Z","fundamento":"ataque","id":137,"jogador_id":9,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:53.000Z","fundamento":"defesa","id":138,"jogador_id":9,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:54.000Z","fundamento":"levantamento","id":139,"jogador_id":9,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:55.000Z","fundamento":"saque","id":140,"jogador_id":9,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:56.000Z","fundamento":"ataque","id":141,"jogador_id":9,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:57.000Z","fundamento":"defesa","id":142,"jogador_id":9,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:58.000Z","fundamento":"levantamento","id":143,"jogador_id":9,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:59.000Z","fundamento":"saque","id":144,"jogador_id":9,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:00.000Z","fundamento":"ataque","id":145,"jogador_id":10,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:01.000Z","fundamento":"defesa","id":146,"jogador_id":10,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:02.000Z","fundamento":"levantamento","id":147,"jogador_id":10,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:03.000Z","fundamento":"saque","id":148,"jogador_id":10,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:04.000Z","fundamento":"ataque","id":149,"jogador_id":10,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:05.000Z","fundamento":"defesa","id":150,"jogador_id":10,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:06.000Z","fundamento":"levantamento","id":151,"jogador_id":10,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:07.000Z","fundamento":"saque","id":152,"jogador_id":10,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:08.000Z","fundamento":"ataque","id":153,"jogador_id":10,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:09.000Z","fundamento":"defesa","id":154,"jogador_id":10,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:10.000Z","fundamento":"levantamento","id":155,"jogador_id":10,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:11.000Z","fundamento":"saque","id":156,"jogador_id":10,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:12.000Z","fundamento":"ataque","id":157,"jogador_id":10,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:13.000Z","fundamento":"defesa","id":158,"jogador_id":10,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:14.000Z","fundamento":"levantamento","id":159,"jogador_id":10,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:15.000Z","fundamento":"saque","id":160,"jogador_id":10,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:16.000Z","fundamento":"ataque","id":161,"jogador_id":11,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:17.000Z","fundamento":"defesa","id":162,"jogador_id":11,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:18.000Z","fundamento":"levantamento","id":163,"jogador_id":11,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:19.000Z","fundamento":"saque","id":164,"jogador_id":11,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:20.000Z","fundamento":"ataque","id":165,"jogador_id":11,"nota":4,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:21.000Z","fundamento":"defesa","id":166,"jogador_id":11,"nota":4,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:22.000Z","fundamento":"levantamento","id":167,"jogador_id":11,"nota":4,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:23.000Z","fundamento":"saque","id":168,"jogador_id":11,"nota":4,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:24.000Z","fundamento":"ataque","id":169,"jogador_id":11,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:25.000Z","fundamento":"defesa","id":170,"jogador_id":11,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:26.000Z","fundamento":"levantamento","id":171,"jogador_id":11,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:27.000Z","fundamento":"saque","id":172,"jogador_id":11,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:28.000Z","fundamento":"ataque","id":173,"jogador_id":11,"nota":4,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:29.000Z","fundamento":"defesa","id":174,"jogador_id":11,"nota":4,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:30.000Z","fundamento":"levantamento","id":175,"jogador_id":11,"nota":4,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:31.000Z","fundamento":"saque","id":176,"jogador_id":11,"nota":4,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:32.000Z","fundamento":"ataque","id":177,"jogador_id":12,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:33.000Z","fundamento":"defesa","id":178,"jogador_id":12,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:34.000Z","fundamento":"levantamento","id":179,"jogador_id":12,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:35.000Z","fundamento":"saque","id":180,"jogador_id":12,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:36.000Z","fundamento":"ataque","id":181,"jogador_id":12,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:37.000Z","fundamento":"defesa","id":182,"jogador_id":12,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:38.000Z","fundamento":"levantamento","id":183,"jogador_id":12,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:39.000Z","fundamento":"saque","id":184,"jogador_id":12,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:40.000Z","fundamento":"ataque","id":185,"jogador_id":12,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:41.000Z","fundamento":"defesa","id":186,"jogador_id":12,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:42.000Z","fundamento":"levantamento","id":187,"jogador_id":12,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:43.000Z","fundamento":"saque","id":188,"jogador_id":12,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:44.000Z","fundamento":"ataque","id":189,"jogador_id":12,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:45.000Z","fundamento":"defesa","id":190,"jogador_id":12,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:46.000Z","fundamento":"levantamento","id":191,"jogador_id":12,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:47.000Z","fundamento":"saque","id":192,"jogador_id":12,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:48.000Z","fundamento":"ataque","id":193,"jogador_id":13,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:49.000Z","fundamento":"defesa","id":194,"jogador_id":13,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:50.000Z","fundamento":"levantamento","id":195,"jogador_id":13,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:51.000Z","fundamento":"saque","id":196,"jogador_id":13,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:52.000Z","fundamento":"ataque","id":197,"jogador_id":13,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:53.000Z","fundamento":"defesa","id":198,"jogador_id":13,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:54.000Z","fundamento":"levantamento","id":199,"jogador_id":13,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:55.000Z","fundamento":"saque","id":200,"jogador_id":13,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:56.000Z","fundamento":"ataque","id":201,"jogador_id":13,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:57.000Z","fundamento":"defesa","id":202,"jogador_id":13,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:58.000Z","fundamento":"levantamento","id":203,"jogador_id":13,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:59.000Z","fundamento":"saque","id":204,"jogador_id":13,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:00.000Z","fundamento":"ataque","id":205,"jogador_id":13,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:01.000Z","fundamento":"defesa","id":206,"jogador_id":13,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:02.000Z","fundamento":"levantamento","id":207,"jogador_id":13,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:03.000Z","fundamento":"saque","id":208,"jogador_id":13,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:04.000Z","fundamento":"ataque","id":209,"jogador_id":14,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:05.000Z","fundamento":"defesa","id":210,"jogador_id":14,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:06.000Z","fundamento":"levantamento","id":211,"jogador_id":14,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:07.000Z","fundamento":"saque","id":212,"jogador_id":14,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:08.000Z","fundamento":"ataque","id":213,"jogador_id":14,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:09.000Z","fundamento":"defesa","id":214,"jogador_id":14,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:10.000Z","fundamento":"levantamento","id":215,"jogador_id":14,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:11.000Z","fundamento":"saque","id":216,"jogador_id":14,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:12.000Z","fundamento":"ataque","id":217,"jogador_id":14,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:13.000Z","fundamento":"defesa","id":218,"jogador_id":14,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:14.000Z","fundamento":"levantamento","id":219,"jogador_id":14,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:15.000Z","fundamento":"saque","id":220,"jogador_id":14,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:16.000Z","fundamento":"ataque","id":221,"jogador_id":14,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:17.000Z","fundamento":"defesa","id":222,"jogador_id":14,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:18.000Z","fundamento":"levantamento","id":223,"jogador_id":14,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:19.000Z","fundamento":"saque","id":224,"jogador_id":14,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:20.000Z","fundamento":"ataque","id":225,"jogador_id":15,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:21.000Z","fundamento":"defesa","id":226,"jogador_id":15,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:22.000Z","fundamento":"levantamento","id":227,"jogador_id":15,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:23.000Z","fundamento":"saque","id":228,"jogador_id":15,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:24.000Z","fundamento":"ataque","id":229,"jogador_id":15,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:25.000Z","fundamento":"defesa","id":230,"jogador_id":15,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:26.000Z","fundamento":"levantamento","id":231,"jogador_id":15,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:27.000Z","fundamento":"saque","id":232,"jogador_id":15,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:28.000Z","fundamento":"ataque","id":233,"jogador_id":15,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:29.000Z","fundamento":"defesa","id":234,"jogador_id":15,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:30.000Z","fundamento":"levantamento","id":235,"jogador_id":15,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:31.000Z","fundamento":"saque","id":236,"jogador_id":15,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:32.000Z","fundamento":"ataque","id":237,"jogador_id":15,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:33.000Z","fundamento":"defesa","id":238,"jogador_id":15,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:34.000Z","fundamento":"levantamento","id":239,"jogador_id":15,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:35.000Z","fundamento":"saque","id":240,"jogador_id":15,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:36.000Z","fundamento":"ataque","id":241,"jogador_id":16,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:37.000Z","fundamento":"defesa","id":242,"jogador_id":16,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:38.000Z","fundamento":"levantamento","id":243,"jogador_id":16,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:39.000Z","fundamento":"saque","id":244,"jogador_id":16,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:40.000Z","fundamento":"ataque","id":245,"jogador_id":16,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:41.000Z","fundamento":"defesa","id":246,"jogador_id":16,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:42.000Z","fundamento":"levantamento","id":247,"jogador_id":16,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:43.000Z","fundamento":"saque","id":248,"jogador_id":16,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:44.000Z","fundamento":"ataque","id":249,"jogador_id":16,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:45.000Z","fundamento":"defesa","id":250,"jogador_id":16,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:46.000Z","fundamento":"levantamento","id":251,"jogador_id":16,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:47.000Z","fundamento":"saque","id":252,"jogador_id":16,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:48.000Z","fundamento":"ataque","id":253,"jogador_id":16,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:49.000Z","fundamento":"defesa","id":254,"jogador_id":16,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:50.000Z","fundamento":"levantamento","id":255,"jogador_id":16,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:51.000Z","fundamento":"saque","id":256,"jogador_id":16,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:52.000Z","fundamento":"ataque","id":257,"jogador_id":17,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:53.000Z","fundamento":"defesa","id":258,"jogador_id":17,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:54.000Z","fundamento":"levantamento","id":259,"jogador_id":17,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:55.000Z","fundamento":"saque","id":260,"jogador_id":17,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:56.000Z","fundamento":"ataque","id":261,"jogador_id":17,"nota":4,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:57.000Z","fundamento":"defesa","id":262,"jogador_id":17,"nota":4,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:58.000Z","fundamento":"levantamento","id":263,"jogador_id":17,"nota":4,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:59.000Z","fundamento":"saque","id":264,"jogador_id":17,"nota":4,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:18:00.000Z","fundamento":"ataque","id":265,"jogador_id":17,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:18:01.000Z","fundamento":"defesa","id":266,"jogador_id":17,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:18:02.000Z","fundamento":"levantamento","id":267,"jogador_id":17,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:18:03.000Z","fundamento":"saque","id":268,"jogador_id":17,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:18:04.000Z","fundamento":"ataque","id":269,"jogador_id":17,"nota":4,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:18:05.000Z","fundamento":"defesa","id":270,"jogador_id":17,"nota":4,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:18:06.000Z","fundamento":"levantamento","id":271,"jogador_id":17,"nota":4,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:18:07.000Z","fundamento":"saque","id":272,"jogador_id":17,"nota":4,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:18:08.000Z","fundamento":"ataque","id":273,"jogador_id":18,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:18:09.000Z","fundamento":"defesa","id":274,"jogador_id":18,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:18:10.000Z","fundamento":"levantamento","id":275,"jogador_id":18,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:18:11.000Z","fundamento":"saque","id":276,"jogador_id":18,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:18:12.000Z","fundamento":"ataque","id":277,"jogador_id":18,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:18:13.000Z","fundamento":"defesa","id":278,"jogador_id":18,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:18:14.000Z","fundamento":"levantamento","id":279,"jogador_id":18,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:18:15.000Z","fundamento":"saque","id":280,"jogador_id":18,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:18:16.000Z","fundamento":"ataque","id":281,"jogador_id":18,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:18:17.000Z","fundamento":"defesa","id":282,"jogador_id":18,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:18:18.000Z","fundamento":"levantamento","id":283,"jogador_id":18,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:18:19.000Z","fundamento":"saque","id":284,"jogador_id":18,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:18:20.000Z","fundamento":"ataque","id":285,"jogador_id":18,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:18:21.000Z","fundamento":"defesa","id":286,"jogador_id":18,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:18:22.000Z","fundamento":"levantamento","id":287,"jogador_id":18,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:18:23.000Z","fundamento":"saque","id":288,"jogador_id":18,"nota":2,"votante":"Bianca"}

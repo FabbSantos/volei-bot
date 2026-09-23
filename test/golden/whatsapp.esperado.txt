@@ -1,0 +1,164 @@
+GET /status → 200 {"status":"inChat","tentativasReconexao":0}
+GET /qr → 404 {"erro":"QR ainda não gerado ou já conectado"}
+GET /painel.html → 302 /painelFound. Redirecting to /painel
+
+>>> [111@lid] "#listargrupos"
+--> [111@lid] Nenhum grupo cadastrado ainda — o bot registra sozinho assim que alguém manda a primeira mensagem num grupo que ele participa.
+
+>>> [333@lid] "#listargrupos"
+
+>>> [111@lid] ""
+
+>>> [g1@g.us / 222@lid] "#lista"
+--> [g1@g.us] 🔒 Esse grupo ainda não foi liberado pra usar o bot. Fala com quem administra.
+
+>>> [adm@g.us / 444@lid] "oi"
+
+>>> [111@lid] "#ativargrupo g1@g.us 3 --1"
+--> [111@lid] ✅ Grupo g1@g.us ativado! Lista com *3* vagas + *1* de espera. Já pode usar #listaDD/MM lá dentro.
+
+>>> [111@lid] "#grupoadmin adm@g.us"
+--> [111@lid] 🛠 Grupo adm@g.us agora é grupo de admins! Todo mundo lá pode usar os comandos remotos (#listade, #pagosde, #adminsde, #valorde...). Manda *#admin* lá pra ver tudo.
+
+>>> [g1@g.us / 333@lid] "#lista10/10 20"
+--> [g1@g.us] 🔒 Só admin pode abrir lista.
+
+>>> [g1@g.us / 222@lid] "#lista10/10 20 Sexta"
+--> [g1@g.us] ✅ Lista *Sexta* aberta pro dia *10/10* — R$ 20,00 por pessoa! Manda *#lista* pra entrar.
+
+>>> [g1@g.us / 222@lid] "#lista"
+--> [g1@g.us] ✅ Fabricio entrou! Você está na posição 1 da lista principal.
+--> [g1@g.us] 📋 *Sexta — 10/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (1/3)
+1. Fabricio
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/1)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 0/1 em dia ✅
+
+>>> [g1@g.us / 333@lid] "#lista"
+--> [g1@g.us] ✅ Marcel entrou! Você está na posição 2 da lista principal.
+--> [g1@g.us] 📋 *Sexta — 10/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (2/3)
+1. Fabricio
+2. Marcel
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/1)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 0/2 em dia ✅
+
+>>> [g1@g.us / 444@lid] "#lista"
+--> [g1@g.us] ✅ Diego entrou! Você está na posição 3 da lista principal.
+--> [g1@g.us] 🚨 Lista encheu! Vamos começar a lista de espera.
+--> [g1@g.us] 📋 *Sexta — 10/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (3/3)
+1. Fabricio
+2. Marcel
+3. Diego
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/1)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 0/3 em dia ✅
+
+>>> [g1@g.us / 333@lid] "#pago"
+--> [g1@g.us] 🔒 Só admin do grupo pode marcar pagamento.
+
+>>> [g1@g.us / 444@lid] "#pago"
+--> [g1@g.us] 💰 Marcel pagou! ✅
+--> [g1@g.us] [figurinha animada] <raiz>/assets/agiota-pago-7.webp
+--> [g1@g.us] 📋 *Sexta — 10/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (3/3)
+1. Fabricio
+2. Marcel ✅
+3. Diego
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/1)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 1/3 em dia ✅
+
+>>> [g1@g.us / 222@lid] "#pago 3"
+--> [g1@g.us] 💰 Diego pagou! ✅
+--> [g1@g.us] [figurinha animada] <raiz>/assets/agiota-pago-5.webp
+--> [g1@g.us] 📋 *Sexta — 10/10*
+━━━━━━━━━━━━━━━
+🟢 *PRINCIPAL* (3/3)
+1. Fabricio
+2. Marcel ✅
+3. Diego ✅
+━━━━━━━━━━━━━━━
+🟡 *ESPERA* (0/1)
+_(vazia)_
+━━━━━━━━━━━━━━━
+💰 R$ 20,00 por pessoa — 2/3 em dia ✅
+
+>>> [g1@g.us / 222@lid] "#mostralista"
+
+>>> [adm@g.us / 444@lid] "#pagosde riachuelo"
+--> [adm@g.us] 💰 *Pagamentos — Vôlei Riachuelo*
+📋 *Sexta* — 10/10
+
+✅ 2/3 em dia (espera não deve ainda)
+
+💵 Arrecadado na lista: *R$ 40,00* (R$ 20,00/pessoa)
+
+⏳ Faltam: Fabricio
+
+>>> [adm@g.us / 444@lid] "#adminsde riachuelo"
+--> [adm@g.us] 👑 *Admins de Vôlei Riachuelo* (1) — são eles que podem marcar #pago lá:
+• 5521900000001
+
+>>> [adm@g.us / 444@lid] "#anuncio Bora!"
+--> [g1@g.us] {"mentionedList":["5521900000001@c.us","5521900000002@c.us"]} Bora!
+--> [adm@g.us] 📣 Anunciado em *Vôlei Riachuelo*, notificando 2 pessoa(s). Saiu assim:
+
+Bora!
+
+>>> [adm@g.us / 444@lid] "#cobrarde riachuelo"
+--> [g1@g.us] {"mentionedList":["5521900000001@c.us"]} ⏰ *Recado do agiota* 🏐
+
+Quem ainda não pagou a pelada da semana tem até *sexta, 12h* pra acertar — depois disso sai da lista e a espera assume a vaga.
+Quem subir da espera tem até *sexta, 17h* pra pagar.
+
+⏳ Na mira do agiota: @5521900000001
+
+Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. 🤝
+--> [g1@g.us] [figurinha] <raiz>/assets/cade-meu-pix-9.png
+--> [adm@g.us] 📣 Cobrança mandada pro grupo (1 na mira). O lembrete diário automático não foi afetado.
+
+>>> [adm@g.us / 444@lid] "#teste"
+--> [adm@g.us] 🏐 *Tudo certo por aqui.*
+
+✅ *Conexão:* inChat
+🖥 *Máquina:* maquina-de-teste
+⏱ *No ar há:* <tempo>
+✅ *Banco:* respondendo · <tamanho>
+🕐 *Agora em Brasília:* 18/09/2026, 12:01
+
+📋 *Grupos ativos (1):*
+• Vôlei Riachuelo — *10/10* (aberta)
+   3 na lista · 2/3 em dia · cobrança de hoje ainda não saiu
+
+✅ *Figurinhas:* agiota-pago: 10 · cade-meu-pix: 9
+
+--- intervalos registrados: 180000, 1800000
+--> [g1@g.us] {"mentionedList":["5521900000001@c.us"]} ⏰ *Recado do agiota* 🏐
+
+Quem ainda não pagou a pelada da semana tem até *sexta, 12h* pra acertar — depois disso sai da lista e a espera assume a vaga.
+Quem subir da espera tem até *sexta, 17h* pra pagar.
+
+⏳ Na mira do agiota: @5521900000001
+
+Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. 🤝
+--> [g1@g.us] [figurinha animada] <raiz>/assets/cade-meu-pix-8.webp
+--- de novo (o lembrete é um por dia)
+
+>>> [g1@g.us / 222@lid] "#mostralista"
+GET /status → 200 {"status":"sem_resposta","tentativasReconexao":1}
