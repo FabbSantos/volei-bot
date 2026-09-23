@@ -176,4 +176,4 @@ NOME_GRUPO_ALVO=
 
 `NOME_GRUPO_ALVO` é opcional — se quiser restringir o bot a só responder
 dentro de um grupo específico (recomendado pra não pegar mensagem de DM),
-edite `src/bot.js` e descomente a linha de filtro por nome do grupo.
+edite `src/whatsapp/mensagens.js` e descomente a linha de filtro por nome do grupo.

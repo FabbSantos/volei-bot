@@ -1,5 +1,5 @@
-// Decisões do teste de vida, separadas do bot.js pra poderem ser testadas —
-// carregar o bot.js sobe servidor HTTP e navegador.
+// Decisões do teste de vida, separadas da sessao.js pra poderem ser testadas —
+// carregar a sessão abre o navegador.
 
 // Estados em que o bot REALMENTE recebe mensagem. "isLogged" não está aqui de
 // propósito: é autenticado mas ainda sincronizando, e nesse estado ele fica

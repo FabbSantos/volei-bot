@@ -2,10 +2,10 @@
   "name": "volei-bot",
   "version": "1.0.0",
   "description": "Bot de WhatsApp para organizar lista de vôlei via WPPConnect",
-  "main": "src/bot.js",
+  "main": "src/main.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node src/bot.js",
+    "start": "node src/main.js",
     "test": "node test/golden/comandos.js && node test/golden/whatsapp.js"
   },
   "dependencies": {

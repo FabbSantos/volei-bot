@@ -17,9 +17,15 @@ DESTINO=/var/backups/volei-bot
 DIA=$(date +%F)
 mkdir -p "$DESTINO"
 
+# Fala com o SQLite direto, sem passar pelo código do bot: o script instalado
+# na VPS é uma cópia e não pode quebrar quando os arquivos de src/ mudam de lugar.
 docker exec volei-bot node -e "
-  process.env.DB_PATH = '/app/data/volei.db';
-  require('/app/src/db').snapshotBanco('/app/data/backup-tmp.db');
+  const fs = require('fs');
+  const Database = require('/app/node_modules/better-sqlite3');
+  fs.rmSync('/app/data/backup-tmp.db', { force: true });
+  const db = new Database('/app/data/volei.db');
+  db.prepare('VACUUM INTO ?').run('/app/data/backup-tmp.db');
+  db.close();
 "
 docker cp volei-bot:/app/data/backup-tmp.db "$DESTINO/volei-$DIA.db"
 docker exec volei-bot rm -f /app/data/backup-tmp.db

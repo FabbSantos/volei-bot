@@ -65,4 +65,4 @@ EXPOSE 3000
 # tini como PID 1 colhe os processos zumbis que o Chrome deixa quando crasha —
 # sem isso eles acumulam até esgotar o limite de PIDs do container (EAGAIN no fork)
 ENTRYPOINT ["tini", "--"]
-CMD ["node", "src/bot.js"]
+CMD ["node", "src/main.js"]

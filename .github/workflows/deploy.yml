@@ -23,6 +23,8 @@ jobs:
             cd /opt/volei-bot
             git fetch --all
             git reset --hard origin/main
+            # O backup do cron é uma cópia do script; reinstala pra acompanhar o repo
+            install -m 0755 deploy/backup-diario.sh /usr/local/bin/volei-backup
             docker compose up -d --build
             docker image prune -f
 
