@@ -6,7 +6,10 @@
   "type": "commonjs",
   "scripts": {
     "start": "node src/main.js",
-    "test": "node test/golden/comandos.js && node test/golden/whatsapp.js"
+    "test": "node test/golden/comandos.js && node test/golden/whatsapp.js && node test/video.js",
+    "gravar": "node src/video.js gravar",
+    "cortar": "node src/video.js cortar",
+    "pedacos": "node src/video.js pedacos"
   },
   "dependencies": {
     "@wppconnect-team/wppconnect": "^2.2.5",

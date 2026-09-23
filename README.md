@@ -102,6 +102,48 @@ Fluxo típico pra um grupo novo:
    primeiro, em ordem de chegada — ninguém fura fila
 7. As listas antigas ficam salvas no banco (histórico), nada é resetado sozinho
 
+## Como o código está organizado
+
+Monólito modular: um processo só, dividido por assunto.
+
+```
+src/
+  main.js       ponto de entrada (HTTP + WhatsApp + relógios)
+  roteador.js   junta os comandos de todos os módulos
+  nucleo/       banco, dinheiro, texto, tempo, alertas, formato de comando
+  modulos/      grupos, pelada, mensalistas, inadimplentes, elenco, video...
+                cada um com repositorio.js (dono das próprias tabelas),
+                comandos e rotas do painel
+  whatsapp/     sessão e reconexão, contatos/@lid/admins, mensagens
+  http/         servidor, QR e painel
+  video.js      linha de comando do gravador (roda na máquina da câmera)
+```
+
+Módulo novo = pasta nova em `modulos/` + registrar os comandos no
+`roteador.js`. Nenhum módulo fala com o wppconnect direto: todos recebem a
+"porta" `msg` descrita em `nucleo/comandos.js`.
+
+`npm test` roda um roteiro de ~220 comandos e compara cada resposta com
+`test/golden/*.esperado.txt` — qualquer mudança de comportamento aparece.
+Mudou de propósito? Confere a diferença e regrava com `--gravar`.
+
+## Vídeo da quadra (em construção)
+
+Grava a câmera sem parar em pedaços de 5 minutos e corta o trecho que
+alguém pedir. Roda na máquina que tem a câmera, não na VPS. Precisa do
+ffmpeg instalado (no Windows: `winget install Gyan.FFmpeg`).
+
+```bash
+npm run gravar                         # liga o gravador (Ctrl+C para)
+npm run cortar -- "hoje 20h-20h05"     # gera o MP4 em gravacoes/cortes/
+npm run pedacos                        # lista o que está gravado
+```
+
+A câmera vem de `VIDEO_FONTE`: `teste` (imagem sintética), `webcam` ou
+`rtsp` (câmera IP). Trocar de câmera não muda mais nada. O relógio da
+máquina precisa estar no horário de Brasília: o nome de cada pedaço é a
+hora em que ele começou.
+
 ## Instalação local
 
 ```bash
