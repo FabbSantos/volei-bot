@@ -12,7 +12,9 @@ const { lerHora, lerDia } = require('./periodo');
 // O ffprobe mora do lado do ffmpeg: "ffmpeg" vira "ffprobe", e
 // "C:\ffmpeg\bin\ffmpeg.exe" vira "C:\ffmpeg\bin\ffprobe.exe"
 function caminhoDoFfprobe(ffmpeg) {
-  const nome = path.basename(ffmpeg).replace(/ffmpeg/i, 'ffprobe');
+  // Âncora no começo do nome do executável: sem ela, uma pasta chamada
+  // "ffmpeg" no caminho poderia ser trocada no lugar do arquivo
+  const nome = path.basename(ffmpeg).replace(/^ffmpeg/i, 'ffprobe');
   const pasta = path.dirname(ffmpeg);
   return pasta === '.' ? nome : path.join(pasta, nome);
 }

@@ -90,8 +90,13 @@ caso('"25/09 20h03"', () => assert.strictEqual(emTexto(lerInicioInformado('25/09
 caso('"sexta 20:03" = a última sexta', () => assert.strictEqual(emTexto(lerInicioInformado('sexta 20:03', agora)), '18/9 20:03'));
 caso('só a hora = hoje', () => assert.strictEqual(emTexto(lerInicioInformado('20h', agora)), '23/9 20:00'));
 caso('lixo devolve null em vez de chutar', () => assert.strictEqual(lerInicioInformado('ontem de noite', agora), null));
-caso('ffprobe mora do lado do ffmpeg (Windows)', () =>
-  assert.strictEqual(caminhoDoFfprobe('C:\\ffmpeg\\bin\\ffmpeg.exe'), path.join('C:\\ffmpeg\\bin', 'ffprobe.exe')));
+// Caminho montado com o separador do sistema onde o teste roda — um caminho
+// do Windows não faz sentido no Linux, onde a barra invertida não é pasta.
+// A pasta se chama "ffmpeg" de propósito: só o executável pode ser trocado.
+caso('ffprobe mora do lado do ffmpeg, mesmo com pasta chamada ffmpeg', () => {
+  const pasta = path.join(os.tmpdir(), 'ffmpeg', 'bin');
+  assert.strictEqual(caminhoDoFfprobe(path.join(pasta, 'ffmpeg.exe')), path.join(pasta, 'ffprobe.exe'));
+});
 caso('ffprobe do PATH continua sem pasta', () => assert.strictEqual(caminhoDoFfprobe('ffmpeg'), 'ffprobe'));
 
 async function gravacaoDeVerdade() {
