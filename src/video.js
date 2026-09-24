@@ -2,6 +2,7 @@
 // bot do WhatsApp (que mora na VPS).
 //
 //   npm run gravar                         liga o gravador (Ctrl+C para)
+//   npm run importar -- video.mp4          traz um vídeo gravado no celular
 //   npm run cortar -- "hoje 20h-20h05"     gera o MP4 desse intervalo
 //   npm run pedacos                        mostra o que está gravado
 //
@@ -12,6 +13,7 @@ const { iniciarGravador } = require('./modulos/video/gravador');
 const { cortar } = require('./modulos/video/cortador');
 const { listarPedacos } = require('./modulos/video/pedacos');
 const { lerPeriodo } = require('./modulos/video/periodo');
+const { importar, lerInicioInformado } = require('./modulos/video/importador');
 
 const hora = (d) => d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'medium' });
 
@@ -49,6 +51,36 @@ async function main() {
     return;
   }
 
+  if (comando === 'importar') {
+    // npm run importar -- VID_20260925.mp4 [--inicio "25/09 20h03"]
+    const posInicio = resto.indexOf('--inicio');
+    const textoInicio = posInicio >= 0 ? resto.slice(posInicio + 1).join(' ') : null;
+    const arquivo = (posInicio >= 0 ? resto.slice(0, posInicio) : resto).join(' ');
+    if (!arquivo) throw new Error('faltou o arquivo. Ex: npm run importar -- VID_20260925.mp4');
+
+    let inicio;
+    if (textoInicio) {
+      inicio = lerInicioInformado(textoInicio);
+      if (!inicio) throw new Error(`não entendi o início "${textoInicio}". Ex: --inicio "25/09 20h03"`);
+    }
+
+    console.log(`Importando ${arquivo}...`);
+    const r = await importar(cfg, arquivo, { inicio });
+    const minutos = Math.round((r.fim - r.inicio) / 60_000);
+    console.log(`Pronto: ${r.pedacos} pedaço(s), ${minutos} min de jogo`);
+    console.log(`Início: ${hora(r.inicio)}${inicio ? ' (informado)' : ' (lido do arquivo)'}`);
+    console.log(`Fim:    ${hora(r.fim)}`);
+    if (!inicio) {
+      console.log('\nConfere se o início bate com a hora em que você apertou gravar.');
+      console.log('Se não bater (alguns celulares erram o fuso), importa de novo com');
+      console.log('  --inicio "25/09 20h03"   — reimportar substitui o anterior.');
+    }
+    if (r.inicio > new Date()) {
+      console.log('\nAtenção: o início ficou no FUTURO. É quase certo que o fuso está errado — use --inicio.');
+    }
+    return;
+  }
+
   if (comando === 'pedacos') {
     const pedacos = listarPedacos(cfg.pasta);
     if (pedacos.length === 0) return console.log(`Nada gravado em ${cfg.pasta}.`);
@@ -56,7 +88,7 @@ async function main() {
     return;
   }
 
-  console.log('Uso: npm run gravar | npm run cortar -- "hoje 20h-21h" | npm run pedacos');
+  console.log('Uso: npm run gravar | npm run importar -- video.mp4 | npm run cortar -- "hoje 20h-21h" | npm run pedacos');
   process.exitCode = 1;
 }
 

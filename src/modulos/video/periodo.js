@@ -66,4 +66,4 @@ function lerPeriodo(texto, agora = new Date()) {
   return { inicio, fim };
 }
 
-module.exports = { lerPeriodo, lerHora };
+module.exports = { lerPeriodo, lerHora, lerDia };
