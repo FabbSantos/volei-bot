@@ -317,7 +317,13 @@ function evolucaoJogadores(chatId) {
 // mede o quão forte é o casamento; só vale se houver UM candidato no melhor
 // rank — ambiguidade (ex: "Marcel" vs "Marcelle" por prefixo) não casa.
 function tokensDeNome(nome) {
-  return normalizarTexto(nome).replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+  // O que vem entre parênteses é anotação da lista, não parte do nome: com
+  // "(cvd Marcel)" contando, o convidado "Paulo Ribeiro (cvd Marcel)" casou
+  // com a Marcelle pelo prefixo "marcel" em 25/09/2026 — o Marcel Garcia não
+  // casava porque "garcia" não aparece no nome do convidado, e a Marcelle
+  // sobrou como candidata única. Foi parar nos times no lugar dele.
+  const semAnotacao = String(nome || '').replace(/\([^)]*\)/g, ' ');
+  return normalizarTexto(semAnotacao).replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
 }
 
 // 0 = nome inteiro igual · 1 = todos os tokens do menor batem exatos no maior,
