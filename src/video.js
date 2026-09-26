@@ -68,8 +68,9 @@ async function main() {
     const r = await importar(cfg, arquivo, { inicio });
     const minutos = Math.round((r.fim - r.inicio) / 60_000);
     console.log(`Pronto: ${r.pedacos} pedaço(s), ${minutos} min de jogo`);
-    console.log(`Início: ${hora(r.inicio)}${inicio ? ' (informado)' : ' (lido do arquivo)'}`);
+    console.log(`Início: ${hora(r.inicio)} (${r.fonte})`);
     console.log(`Fim:    ${hora(r.fim)}`);
+    if (r.aviso) console.log(`\nAtenção: ${r.aviso}.`);
     if (!inicio) {
       console.log('\nConfere se o início bate com a hora em que você apertou gravar.');
       console.log('Se não bater (alguns celulares erram o fuso), importa de novo com');

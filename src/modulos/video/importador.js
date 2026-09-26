@@ -5,46 +5,77 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-const { rodarFfmpeg } = require('./cortador');
+const { rodarFfmpeg, rodarFfprobe, caminhoDoFfprobe } = require('./cortador');
 const { nomeDoInicio } = require('./pedacos');
 const { lerHora, lerDia } = require('./periodo');
 
-// O ffprobe mora do lado do ffmpeg: "ffmpeg" vira "ffprobe", e
-// "C:\ffmpeg\bin\ffmpeg.exe" vira "C:\ffmpeg\bin\ffprobe.exe"
-function caminhoDoFfprobe(ffmpeg) {
-  // Âncora no começo do nome do executável: sem ela, uma pasta chamada
-  // "ffmpeg" no caminho poderia ser trocada no lugar do arquivo
-  const nome = path.basename(ffmpeg).replace(/^ffmpeg/i, 'ffprobe');
-  const pasta = path.dirname(ffmpeg);
-  return pasta === '.' ? nome : path.join(pasta, nome);
+// A hora de início escrita no NOME do arquivo pela câmera do celular. É a
+// fonte mais confiável: o metadado creation_time varia de fabricante pra
+// fabricante (o Realme do Fabrício grava a hora do FIM ali — descoberto com o
+// vídeo do jogo de 25/09/2026, que teria saído 2h56 deslocado).
+//   VID20260925211316.mp4       Realme/OPPO — hora local
+//   VID_20260925_211316.mp4     Android genérico — hora local
+//   20260925_211316.mp4         Samsung — hora local
+//   PXL_20260925_001316123.mp4  Google Pixel — UTC
+function inicioPeloNome(arquivo) {
+  const nome = path.basename(arquivo);
+  const m = nome.match(/(?:^|[^\d])(\d{4})(\d{2})(\d{2})_?(\d{2})(\d{2})(\d{2})/);
+  if (!m) return null;
+  const [, a, mes, d, h, mi, s] = m.map(Number);
+  if (mes < 1 || mes > 12 || d < 1 || d > 31 || h > 23 || mi > 59 || s > 59) return null;
+  const data = /^PXL_/i.test(nome)
+    ? new Date(Date.UTC(a, mes - 1, d, h, mi, s))
+    : new Date(a, mes - 1, d, h, mi, s);
+  return Number.isNaN(data.getTime()) ? null : data;
 }
 
-function rodarFfprobe(ffprobe, args) {
-  return new Promise((resolve, reject) => {
-    const processo = spawn(ffprobe, args, { stdio: ['ignore', 'pipe', 'pipe'] });
-    let saida = '';
-    processo.stdout.on('data', (d) => { saida += d; });
-    processo.on('error', (err) => reject(err.code === 'ENOENT'
-      ? new Error(`não achei o ffprobe em "${ffprobe}" — ele vem junto com o ffmpeg`)
-      : err));
-    processo.on('exit', () => resolve(saida.trim()));
-  });
-}
-
-// A hora em que o celular COMEÇOU a gravar, lida do próprio arquivo. O
-// metadado vem em UTC com "Z" no fim; alguns Samsung gravam a hora local e
-// ainda assim põem o "Z", o que dá 3h de diferença — por isso o comando
-// mostra a hora achada e aceita --inicio pra corrigir.
-async function detectarInicio(cfg, arquivo) {
+// O que o arquivo diz sobre si mesmo: creation_time e duração
+async function lerMetadados(cfg, arquivo) {
   const bruto = await rodarFfprobe(caminhoDoFfprobe(cfg.ffmpeg), [
     '-v', 'quiet',
-    '-show_entries', 'format_tags=creation_time',
-    '-of', 'default=noprint_wrappers=1:nokey=1',
+    '-show_entries', 'format=duration:format_tags=creation_time',
+    '-of', 'default=noprint_wrappers=1',
     arquivo,
   ]);
-  if (!bruto) return null;
-  const data = new Date(bruto);
-  return Number.isNaN(data.getTime()) ? null : data;
+  const campo = (nome) => (bruto.match(new RegExp(`${nome}=(.+)`)) || [])[1]?.trim();
+  const criacao = campo('TAG:creation_time') ? new Date(campo('TAG:creation_time')) : null;
+  const duracao = parseFloat(campo('duration'));
+  return {
+    criacao: criacao && !Number.isNaN(criacao.getTime()) ? criacao : null,
+    duracaoS: Number.isFinite(duracao) ? duracao : null,
+  };
+}
+
+// A hora em que o celular COMEÇOU a gravar. Devolve { inicio, fonte, aviso }.
+// Nome do arquivo primeiro; o metadado só é usado quando não tem nome com
+// hora, e mesmo assim é conferido: se creation_time bater com "nome + duração",
+// este celular grava o FIM no metadado — vale avisar, porque é o erro que
+// desloca todos os cortes.
+async function detectarInicio(cfg, arquivo) {
+  const pelo = inicioPeloNome(arquivo);
+  const { criacao, duracaoS } = await lerMetadados(cfg, arquivo);
+  const TOLERANCIA_MS = 15_000;
+
+  if (pelo) {
+    let aviso = null;
+    if (criacao && duracaoS != null) {
+      const fimPeloNome = pelo.getTime() + duracaoS * 1000;
+      if (Math.abs(criacao - fimPeloNome) <= TOLERANCIA_MS) {
+        aviso = 'este celular grava a hora do FIM no metadado — usei a hora do nome do arquivo';
+      } else if (Math.abs(criacao - pelo) > TOLERANCIA_MS) {
+        const difMin = Math.round((criacao - pelo) / 60_000);
+        aviso = `o metadado discorda do nome do arquivo em ${difMin} min — usei a hora do nome`;
+      }
+    }
+    return { inicio: pelo, fonte: 'nome do arquivo', aviso };
+  }
+
+  if (!criacao) return { inicio: null };
+  return {
+    inicio: criacao,
+    fonte: 'metadado do arquivo',
+    aviso: 'sem hora no nome do arquivo: alguns celulares gravam no metadado a hora do FIM ou o fuso errado — confira',
+  };
 }
 
 // "--inicio 25/09 20h03", "sexta 20:03", "hoje 20h" → Date. Usa o mesmo
@@ -61,7 +92,8 @@ function lerInicioInformado(texto, agora = new Date()) {
 async function importar(cfg, arquivo, { inicio } = {}) {
   if (!fs.existsSync(arquivo)) throw new Error(`não achei o arquivo ${arquivo}`);
 
-  const comeco = inicio || await detectarInicio(cfg, arquivo);
+  const detectado = inicio ? { inicio, fonte: 'informado' } : await detectarInicio(cfg, arquivo);
+  const comeco = detectado.inicio;
   if (!comeco) {
     throw new Error('o arquivo não diz quando começou a gravar. Informe na mão: --inicio "25/09 20h03"');
   }
@@ -106,10 +138,10 @@ async function importar(cfg, arquivo, { inicio } = {}) {
       fs.utimesSync(destino, fim, fim);
       if (fim > fimGeral) fimGeral = fim;
     }
-    return { pedacos: linhas.length, inicio: comeco, fim: fimGeral };
+    return { pedacos: linhas.length, inicio: comeco, fim: fimGeral, fonte: detectado.fonte, aviso: detectado.aviso || null };
   } finally {
     fs.rmSync(trabalho, { recursive: true, force: true });
   }
 }
 
-module.exports = { importar, detectarInicio, lerInicioInformado, caminhoDoFfprobe };
+module.exports = { importar, detectarInicio, inicioPeloNome, lerInicioInformado, caminhoDoFfprobe };

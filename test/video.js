@@ -11,7 +11,7 @@ const { lerPeriodo } = require('../src/modulos/video/periodo');
 const { iniciarGravador } = require('../src/modulos/video/gravador');
 const { cortar } = require('../src/modulos/video/cortador');
 const { listarPedacos, apagarAntigos, pedacosDoIntervalo, nomeDoInicio, inicioDoNome } = require('../src/modulos/video/pedacos');
-const { importar, lerInicioInformado, caminhoDoFfprobe } = require('../src/modulos/video/importador');
+const { importar, lerInicioInformado, caminhoDoFfprobe, inicioPeloNome } = require('../src/modulos/video/importador');
 
 let falhas = 0;
 function caso(nome, fn) {
@@ -99,6 +99,19 @@ caso('ffprobe mora do lado do ffmpeg, mesmo com pasta chamada ffmpeg', () => {
 });
 caso('ffprobe do PATH continua sem pasta', () => assert.strictEqual(caminhoDoFfprobe('ffmpeg'), 'ffprobe'));
 
+console.log('\nimportação — hora de início pelo nome do arquivo');
+const local = (a, m, d, h, mi, s) => new Date(a, m - 1, d, h, mi, s).getTime();
+caso('Realme: VID20260925211316.mp4', () =>
+  assert.strictEqual(inicioPeloNome('C:/x/VID20260925211316.mp4')?.getTime(), local(2026, 9, 25, 21, 13, 16)));
+caso('Android genérico: VID_20260925_211316.mp4', () =>
+  assert.strictEqual(inicioPeloNome('VID_20260925_211316.mp4')?.getTime(), local(2026, 9, 25, 21, 13, 16)));
+caso('Samsung: 20240712_140535.mp4', () =>
+  assert.strictEqual(inicioPeloNome('20240712_140535.mp4')?.getTime(), local(2024, 7, 12, 14, 5, 35)));
+caso('Pixel usa UTC no nome', () =>
+  assert.strictEqual(inicioPeloNome('PXL_20260926_001316123.mp4')?.getTime(), Date.UTC(2026, 8, 26, 0, 13, 16)));
+caso('iPhone (IMG_1234.MOV) não tem hora no nome', () => assert.strictEqual(inicioPeloNome('IMG_1234.MOV'), null));
+caso('número que não é data não vira data', () => assert.strictEqual(inicioPeloNome('VID20261399999999.mp4'), null));
+
 async function gravacaoDeVerdade() {
   const ffmpeg = process.env.FFMPEG_PATH || 'ffmpeg';
   if (spawnSync(ffmpeg, ['-version']).error) {
@@ -117,16 +130,23 @@ async function gravacaoDeVerdade() {
   const pedacos = listarPedacos(pasta);
   caso('gravou vários pedaços com a hora no nome', () => assert.ok(pedacos.length >= 3, `só ${pedacos.length} pedaço(s); logs: ${logs.join(' / ')}`));
 
-  // Um corte de 8s atravessando a fronteira entre dois pedaços
-  const inicio = new Date(pedacos[1].inicio.getTime() - 3000);
+  // Um corte de 8s atravessando a fronteira entre dois pedaços. Do 2º pro 3º,
+  // e não do 1º: o PRIMEIRO pedaço de cada gravação ao vivo nasce com o nome
+  // ~2s antes do primeiro quadro (o arquivo abre antes do ffmpeg esquentar),
+  // então o horário dele é aproximado. Isso é limitação do gravador, não do
+  // cortador — e não afeta vídeo importado do celular.
+  const inicio = new Date(pedacos[2].inicio.getTime() - 3000);
   const fim = new Date(inicio.getTime() + 8000);
   const r = await cortar(cfg, inicio, fim);
   caso('o corte gera um MP4', () => assert.ok(r.arquivo && fs.statSync(r.arquivo).size > 10_000));
-  const info = spawnSync(ffmpeg, ['-hide_banner', '-i', r.arquivo], { encoding: 'utf8' }).stderr;
-  const [, hh, mm, ss] = info.match(/Duration: (\d+):(\d+):([\d.]+)/) || [];
-  const duracao = Number(hh) * 3600 + Number(mm) * 60 + Number(ss);
+  const d = duracoes(ffmpeg, r.arquivo);
   // quadro-chave a cada 2s: o começo pode voltar até 2s
-  caso(`o corte dura o pedido (8s ± 2s, saiu ${duracao}s)`, () => assert.ok(Math.abs(duracao - 8) <= 2.1));
+  // Pode vir até 3s (a folga) a MAIS no começo, nunca a menos — perder o
+  // começo da jogada é o erro ruim
+  caso(`o corte cobre o pedido e nunca começa depois (8s a 11s + arredondamento, declarado ${d.declarada}s)`, () =>
+    assert.ok(d.declarada >= 7.9 && d.declarada <= 11.5));
+  caso(`e não esconde nada: guarda o que declara (${d.guardada}s guardados × ${d.declarada}s declarados)`, () =>
+    assert.ok(d.guardada <= d.declarada + 0.5));
 
   const antes = new Date(comeco.getTime() - 3_600_000);
   const nada = await cortar(cfg, antes, new Date(antes.getTime() + 60_000));
@@ -144,19 +164,51 @@ async function gravacaoDeVerdade() {
 // Um "vídeo de celular" de 20s, com a hora de início gravada no arquivo como
 // o celular grava (UTC com Z), mais uma trilha de dados que o formato dos
 // pedaços não aceita — igual às de GPS/metadado que os celulares põem.
-async function importacaoDeVerdade(ffmpeg) {
-  console.log('\nimportação de vídeo do celular (~20s de vídeo)');
-  const pasta = fs.mkdtempSync(path.join(os.tmpdir(), 'volei-import-'));
-  const celular = path.join(pasta, 'VID_20260925_200312.mp4');
-  const inicioNoCelular = '2026-09-25T23:03:12.000000Z'; // 20:03:12 no Brasil
-  const gerar = spawnSync(ffmpeg, [
+// Duas medidas de duração, porque elas podem discordar e já discordaram:
+// (só o lado de guardar A MAIS é bug: celular à noite pula quadros e grava
+// a menos que os 60/s nominais — o jogo de 25/09 teve até 0,9s a menos em 33s)
+// "declarada" é o que o MP4 diz (respeita a marca de "comece a tocar daqui");
+// "guardada" é quantos quadros existem de fato no arquivo ÷ quadros por
+// segundo. O bug do corte (25/09/2026) declarava 30s e guardava 4min48s — um
+// teste que só olhasse a declarada passava enganado, e passou.
+function duracoes(ffmpeg, arquivo) {
+  const ffprobe = caminhoDoFfprobe(ffmpeg);
+  const r = spawnSync(ffprobe, [
+    '-v', 'quiet', '-select_streams', 'v:0',
+    '-show_entries', 'stream=nb_frames,r_frame_rate:format=duration',
+    '-of', 'default=noprint_wrappers=1', arquivo,
+  ], { encoding: 'utf8' }).stdout;
+  const quadros = Number((r.match(/nb_frames=(\d+)/) || [])[1]);
+  const [n, dv] = ((r.match(/r_frame_rate=(\d+)\/(\d+)/) || []).slice(1)).map(Number);
+  const declarada = Number((r.match(/duration=([\d.]+)/) || [])[1]);
+  return { declarada: Math.round(declarada * 100) / 100, guardada: Math.round((quadros / (n / dv)) * 100) / 100 };
+}
+
+// Gera um "vídeo de celular" de 20s com o nome e o metadado que a gente quiser
+function gerarVideo(ffmpeg, arquivo, creationTime) {
+  return spawnSync(ffmpeg, [
     '-hide_banner', '-loglevel', 'error', '-y',
     '-f', 'lavfi', '-i', 'testsrc=duration=20:size=320x240:rate=15',
     '-f', 'lavfi', '-i', 'sine=frequency=440:duration=20',
     '-c:v', 'libx264', '-g', '15', '-c:a', 'aac',
-    '-metadata', `creation_time=${inicioNoCelular}`,
-    celular,
+    '-metadata', `creation_time=${creationTime}`,
+    arquivo,
   ], { encoding: 'utf8' });
+}
+
+const carimboDoCelular = (d) => [d.getFullYear(), d.getMonth() + 1, d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds()]
+  .map((n, i) => String(n).padStart(i ? 2 : 4, '0')).join('');
+
+async function importacaoDeVerdade(ffmpeg) {
+  console.log('\nimportação de vídeo do celular (~20s de vídeo)');
+  const pasta = fs.mkdtempSync(path.join(os.tmpdir(), 'volei-import-'));
+  // O caso real do Realme (jogo de 25/09/2026): o NOME tem a hora de início
+  // no horário local, e o metadado tem a hora do FIM. Montado no fuso da
+  // máquina que roda o teste, pra valer no Windows do Fabrício e no Linux.
+  const esperado = new Date(2026, 8, 25, 20, 3, 12);
+  const celular = path.join(pasta, `VID${carimboDoCelular(esperado)}.mp4`);
+  const fimNoMetadado = new Date(esperado.getTime() + 20_000).toISOString();
+  const gerar = gerarVideo(ffmpeg, celular, fimNoMetadado);
   if (gerar.status !== 0) {
     caso('gerar o vídeo de teste', () => assert.fail(gerar.stderr));
     return;
@@ -164,10 +216,20 @@ async function importacaoDeVerdade(ffmpeg) {
 
   const cfg = { pasta: path.join(pasta, 'gravacoes'), segundosPorPedaco: 5, ffmpeg };
   const r = await importar(cfg, celular);
-  const esperado = new Date(inicioNoCelular);
 
-  caso('lê a hora de início do próprio arquivo', () =>
-    assert.strictEqual(r.inicio.getTime(), esperado.getTime()));
+  caso('Realme: usa a hora do NOME, não a do metadado (que é o fim)', () =>
+    assert.strictEqual(r.inicio.getTime(), esperado.getTime(),
+      `pegou ${r.inicio.toLocaleString('pt-BR')} — com o metadado, sairia 20s deslocado`));
+  caso('e avisa que este celular grava o fim no metadado', () =>
+    assert.match(r.aviso || '', /FIM/, `aviso: ${r.aviso}`));
+
+  // Sem hora no nome (tipo iPhone), cai pro metadado — e avisa pra conferir
+  const semHora = path.join(pasta, 'IMG_0001.mp4');
+  gerarVideo(ffmpeg, semHora, esperado.toISOString());
+  const pastaIphone = { ...cfg, pasta: path.join(pasta, 'iphone') };
+  const rIphone = await importar(pastaIphone, semHora);
+  caso('sem hora no nome, usa o metadado', () => assert.strictEqual(rIphone.inicio.getTime(), esperado.getTime()));
+  caso('e pede pra conferir', () => assert.match(rIphone.aviso || '', /confira/));
   caso('20s em pedaços de 5s dá 4 pedaços', () => assert.strictEqual(r.pedacos, 4));
   const pedacos = listarPedacos(cfg.pasta);
   caso('o primeiro pedaço tem a hora de início no nome', () =>
@@ -180,13 +242,14 @@ async function importacaoDeVerdade(ffmpeg) {
   caso('não sobra pasta de trabalho pra trás', () =>
     assert.deepStrictEqual(fs.readdirSync(cfg.pasta).filter((n) => n.startsWith('.importando')), []));
 
-  // O cortador de sempre, em cima do que veio do celular
-  const corte = await cortar(cfg, new Date(esperado.getTime() + 6_000), new Date(esperado.getTime() + 14_000));
-  const info = spawnSync(ffmpeg, ['-hide_banner', '-i', corte.arquivo], { encoding: 'utf8' }).stderr;
-  const [, hh, mm, ss] = info.match(/Duration: (\d+):(\d+):([\d.]+)/) || [];
-  const duracao = Number(hh) * 3600 + Number(mm) * 60 + Number(ss);
-  caso(`o cortar funciona igual no vídeo importado (8s ± 2s, saiu ${duracao}s)`, () =>
-    assert.ok(Math.abs(duracao - 8) <= 2.1));
+  // O cortador de sempre, em cima do que veio do celular. Começa a 3s de um
+  // pedaço de 5s: com o bug antigo, guardaria 11s (3 escondidos + 8)
+  const corte = await cortar(cfg, new Date(esperado.getTime() + 8_000), new Date(esperado.getTime() + 16_000));
+  const d = duracoes(ffmpeg, corte.arquivo);
+  caso(`o cortar funciona igual no vídeo importado, sem começar depois (8s a 11s + arredondamento, declarado ${d.declarada}s)`, () =>
+    assert.ok(d.declarada >= 7.9 && d.declarada <= 11.5));
+  caso(`e não esconde nada (${d.guardada}s guardados × ${d.declarada}s declarados)`, () =>
+    assert.ok(d.guardada <= d.declarada + 0.5));
 
   // Hora informada na mão vence a do arquivo (o caso do Samsung com fuso torto)
   const outraPasta = { ...cfg, pasta: path.join(pasta, 'outra') };
