@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const { rodarFfmpeg, rodarFfprobe, caminhoDoFfprobe } = require('./cortador');
-const { nomeDoInicio } = require('./pedacos');
+const { nomeDoInicio, escreverRotacao } = require('./pedacos');
 const { lerHora, lerDia } = require('./periodo');
 
 // A hora de início escrita no NOME do arquivo pela câmera do celular. É a
@@ -29,20 +29,27 @@ function inicioPeloNome(arquivo) {
   return Number.isNaN(data.getTime()) ? null : data;
 }
 
-// O que o arquivo diz sobre si mesmo: creation_time e duração
+// O que o arquivo diz sobre si mesmo: creation_time, duração e rotação.
+// Rotação: celular não gira os pixels — grava de um jeito e anota "gire X°
+// ao mostrar". O MPEG-TS dos pedaços não tem onde guardar essa anotação, e o
+// jogo de 25/09/2026 (celular de cabeça pra baixo no tripé, rotation=-180)
+// saiu com todos os cortes de ponta-cabeça.
 async function lerMetadados(cfg, arquivo) {
   const bruto = await rodarFfprobe(caminhoDoFfprobe(cfg.ffmpeg), [
     '-v', 'quiet',
-    '-show_entries', 'format=duration:format_tags=creation_time',
+    '-select_streams', 'v:0',
+    '-show_entries', 'format=duration:format_tags=creation_time:stream_side_data=rotation',
     '-of', 'default=noprint_wrappers=1',
     arquivo,
   ]);
-  const campo = (nome) => (bruto.match(new RegExp(`${nome}=(.+)`)) || [])[1]?.trim();
+  const campo = (nome) => (bruto.match(new RegExp(`^${nome}=(.+)$`, 'm')) || [])[1]?.trim();
   const criacao = campo('TAG:creation_time') ? new Date(campo('TAG:creation_time')) : null;
   const duracao = parseFloat(campo('duration'));
+  const rotacao = parseFloat(campo('rotation'));
   return {
     criacao: criacao && !Number.isNaN(criacao.getTime()) ? criacao : null,
     duracaoS: Number.isFinite(duracao) ? duracao : null,
+    rotacao: Number.isFinite(rotacao) && rotacao % 360 !== 0 ? rotacao : null,
   };
 }
 
@@ -98,6 +105,8 @@ async function importar(cfg, arquivo, { inicio } = {}) {
     throw new Error('o arquivo não diz quando começou a gravar. Informe na mão: --inicio "25/09 20h03"');
   }
 
+  const { rotacao } = await lerMetadados(cfg, arquivo);
+
   fs.mkdirSync(cfg.pasta, { recursive: true });
   // Pasta de trabalho DENTRO da pasta de gravações: renomear pro lugar final
   // é instantâneo (mesmo disco), e o ponto no nome faz o listarPedacos
@@ -133,12 +142,14 @@ async function importar(cfg, arquivo, { inicio } = {}) {
       const destino = path.join(cfg.pasta, nomeDoInicio(ini));
       fs.rmSync(destino, { force: true }); // reimportar o mesmo vídeo substitui
       fs.renameSync(path.join(trabalho, nome), destino);
+      // A rotação que o MPEG-TS não guarda vai num arquivinho do lado
+      escreverRotacao(destino, rotacao);
       // A "última escrita" do pedaço é o fim dele no jogo, não a hora da
       // importação — é assim que o listarPedacos sabe onde cada um termina
       fs.utimesSync(destino, fim, fim);
       if (fim > fimGeral) fimGeral = fim;
     }
-    return { pedacos: linhas.length, inicio: comeco, fim: fimGeral, fonte: detectado.fonte, aviso: detectado.aviso || null };
+    return { pedacos: linhas.length, inicio: comeco, fim: fimGeral, fonte: detectado.fonte, aviso: detectado.aviso || null, rotacao };
   } finally {
     fs.rmSync(trabalho, { recursive: true, force: true });
   }

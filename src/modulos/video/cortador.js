@@ -5,7 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-const { pedacosDoIntervalo } = require('./pedacos');
+const { pedacosDoIntervalo, lerRotacao } = require('./pedacos');
 
 const doisDigitos = (n) => String(n).padStart(2, '0');
 const carimbo = (d) =>
@@ -100,9 +100,10 @@ async function cortar(cfg, inicio, fim) {
     // Pra replay, uns segundos a mais antes da jogada não fazem mal; um a
     // menos pode cortar o saque.
     const folga = Math.min(FOLGA_S, deslocamento);
-    await rodarFfmpeg(cfg.ffmpeg, [
+    const argsDoCorte = (rotacao) => [
       '-hide_banner', '-loglevel', 'error', '-y',
       '-ss', (deslocamento - folga).toFixed(3),
+      ...rotacao,
       '-i', fonte,
       '-t', (segundos + folga).toFixed(3),
       '-c', 'copy',
@@ -110,7 +111,25 @@ async function cortar(cfg, inicio, fim) {
       // antes de terminar de baixar
       '-movflags', '+faststart',
       arquivo,
-    ]);
+    ];
+    // A rotação do vídeo importado (celular de cabeça pra baixo no tripé)
+    // volta pro MP4 como anotação — nada é recomprimido, o player é que gira
+    const rotacao = lerRotacao(primeiro.caminho);
+    if (rotacao == null) {
+      await rodarFfmpeg(cfg.ffmpeg, argsDoCorte([]));
+    } else {
+      try {
+        await rodarFfmpeg(cfg.ffmpeg, argsDoCorte(['-display_rotation', String(rotacao)]));
+      } catch (err) {
+        // ffmpeg antes do 6.1 não tem -display_rotation; o jeito antigo é a
+        // tag "rotate" na saída, que conta no sentido horário
+        if (!/display_rotation/i.test(err.message)) throw err;
+        const horario = (((-rotacao) % 360) + 360) % 360;
+        const args = argsDoCorte([]);
+        args.splice(args.indexOf('-movflags'), 0, '-metadata:s:v:0', `rotate=${horario}`);
+        await rodarFfmpeg(cfg.ffmpeg, args);
+      }
+    }
   } finally {
     fs.rmSync(trabalho, { recursive: true, force: true });
   }

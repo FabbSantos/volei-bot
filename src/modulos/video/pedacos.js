@@ -57,6 +57,30 @@ function listarPedacos(pasta) {
   return pedacos;
 }
 
+// Rotação de exibição do pedaço ("gire X° ao mostrar"). O MPEG-TS não tem
+// onde guardar isso, então mora num arquivinho do lado: <pedaço>.ts.json.
+// O padrão de nome dos pedaços termina em ".ts", então o listarPedacos
+// não confunde o arquivinho com um pedaço.
+const caminhoDaRotacao = (caminhoDoPedaco) => `${caminhoDoPedaco}.json`;
+
+function escreverRotacao(caminhoDoPedaco, rotacao) {
+  const alvo = caminhoDaRotacao(caminhoDoPedaco);
+  if (rotacao == null) {
+    fs.rmSync(alvo, { force: true }); // reimportar sem rotação limpa a antiga
+    return;
+  }
+  fs.writeFileSync(alvo, JSON.stringify({ rotacao }));
+}
+
+function lerRotacao(caminhoDoPedaco) {
+  try {
+    const { rotacao } = JSON.parse(fs.readFileSync(caminhoDaRotacao(caminhoDoPedaco), 'utf8'));
+    return Number.isFinite(rotacao) ? rotacao : null;
+  } catch {
+    return null; // sem arquivinho = sem rotação (é o caso do gravador ao vivo)
+  }
+}
+
 // Pedaços que têm pelo menos um pedaço do intervalo pedido
 function pedacosDoIntervalo(pasta, inicio, fim) {
   return listarPedacos(pasta).filter((p) => p.inicio < fim && p.fim > inicio);
@@ -72,6 +96,7 @@ function apagarAntigos(pasta, retencaoDias, agora = new Date()) {
     if (p.fim.getTime() < limite) {
       try {
         fs.rmSync(p.caminho, { force: true });
+        fs.rmSync(caminhoDaRotacao(p.caminho), { force: true });
         apagados++;
       } catch {}
     }
@@ -79,4 +104,7 @@ function apagarAntigos(pasta, retencaoDias, agora = new Date()) {
   return apagados;
 }
 
-module.exports = { MODELO_FFMPEG, inicioDoNome, nomeDoInicio, listarPedacos, pedacosDoIntervalo, apagarAntigos };
+module.exports = {
+  MODELO_FFMPEG, inicioDoNome, nomeDoInicio, listarPedacos, pedacosDoIntervalo, apagarAntigos,
+  escreverRotacao, lerRotacao,
+};

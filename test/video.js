@@ -263,6 +263,31 @@ async function importacaoDeVerdade(ffmpeg) {
   // Reimportar o mesmo vídeo substitui, não duplica
   await importar(cfg, celular);
   caso('reimportar substitui em vez de duplicar', () => assert.strictEqual(listarPedacos(cfg.pasta).length, 4));
+  caso('vídeo sem rotação não deixa arquivinho de rotação', () =>
+    assert.deepStrictEqual(fs.readdirSync(cfg.pasta).filter((n) => n.endsWith('.json')), []));
+
+  // Celular virado no tripé (jogo de 25/09/2026: rotation=-180, todos os
+  // cortes saíram de ponta-cabeça). 90° e não 180°: com 180 o sentido do giro
+  // não faz diferença, e um sinal trocado passaria despercebido.
+  const virado = path.join(pasta, `VID${carimboDoCelular(esperado)}_virado.mp4`);
+  spawnSync(ffmpeg, ['-hide_banner', '-loglevel', 'error', '-y', '-display_rotation', '90', '-i', celular, '-c', 'copy', virado]);
+  const pastaVirada = { ...cfg, pasta: path.join(pasta, 'virado') };
+  const rVirado = await importar(pastaVirada, virado);
+  caso('importar lê a rotação do celular', () => assert.strictEqual(rVirado.rotacao, 90));
+  caso('os pedaços viram .ts e a rotação fica do lado, sem virar "pedaço"', () =>
+    assert.strictEqual(listarPedacos(pastaVirada.pasta).length, 4));
+  const corteVirado = await cortar(pastaVirada, new Date(esperado.getTime() + 8_000), new Date(esperado.getTime() + 16_000));
+  const rotacaoDoCorte = spawnSync(caminhoDoFfprobe(ffmpeg), [
+    '-v', 'quiet', '-select_streams', 'v:0', '-show_entries', 'stream_side_data=rotation',
+    '-of', 'default=noprint_wrappers=1', corteVirado.arquivo,
+  ], { encoding: 'utf8' }).stdout;
+  caso(`o corte sai com a mesma rotação do original (${rotacaoDoCorte.trim() || 'nenhuma'})`, () =>
+    assert.match(rotacaoDoCorte, /^rotation=90$/m));
+  caso('e a faxina leva o arquivinho de rotação junto', () => {
+    apagarAntigos(pastaVirada.pasta, 0, new Date(esperado.getTime() + 86_400_000));
+    const sobrou = fs.readdirSync(pastaVirada.pasta).filter((n) => n.endsWith('.json'));
+    assert.strictEqual(sobrou.length, 1, `sobrou: ${sobrou}`); // só o do último pedaço, que nunca é apagado
+  });
 
   fs.rmSync(pasta, { recursive: true, force: true });
 }
