@@ -121,12 +121,14 @@ async function cortar(cfg, inicio, fim) {
       try {
         await rodarFfmpeg(cfg.ffmpeg, argsDoCorte(['-display_rotation', String(rotacao)]));
       } catch (err) {
-        // ffmpeg antes do 6.1 não tem -display_rotation; o jeito antigo é a
-        // tag "rotate" na saída, que conta no sentido horário
+        // ffmpeg antes do 6.1 (o 5.1 do Debian, na VPS) não tem
+        // -display_rotation; o jeito antigo é a tag "rotate" na saída. Mesmo
+        // sinal do que o ffprobe lê — conferido no 5.1 em 26/09/2026 com 90°,
+        // o único ângulo em que o sinal faz diferença
         if (!/display_rotation/i.test(err.message)) throw err;
-        const horario = (((-rotacao) % 360) + 360) % 360;
+        const tag = ((rotacao % 360) + 360) % 360;
         const args = argsDoCorte([]);
-        args.splice(args.indexOf('-movflags'), 0, '-metadata:s:v:0', `rotate=${horario}`);
+        args.splice(args.indexOf('-movflags'), 0, '-metadata:s:v:0', `rotate=${tag}`);
         await rodarFfmpeg(cfg.ffmpeg, args);
       }
     }

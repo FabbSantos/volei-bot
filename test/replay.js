@@ -74,7 +74,11 @@ async function principal() {
     '-f', 'lavfi', '-i', 'testsrc=duration=20:size=320x240:rate=15',
     '-f', 'lavfi', '-i', 'sine=frequency=440:duration=20',
     '-c:v', 'libx264', '-g', '15', '-c:a', 'aac', cru]);
-  spawnSync(ffmpeg, ['-hide_banner', '-loglevel', 'error', '-y', '-display_rotation', '180', '-i', cru, '-c', 'copy', celular]);
+  // ffmpeg 6.1+: -display_rotation; o 5.1 da VPS só tem a tag "rotate"
+  const girar = spawnSync(ffmpeg, ['-hide_banner', '-loglevel', 'error', '-y', '-display_rotation', '180', '-i', cru, '-c', 'copy', celular]);
+  if (girar.status !== 0) {
+    spawnSync(ffmpeg, ['-hide_banner', '-loglevel', 'error', '-y', '-i', cru, '-c', 'copy', '-metadata:s:v:0', 'rotate=180', celular]);
+  }
 
   // Grupo de admins recebe o resumo; os replays voltam pro chat de origem
   grupos.registrarGrupoSeNovo('adm@g.us', 'Admins');

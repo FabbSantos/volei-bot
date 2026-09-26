@@ -196,6 +196,15 @@ function gerarVideo(ffmpeg, arquivo, creationTime) {
   ], { encoding: 'utf8' });
 }
 
+// Anota "gire X° ao mostrar", como o celular faz. ffmpeg 6.1+ tem
+// -display_rotation; o 5.1 do Debian (o da VPS) só a tag "rotate"
+function girarVideo(ffmpeg, origem, destino, graus) {
+  const base = ['-hide_banner', '-loglevel', 'error', '-y'];
+  const r = spawnSync(ffmpeg, [...base, '-display_rotation', String(graus), '-i', origem, '-c', 'copy', destino]);
+  if (r.status === 0) return;
+  spawnSync(ffmpeg, [...base, '-i', origem, '-c', 'copy', '-metadata:s:v:0', `rotate=${((graus % 360) + 360) % 360}`, destino]);
+}
+
 const carimboDoCelular = (d) => [d.getFullYear(), d.getMonth() + 1, d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds()]
   .map((n, i) => String(n).padStart(i ? 2 : 4, '0')).join('');
 
@@ -270,7 +279,7 @@ async function importacaoDeVerdade(ffmpeg) {
   // cortes saíram de ponta-cabeça). 90° e não 180°: com 180 o sentido do giro
   // não faz diferença, e um sinal trocado passaria despercebido.
   const virado = path.join(pasta, `VID${carimboDoCelular(esperado)}_virado.mp4`);
-  spawnSync(ffmpeg, ['-hide_banner', '-loglevel', 'error', '-y', '-display_rotation', '90', '-i', celular, '-c', 'copy', virado]);
+  girarVideo(ffmpeg, celular, virado, 90);
   const pastaVirada = { ...cfg, pasta: path.join(pasta, 'virado') };
   const rVirado = await importar(pastaVirada, virado);
   caso('importar lê a rotação do celular', () => assert.strictEqual(rVirado.rotacao, 90));
