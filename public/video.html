@@ -94,6 +94,9 @@
 <main>
   <section class="cartao">
     <h2>Subir o vídeo</h2>
+    <p class="dica" style="margin:0 0 0.8rem">⚡ <b>O jeito rápido é pelo Drive:</b> sobe o vídeo na pasta <b>Vôlei - vídeos</b> pelo app do Drive
+      (em segundo plano, na velocidade cheia da sua internet) e o bot pega sozinho em até 5 min.
+      Por aqui o envio vai direto pra França e pode levar horas.</p>
     <input type="file" id="arquivo" accept="video/*">
     <button class="primario" id="btnSubir" disabled>Subir</button>
     <div class="trilho"><div id="barra"></div></div>
@@ -233,7 +236,7 @@ function mostrarProgresso(recebido, total, comecou, base) {
 }
 
 const duracao = (s) => (s < 60 ? `${s}s` : `${s / 60} min`);
-const ROTULO = { processando: 'processando', pronto: 'pronto', erro: 'erro' };
+const ROTULO = { baixando: 'baixando do Drive', processando: 'processando', pronto: 'pronto', erro: 'erro' };
 
 async function carregarEstado() {
   const { r, corpo } = await api('/video/estado');
@@ -258,7 +261,7 @@ async function carregarEstado() {
     : '<li class="mut">Nenhum vídeo ainda.</li>';
 
   // Enquanto algum estiver processando, atualiza sozinho
-  if (corpo.videos.some((v) => v.status === 'processando')) setTimeout(carregarEstado, 5000);
+  if (corpo.videos.some((v) => ['baixando', 'processando'].includes(v.status))) setTimeout(carregarEstado, 5000);
 }
 
 carregarEstado();

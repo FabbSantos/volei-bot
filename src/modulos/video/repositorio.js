@@ -10,14 +10,14 @@
 // Horários em milissegundos desde 1970 (UTC): o container roda em UTC e o
 // vídeo é processado no fuso de Brasília, então número puro é o único jeito
 // de os dois lados concordarem sem conversão.
-const { db } = require('../../nucleo/banco');
+const { db, migrarColunas } = require('../../nucleo/banco');
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS videos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT NOT NULL,              -- nome original do arquivo (tem a hora do celular)
     tamanho INTEGER NOT NULL,
-    status TEXT NOT NULL,            -- processando | pronto | erro
+    status TEXT NOT NULL,            -- baixando | processando | pronto | erro
     inicio INTEGER,                  -- intervalo coberto, preenchido na importação
     fim INTEGER,
     aviso TEXT,                      -- ex: "este celular grava a hora do FIM no metadado"
@@ -38,6 +38,9 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_replays_pendentes ON replays(status, momento);
 `);
+// Id do arquivo no Google Drive, quando o vídeo veio de lá: é o que impede
+// o mesmo arquivo de ser baixado e cortado duas vezes
+migrarColunas('videos', { drive_id: 'TEXT' });
 
 function registrarReplay({ chatId, autor, momento, segundos }) {
   const info = db.prepare(
@@ -71,11 +74,31 @@ function expirarReplays(antesDe) {
     .run(antesDe).changes;
 }
 
-function registrarVideo({ nome, tamanho }) {
+function registrarVideo({ nome, tamanho, driveId = null, status = 'processando' }) {
   const info = db.prepare(
-    "INSERT INTO videos (nome, tamanho, status, criado_em) VALUES (?, ?, 'processando', ?)"
-  ).run(nome, tamanho, Date.now());
+    'INSERT INTO videos (nome, tamanho, status, drive_id, criado_em) VALUES (?, ?, ?, ?, ?)'
+  ).run(nome, tamanho, status, driveId, Date.now());
   return getVideo(info.lastInsertRowid);
+}
+
+function videoDoDrive(driveId) {
+  return db.prepare('SELECT * FROM videos WHERE drive_id = ? ORDER BY id DESC').get(driveId);
+}
+
+function apagarVideo(id) {
+  db.prepare('DELETE FROM videos WHERE id = ?').run(id);
+}
+
+// No boot: o que estava baixando ou processando quando o bot caiu não vai
+// terminar sozinho. Vídeo do Drive sai da tabela e a vigia pega de novo (o
+// download continua de onde parou; replay já enviado não é cortado de novo).
+// Vídeo do painel vira erro: o original pode já ter sido apagado.
+function limparInterrompidos() {
+  const drive = db.prepare("DELETE FROM videos WHERE status IN ('baixando', 'processando') AND drive_id IS NOT NULL").run().changes;
+  const painel = db.prepare(
+    "UPDATE videos SET status = 'erro', erro = 'interrompido: o bot reiniciou no meio' WHERE status IN ('baixando', 'processando')"
+  ).run().changes;
+  return drive + painel;
 }
 
 function getVideo(id) {
@@ -100,5 +123,5 @@ function replaysDoVideo(videoId) {
 
 module.exports = {
   registrarReplay, replaysPendentesEntre, listarReplaysPendentes, marcarReplay, expirarReplays,
-  registrarVideo, getVideo, marcarVideo, listarVideos, replaysDoVideo,
+  registrarVideo, getVideo, marcarVideo, listarVideos, replaysDoVideo, videoDoDrive, apagarVideo, limparInterrompidos,
 };

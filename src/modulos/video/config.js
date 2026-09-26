@@ -18,4 +18,11 @@ function lerConfig(env = process.env) {
   };
 }
 
-module.exports = { lerConfig };
+// Onde chegam os vídeos a importar (upload do painel, download do Drive): do
+// lado da pasta de gravações, no mesmo disco — mover pro lugar final é instantâneo
+const pastaDeEntrada = (cfg) => path.join(path.dirname(cfg.pasta), 'entrada');
+
+// Nome de arquivo seguro, sem perder a hora que o celular pôs no nome
+const nomeSeguro = (nome) => path.basename(String(nome || 'video.mp4')).replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 120);
+
+module.exports = { lerConfig, pastaDeEntrada, nomeSeguro };

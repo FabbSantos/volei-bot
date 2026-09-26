@@ -6891,7 +6891,7 @@ Bom jogo! 🔥
 
 === times_montados (atualizado_em, dados, lista_id)
 
-=== videos (aviso, criado_em, erro, fim, id, inicio, nome, status, tamanho)
+=== videos (aviso, criado_em, drive_id, erro, fim, id, inicio, nome, status, tamanho)
 
 === votos_habilidade (atualizado_em, fundamento, id, jogador_id, nota, votante)
 {"atualizado_em":"2026-09-18T15:13:36.000Z","fundamento":"ataque","id":1,"jogador_id":1,"nota":3,"votante":"Fabrício"}

@@ -43,7 +43,7 @@ function processarVideo(videoId, arquivo, canal, opcoes = {}) {
   return fila;
 }
 
-async function processar(videoId, arquivo, canal, { trabalhar = trabalharDeVerdade, cfg = lerConfig() } = {}) {
+async function processar(videoId, arquivo, canal, { trabalhar = trabalharDeVerdade, cfg = lerConfig(), rodape = null } = {}) {
   const avisarAdmins = async (texto) => {
     for (const chatId of canal.gruposAdmin()) {
       try { await canal.enviarTexto(chatId, texto); } catch (err) { console.warn(`[video] aviso não saiu: ${err.message}`); }
@@ -62,7 +62,7 @@ async function processar(videoId, arquivo, canal, { trabalhar = trabalharDeVerda
     // continua com ele. 5 GB parados no disco da VPS não ajudam ninguém.
     fs.rmSync(arquivo, { force: true });
   }
-  repo.marcarVideo(videoId, { inicio: importado.inicio, fim: importado.fim, aviso: importado.aviso });
+  repo.marcarVideo(videoId, { status: 'processando', inicio: importado.inicio, fim: importado.fim, aviso: importado.aviso });
   console.log(`[video] vídeo ${videoId}: ${quando(importado.inicio)} → ${quando(importado.fim)}, ${importado.pedacos} pedaço(s)`);
 
   const pendentes = repo.replaysPendentesEntre(importado.inicio, importado.fim);
@@ -97,6 +97,7 @@ async function processar(videoId, arquivo, canal, { trabalhar = trabalharDeVerda
       ? 'Nenhum #replay pedido nesse horário.'
       : `${enviados} replay(s) enviado(s)${falhas ? ` · ⚠️ ${falhas} falharam` : ''}.`,
     importado.aviso ? `Obs.: ${importado.aviso}.` : null,
+    rodape,
   ].filter(Boolean).join('\n');
   await avisarAdmins(resumo);
 
@@ -119,4 +120,4 @@ function arrumarACasa(cfg, agora = Date.now()) {
   }
 }
 
-module.exports = { processarVideo, nomeDoCorte };
+module.exports = { processarVideo, nomeDoCorte, quando };

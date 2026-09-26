@@ -9,18 +9,12 @@ const path = require('path');
 const express = require('express');
 const repo = require('./repositorio');
 const grupos = require('../grupos/repositorio');
-const { lerConfig } = require('./config');
+const { lerConfig, pastaDeEntrada, nomeSeguro } = require('./config');
 const { processarVideo } = require('./processador');
 
 const ID_VALIDO = /^[A-Za-z0-9._-]{1,160}$/;
 const MAX_PEDACO_MB = 32;
 
-// Pasta dos uploads em andamento: do lado da pasta de gravações, no mesmo
-// disco — mover pro lugar final é instantâneo
-const pastaDeEntrada = (cfg) => path.join(path.dirname(cfg.pasta), 'entrada');
-
-// Nome seguro, mas sem perder a hora que o celular pôs no nome do arquivo
-const nomeSeguro = (nome) => path.basename(String(nome || 'video.mp4')).replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 120);
 
 function espacoLivre(pasta) {
   try {
@@ -111,4 +105,4 @@ function rotasPainel(api, deps = {}, { cfg = lerConfig(), processar = processarV
   });
 }
 
-module.exports = { rotasPainel, nomeSeguro };
+module.exports = { rotasPainel, espacoLivre };

@@ -11,7 +11,9 @@ require('dotenv').config();
 const { fecharBanco } = require('./nucleo/banco');
 const sessao = require('./whatsapp/sessao');
 const { escutar } = require('./whatsapp/mensagens');
-const { enviarFigurinhaNoChat } = require('./whatsapp/contatos');
+const { enviarFigurinhaNoChat, enviarArquivoNoChat } = require('./whatsapp/contatos');
+const { listarGruposAdmin } = require('./modulos/grupos/repositorio');
+const { iniciarVigiaDoDrive } = require('./modulos/video/vigiaDrive');
 const { criarServidor } = require('./http/servidor');
 const lembrete = require('./modulos/pelada/lembrete');
 
@@ -63,6 +65,22 @@ setInterval(() => {
 }, sessao.SAUDE_INTERVALO_MS);
 
 console.log(lembrete.descreverConfiguracao());
+
+// Vídeo do jogo que chega pela pasta do Drive: os cortes dos #replay saem
+// pelo cliente vigente do WhatsApp
+iniciarVigiaDoDrive({
+  enviarTexto: (chatId, texto) => {
+    const cliente = sessao.cliente();
+    if (!cliente) return Promise.reject(new Error('bot desconectado'));
+    return cliente.sendText(chatId, texto);
+  },
+  enviarArquivo: (chatId, caminho, legenda) => {
+    const cliente = sessao.cliente();
+    if (!cliente) return Promise.reject(new Error('bot desconectado'));
+    return enviarArquivoNoChat(cliente, chatId, caminho, legenda);
+  },
+  gruposAdmin: () => listarGruposAdmin(),
+});
 
 setInterval(() => {
   const cliente = sessao.cliente();
