@@ -3,6 +3,7 @@
 const path = require('path');
 const express = require('express');
 const { registrarPainel } = require('./painel');
+const { enviarArquivoNoChat } = require('../whatsapp/contatos');
 
 // sessao: ver whatsapp/sessao.js — o servidor só lê o estado e envia por ela
 function criarServidor(sessao) {
@@ -12,6 +13,7 @@ function criarServidor(sessao) {
   // inteira por fora do login — os dados continuariam protegidos, mas não custa
   // fechar a porta.
   app.get('/painel.html', (req, res) => res.redirect('/painel'));
+  app.get('/video.html', (req, res) => res.redirect('/painel/video'));
   app.use(express.static(path.join(__dirname, '..', '..', 'public')));
 
   app.get('/status', (req, res) => {
@@ -33,6 +35,12 @@ function criarServidor(sessao) {
       const cliente = sessao.cliente();
       if (!cliente) return Promise.reject(new Error('bot desconectado'));
       return cliente.sendText(chatId, texto, opcoes);
+    },
+    // Os cortes de #replay saem por aqui quando o vídeo termina de processar
+    enviarArquivoPara: (chatId, caminho, legenda) => {
+      const cliente = sessao.cliente();
+      if (!cliente) return Promise.reject(new Error('bot desconectado'));
+      return enviarArquivoNoChat(cliente, chatId, caminho, legenda);
     },
   });
 

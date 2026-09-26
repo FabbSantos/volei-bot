@@ -7,7 +7,7 @@
 //   grupo da pelada: { body, pushname, chatId, numero, nomeGrupo, reply(texto),
 //                      enviarFigurinha(caminho), ehAdmin(): Promise<bool>,
 //                      remetenteCitado(): Promise<numero|null> }
-//   admin:           { body, origem: 'privado'|'grupoadmin', reply(texto),
+//   admin:           { body, origem: 'privado'|'grupoadmin', chatId, enviadoEm (ms), autor, reply(texto),
 //                      enviarPara(chatId, texto, opcoes), enviarFigurinhaPara(chatId, caminho),
 //                      getAdminsDoGrupo(chatId), getMembrosDoGrupo(chatId), saude() }
 //

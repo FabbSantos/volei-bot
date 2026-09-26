@@ -10,6 +10,7 @@ const MODULOS = [
   require('../modulos/elenco/rotasPainel'),
   require('../modulos/mensalistas/rotasPainel'),
   require('../modulos/pelada/rotasPainel'),
+  require('../modulos/video/rotasPainel'),
 ];
 
 // Tela de entrada do painel: senha única, sem usuário — os admins sabem qual é.
@@ -127,6 +128,12 @@ function registrarPainel(app, deps = {}) {
       return res.redirect('/painel');
     }
     res.sendFile(path.join(__dirname, '..', '..', 'public', 'painel.html'));
+  });
+
+  // Página de subir o vídeo do jogo (ver modulos/video/rotasPainel.js)
+  app.get('/painel/video', (req, res) => {
+    if (!autenticado(req)) return res.redirect('/painel');
+    res.sendFile(path.join(__dirname, '..', '..', 'public', 'video.html'));
   });
 
   function gravarCookie(res) {

@@ -44,6 +44,8 @@ async function comoAdmin(texto, origem = 'grupoadmin') {
   await app.processarComandoAdmin({
     body: texto,
     origem,
+    chatId: origem === 'privado' ? '5521999990000@c.us' : ADM,
+    autor: 'Fabricio',
     reply: async (t) => log(`<<< ${t}`),
     enviarPara: async (chatId, t, opcoes) => log(`--> [${chatId}]${opcoes ? ` ${JSON.stringify(opcoes)}` : ''} ${t}`),
     enviarFigurinhaPara: async (chatId, c) => log(`--> [${chatId}] [figurinha] ${c}`),
@@ -245,6 +247,14 @@ async function roteiro() {
   await comoAdmin('#ativargrupo naoexiste@g.us');
   await comoAdmin('#ativargrupo x@g.us 0');
   await comoAdmin('#teste');
+
+  // ---- #replay: anota o horário; o corte sai quando o vídeo subir
+  await comoAdmin('#replays');
+  await comoAdmin('#replay');
+  await comoAdmin('#Replay2');
+  await comoAdmin('#replay 9');
+  await comoAdmin('#replay abc');
+  await comoAdmin('#replays');
   await comoAdmin('#listargrupos');
   await comoAdmin(`#grupoadmin ${G1}`, 'privado');
   await comoAdmin('#cancelarlistade riachuelo');

@@ -23,6 +23,20 @@ function enviarFigurinhaNoChat(client, chatId, caminho) {
     : client.sendImageAsSticker(chatId, caminho);
 }
 
+// Corte de vídeo: vai como VÍDEO (toca direto na conversa). Se o WhatsApp
+// Web recusar — celular grava em HEVC, que o Chrome sem placa de vídeo pode
+// não conseguir abrir pra gerar a miniatura —, vai como DOCUMENTO: chega
+// igual, com a qualidade original, só que abre no player do celular.
+async function enviarArquivoNoChat(client, chatId, caminho, legenda) {
+  const filename = require('path').basename(caminho);
+  try {
+    return await client.sendFile(chatId, caminho, { type: 'video', filename, caption: legenda });
+  } catch (err) {
+    console.warn(`[video] não foi como vídeo (${err.message}) — mandando como documento`);
+    return client.sendFile(chatId, caminho, { type: 'document', filename, caption: legenda });
+  }
+}
+
 // Cache da lista de admins por grupo — evita consultar o WhatsApp a cada #pago.
 // 5min de TTL: promover/rebaixar admin no grupo demora até isso pra valer no bot.
 const CACHE_ADMINS_TTL_MS = 5 * 60_000;
@@ -131,6 +145,7 @@ async function ehAdminDoGrupo(client, chatId, numero) {
 module.exports = {
   ADMIN_NUMBER,
   enviarFigurinhaNoChat,
+  enviarArquivoNoChat,
   lidParaNumero,
   listarAdminsDoGrupo,
   listarMembrosDoGrupo,

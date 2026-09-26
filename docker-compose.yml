@@ -13,9 +13,13 @@ services:
       - PORT=3000
       - DB_PATH=/app/data/volei.db
       - TOKENS_DIR=/app/data/tokens
+      - VIDEO_PASTA=/app/videos/gravacoes
     volumes:
       # Banco + sessão do WhatsApp. É a única coisa insubstituível da máquina.
       - ./dados:/app/data
+      # Vídeos dos jogos: grandes e descartáveis (o original fica no celular),
+      # por isso fora de ./dados — o backup do banco não arrasta GB de vídeo
+      - ./videos:/app/videos
     # O Chrome estoura o /dev/shm padrão do Docker (64 MB) e passa a crashar
     # aba. Subir aqui é mais seguro que depender só de --disable-dev-shm-usage.
     shm_size: '512mb'

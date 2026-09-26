@@ -4,7 +4,7 @@ const { processarMensagem, processarComandoAdmin } = require('../roteador');
 const { notificarFalha } = require('../nucleo/alertas');
 const grupos = require('../modulos/grupos/repositorio');
 const {
-  ADMIN_NUMBER, enviarFigurinhaNoChat, lidParaNumero, listarAdminsDoGrupo, listarMembrosDoGrupo, ehAdminDoBot, ehAdminDoGrupo,
+  ADMIN_NUMBER, enviarFigurinhaNoChat, enviarArquivoNoChat, lidParaNumero, listarAdminsDoGrupo, listarMembrosDoGrupo, ehAdminDoBot, ehAdminDoGrupo,
 } = require('./contatos');
 
 const NOME_GRUPO_ALVO = process.env.NOME_GRUPO_ALVO || null; // opcional: filtrar por nome do grupo
@@ -14,9 +14,14 @@ function portaDeAdmin(client, message, origem, sessao) {
   return {
     body: message.body,
     origem,
+    chatId: message.from,
+    // Hora em que a mensagem foi mandada (o #replay corta a partir dela)
+    enviadoEm: message.t ? message.t * 1000 : null,
+    autor: message.notifyName || message.sender?.pushname || null,
     reply: (texto) => client.sendText(message.from, texto),
     enviarPara: (chatId, texto, opcoes) => client.sendText(chatId, texto, opcoes),
     enviarFigurinhaPara: (chatId, caminho) => enviarFigurinhaNoChat(client, chatId, caminho),
+    enviarArquivoPara: (chatId, caminho, legenda) => enviarArquivoNoChat(client, chatId, caminho, legenda),
     getAdminsDoGrupo: (chatId) => listarAdminsDoGrupo(client, chatId),
     saude: sessao.saudeDoProcesso,
     getMembrosDoGrupo: (chatId) => listarMembrosDoGrupo(client, chatId),

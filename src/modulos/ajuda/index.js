@@ -50,6 +50,10 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 *#anuncio <texto>* — manda o texto pro grupo da pelada, exatamente como escrito
 *#anunciarde <grupo> <texto>* — o mesmo, escolhendo o grupo (também aceita *#anunciode*)
 
+🎥 *Vídeo:*
+*#replay* — no meio do jogo: guarda os últimos 30s (*#replay 2* = 2 min, até 5). O corte chega aqui quando o vídeo subir pelo painel (🎥 Vídeo)
+*#replays* — replays esperando o vídeo subir
+
 *#listargrupos* — todos os grupos, com status, tamanho, valor e chat_id
 *#ativargrupo <chat_id>* — libera um grupo pra usar o bot
 *#ativargrupo <chat_id> 18 --6* — libera e dimensiona (padrão: 18 + 6)
@@ -128,7 +132,7 @@ async function responderMalformadoNoGrupo(msg, texto) {
 // Qualquer variação dos comandos de admin que não casou é sintaxe errada
 // (ex: "18 -6", "#listade" sem grupo, "#listargrupos x") — responde com o
 // uso em vez de ficar mudo e deixar o admin achando que funcionou
-const MALFORMADO_NO_ADMIN = /^#(ativargrupo|desativargrupo|abrirlistade|editarlistade|encerrarlistade|reabrirlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|adicionarde|renomearde|cobrarde|cobrarsubiude|timesde|importarelencode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin)\b/i;
+const MALFORMADO_NO_ADMIN = /^#(ativargrupo|desativargrupo|abrirlistade|editarlistade|encerrarlistade|reabrirlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|adicionarde|renomearde|cobrarde|cobrarsubiude|timesde|importarelencode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin|replays?)\b/i;
 // Comando do grupo de pelada digitado no contexto admin (ex: responder um
 // comprovante encaminhado com #pago) — aponta o equivalente remoto
 const DE_GRUPO_NO_ADMIN = /^#(pago|naopago|valor|valorpadr[aã]o|valormes|mostralista|remover|encerrarlista|lista|mensalistas?|pagomes|naopagomes|fixo|removermensalista|vagasmensalistas|inadimplente|quitado)\b/i;

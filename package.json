@@ -6,7 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "start": "node src/main.js",
-    "test": "node test/golden/comandos.js && node test/golden/whatsapp.js && node test/casamento.js && node test/video.js",
+    "test": "node test/golden/comandos.js && node test/golden/whatsapp.js && node test/casamento.js && node test/video.js && node test/replay.js",
     "gravar": "node src/video.js gravar",
     "importar": "node src/video.js importar",
     "cortar": "node src/video.js cortar",

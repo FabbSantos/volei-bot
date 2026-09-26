@@ -40,6 +40,10 @@
 *#anuncio <texto>* — manda o texto pro grupo da pelada, exatamente como escrito
 *#anunciarde <grupo> <texto>* — o mesmo, escolhendo o grupo (também aceita *#anunciode*)
 
+🎥 *Vídeo:*
+*#replay* — no meio do jogo: guarda os últimos 30s (*#replay 2* = 2 min, até 5). O corte chega aqui quando o vídeo subir pelo painel (🎥 Vídeo)
+*#replays* — replays esperando o vídeo subir
+
 *#listargrupos* — todos os grupos, com status, tamanho, valor e chat_id
 *#ativargrupo <chat_id>* — libera um grupo pra usar o bot
 *#ativargrupo <chat_id> 18 --6* — libera e dimensiona (padrão: 18 + 6)
@@ -123,6 +127,10 @@ Repetir #ativargrupo num grupo já ativo só atualiza o tamanho.
 *#mensalistasde <grupo> enviar* — publica o quadro de mensalistas no grupo (sem o arrecadado)
 *#anuncio <texto>* — manda o texto pro grupo da pelada, exatamente como escrito
 *#anunciarde <grupo> <texto>* — o mesmo, escolhendo o grupo (também aceita *#anunciode*)
+
+🎥 *Vídeo:*
+*#replay* — no meio do jogo: guarda os últimos 30s (*#replay 2* = 2 min, até 5). O corte chega aqui quando o vídeo subir pelo painel (🎥 Vídeo)
+*#replays* — replays esperando o vídeo subir
 
 *#listargrupos* — todos os grupos, com status, tamanho, valor e chat_id
 *#ativargrupo <chat_id>* — libera um grupo pra usar o bot
@@ -1453,6 +1461,30 @@ Manda *#admin* pra ver a sintaxe de tudo.
    1 na lista · 0/1 em dia · cobrança de hoje ainda não saiu
 
 ✅ *Figurinhas:* agiota-pago: 10 · cade-meu-pix: 9
+
+>>> [admin/grupoadmin] #replays
+<<< 🎬 Nenhum replay esperando vídeo.
+
+>>> [admin/grupoadmin] #replay
+<<< 🎬 Replay anotado: 12:18:29, 30s pra trás. Sai quando o vídeo subir.
+
+>>> [admin/grupoadmin] #Replay2
+<<< 🎬 Replay anotado: 12:18:31, 2 min pra trás. Sai quando o vídeo subir.
+
+>>> [admin/grupoadmin] #replay 9
+<<< 🎬 Replay anotado: 12:18:33, 5 min pra trás (o máximo é 5 min). Sai quando o vídeo subir.
+
+>>> [admin/grupoadmin] #replay abc
+<<< Não entendi o formato 🤔 Exemplos:
+*#ativargrupo <chat_id> 18 --6*
+*#listade quinta* · *#pagosde quinta* · *#valorde quinta 25*
+Manda *#admin* pra ver a sintaxe de tudo.
+
+>>> [admin/grupoadmin] #replays
+<<< 🎬 *3 replay(s) esperando o vídeo subir:*
+• 18/09 12:18:29 — 30s (Fabricio)
+• 18/09 12:18:31 — 2 min (Fabricio)
+• 18/09 12:18:33 — 5 min (Fabricio)
 
 >>> [admin/grupoadmin] #listargrupos
 <<< 📋 *Grupos cadastrados (3):*
@@ -3407,7 +3439,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
  "chat_id": "g1@g.us",
  "nome": "Novato Painel",
  "numero": "5521900000010@c.us",
- "criado_em": "2026-09-18T15:18:34.000Z",
+ "criado_em": "2026-09-18T15:18:40.000Z",
  "altura": null
 }
 
@@ -4110,7 +4142,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
     },
     {
      "habilidade": 2.875,
-     "em": "2026-09-18T15:18:38.000Z"
+     "em": "2026-09-18T15:18:44.000Z"
     }
    ]
   },
@@ -4733,12 +4765,12 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "altos": 1
   }
  ],
- "atualizadoEm": "2026-09-18T15:18:40.000Z"
+ "atualizadoEm": "2026-09-18T15:18:46.000Z"
 }
 
 >>> POST /api/times/salvar {"grupo":"g1@g.us","times":[{"jogadores":[{"nome":"Diego","nota":4}]},{"jogadores":[{"nome":"Aces"}]}]}
 <<< 200 {
- "atualizadoEm": "2026-09-18T15:18:41.000Z",
+ "atualizadoEm": "2026-09-18T15:18:47.000Z",
  "times": [
   {
    "numero": 1,
@@ -5923,7 +5955,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Novato Painel",
    "numero": "5521900000010@c.us",
-   "criado_em": "2026-09-18T15:18:34.000Z",
+   "criado_em": "2026-09-18T15:18:40.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [],
@@ -6689,7 +6721,7 @@ Bom jogo! 🔥
 === apelidos (apelido, criado_em, id, jogador_id)
 {"apelido":"A6","criado_em":"2026-09-18T15:13:13.000Z","id":1,"jogador_id":17}
 {"apelido":"David","criado_em":"2026-09-18T15:13:14.000Z","id":2,"jogador_id":14}
-{"apelido":"Marcel Garcia","criado_em":"2026-09-18T15:18:35.000Z","id":5,"jogador_id":1}
+{"apelido":"Marcel Garcia","criado_em":"2026-09-18T15:18:41.000Z","id":5,"jogador_id":1}
 
 === entradas (id, lista_id, mensalista, nome, numero, pago, promovido, timestamp, tipo, valor_pago_centavos)
 {"id":9,"lista_id":2,"mensalista":1,"nome":"Marcel Garcia","numero":"5521900000002@c.us","pago":0,"promovido":0,"timestamp":"2026-09-18T15:03:13.000Z","tipo":"principal","valor_pago_centavos":0}
@@ -6815,7 +6847,7 @@ Bom jogo! 🔥
 {"em":"2026-09-18T15:12:36.000Z","habilidade":3.5,"id":92,"jogador_id":16}
 {"em":"2026-09-18T15:12:39.000Z","habilidade":4,"id":93,"jogador_id":17}
 {"em":"2026-09-18T15:12:57.000Z","habilidade":2,"id":94,"jogador_id":18}
-{"em":"2026-09-18T15:18:38.000Z","habilidade":2.875,"id":95,"jogador_id":3}
+{"em":"2026-09-18T15:18:44.000Z","habilidade":2.875,"id":95,"jogador_id":3}
 
 === inadimplentes (chat_id, criado_em, id, nome, numero, valor_centavos)
 
@@ -6837,7 +6869,7 @@ Bom jogo! 🔥
 {"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:12:07.000Z","id":16,"nome":"Vini","numero":"5521900000007@c.us"}
 {"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:12:37.000Z","id":17,"nome":"Aces","numero":"5521900000008@c.us"}
 {"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:12:55.000Z","id":18,"nome":"Stephanie Bastos","numero":null}
-{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:18:34.000Z","id":19,"nome":"Novato Painel","numero":"5521900000010@c.us"}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:18:40.000Z","id":19,"nome":"Novato Painel","numero":"5521900000010@c.us"}
 
 === listas (chat_id, criada_em, data_jogo, id, lembrete_em, nome, status, valor_centavos)
 {"chat_id":"g1@g.us","criada_em":"2026-09-18T15:03:10.000Z","data_jogo":"14/10","id":2,"lembrete_em":null,"nome":"Sexta Nova","status":"encerrada","valor_centavos":1700}
@@ -6850,9 +6882,16 @@ Bom jogo! 🔥
 {"chat_id":"g1@g.us","criado_em":"2026-09-18T15:01:40.000Z","espera":0,"fixo":1,"id":3,"nome":"Aces","numero":"5521900000008@c.us"}
 
 === notas_do_dia (atualizado_em, id, jogador_id, lista_id, nota, observacao)
-{"atualizado_em":"2026-09-18T15:18:39.000Z","id":1,"jogador_id":3,"lista_id":2,"nota":4.5,"observacao":"bom"}
+{"atualizado_em":"2026-09-18T15:18:45.000Z","id":1,"jogador_id":3,"lista_id":2,"nota":4.5,"observacao":"bom"}
+
+=== replays (arquivo, autor, chat_id, criado_em, erro, id, momento, segundos, status, video_id)
+{"arquivo":null,"autor":"Fabricio","chat_id":"adm@g.us","criado_em":1789744710000,"erro":null,"id":1,"momento":1789744709000,"segundos":30,"status":"pendente","video_id":null}
+{"arquivo":null,"autor":"Fabricio","chat_id":"adm@g.us","criado_em":1789744712000,"erro":null,"id":2,"momento":1789744711000,"segundos":120,"status":"pendente","video_id":null}
+{"arquivo":null,"autor":"Fabricio","chat_id":"adm@g.us","criado_em":1789744714000,"erro":null,"id":3,"momento":1789744713000,"segundos":300,"status":"pendente","video_id":null}
 
 === times_montados (atualizado_em, dados, lista_id)
+
+=== videos (aviso, criado_em, erro, fim, id, inicio, nome, status, tamanho)
 
 === votos_habilidade (atualizado_em, fundamento, id, jogador_id, nota, votante)
 {"atualizado_em":"2026-09-18T15:13:36.000Z","fundamento":"ataque","id":1,"jogador_id":1,"nota":3,"votante":"Fabrício"}
@@ -6887,7 +6926,7 @@ Bom jogo! 🔥
 {"atualizado_em":"2026-09-18T15:14:05.000Z","fundamento":"defesa","id":30,"jogador_id":2,"nota":3,"votante":"Bianca"}
 {"atualizado_em":"2026-09-18T15:14:06.000Z","fundamento":"levantamento","id":31,"jogador_id":2,"nota":3,"votante":"Bianca"}
 {"atualizado_em":"2026-09-18T15:14:07.000Z","fundamento":"saque","id":32,"jogador_id":2,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:18:37.000Z","fundamento":"ataque","id":33,"jogador_id":3,"nota":5,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:18:43.000Z","fundamento":"ataque","id":33,"jogador_id":3,"nota":5,"votante":"Fabrício"}
 {"atualizado_em":"2026-09-18T15:14:09.000Z","fundamento":"defesa","id":34,"jogador_id":3,"nota":3,"votante":"Fabrício"}
 {"atualizado_em":"2026-09-18T15:14:10.000Z","fundamento":"levantamento","id":35,"jogador_id":3,"nota":3,"votante":"Fabrício"}
 {"atualizado_em":"2026-09-18T15:14:11.000Z","fundamento":"saque","id":36,"jogador_id":3,"nota":3,"votante":"Fabrício"}

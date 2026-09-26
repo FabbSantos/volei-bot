@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vídeo do Jogo</title>
+<style>
+  :root {
+    color-scheme: light;
+    --plano: #f9f9f7;
+    --superficie: #fcfcfb;
+    --tinta: #0b0b0b;
+    --tinta-2: #52514e;
+    --tinta-mut: #898781;
+    --grade: #e1e0d9;
+    --eixo: #c3c2b7;
+    --borda: rgba(11,11,11,0.10);
+    --acento: #2a78d6;
+    --ok: #1baf7a;
+    --ruim: #d95926;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --plano: #0d0d0d;
+      --superficie: #1a1a19;
+      --tinta: #ffffff;
+      --tinta-2: #c3c2b7;
+      --tinta-mut: #898781;
+      --grade: #2c2c2a;
+      --eixo: #383835;
+      --borda: rgba(255,255,255,0.10);
+      --acento: #3987e5;
+      --ok: #199e70;
+      --ruim: #d95926;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--plano); color: var(--tinta);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.45; font-size: 15px;
+  }
+  header {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem 1.2rem;
+    padding: 0.9rem 1.2rem; border-bottom: 1px solid var(--grade); background: var(--superficie);
+  }
+  header h1 { font-size: 1.05rem; margin: 0; letter-spacing: -0.01em; }
+  header a { color: var(--acento); text-decoration: none; font-size: 0.9rem; }
+  main { padding: 1rem 1.2rem 3rem; max-width: 760px; margin: 0 auto; }
+  .cartao {
+    background: var(--superficie); border: 1px solid var(--borda); border-radius: 12px;
+    padding: 1rem 1.2rem; margin-top: 1rem;
+  }
+  h2 { font-size: 0.95rem; margin: 0 0 0.6rem; }
+  input, button {
+    font: inherit; color: var(--tinta); background: var(--superficie);
+    border: 1px solid var(--eixo); border-radius: 8px; padding: 0.5rem 0.7rem;
+  }
+  input[type=file] { width: 100%; }
+  button { cursor: pointer; }
+  button.primario { background: var(--acento); color: #fff; border-color: var(--acento); font-weight: 600; width: 100%; margin-top: 0.7rem; padding: 0.7rem; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--acento); outline-offset: 1px; }
+  .trilho { height: 10px; border-radius: 5px; background: var(--grade); overflow: hidden; margin-top: 0.9rem; }
+  .trilho div { height: 100%; width: 0; background: var(--acento); transition: width 0.3s; }
+  .numeros { display: flex; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.4rem; font-size: 0.85rem; font-variant-numeric: tabular-nums; color: var(--tinta-2); }
+  .mut { color: var(--tinta-mut); }
+  .dica { color: var(--tinta-mut); font-size: 0.85rem; margin: 0.6rem 0 0; }
+  #situacao { margin-top: 0.7rem; font-weight: 600; min-height: 1.4em; }
+  #situacao.ok { color: var(--ok); }
+  #situacao.ruim { color: var(--ruim); }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li.video { padding: 0.7rem 0; border-bottom: 1px solid var(--grade); }
+  li.video:last-child { border-bottom: none; }
+  .linha1 { display: flex; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
+  .chip {
+    display: inline-block; padding: 0.1rem 0.55rem; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 700; background: var(--grade); color: var(--tinta-2);
+  }
+  .chip.pronto { background: color-mix(in srgb, var(--ok) 20%, var(--superficie)); color: var(--ok); }
+  .chip.erro { background: color-mix(in srgb, var(--ruim) 20%, var(--superficie)); color: var(--ruim); }
+  .replays { margin-top: 0.35rem; font-size: 0.85rem; color: var(--tinta-2); }
+  .replays a { color: var(--acento); }
+  @media (max-width: 640px) { main, header { padding-left: 1rem; padding-right: 1rem; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎥 Vídeo do jogo</h1>
+  <a href="/painel">← voltar pro painel</a>
+</header>
+
+<main>
+  <section class="cartao">
+    <h2>Subir o vídeo</h2>
+    <input type="file" id="arquivo" accept="video/*">
+    <button class="primario" id="btnSubir" disabled>Subir</button>
+    <div class="trilho"><div id="barra"></div></div>
+    <div class="numeros"><span id="quanto">&nbsp;</span><span id="ritmo"></span></div>
+    <div id="situacao"></div>
+    <p class="dica">Pode subir o vídeo inteiro, do jeito que saiu do celular. Deixa esta tela aberta até terminar.
+      Se a internet cair ou a página fechar, é só escolher o <b>mesmo arquivo</b> de novo: continua de onde parou.
+      Quando terminar, o bot corta os #replay daquele horário e manda no grupo.</p>
+  </section>
+
+  <section class="cartao">
+    <h2>Replays esperando vídeo</h2>
+    <ul id="pendentes"><li class="mut">carregando…</li></ul>
+  </section>
+
+  <section class="cartao">
+    <h2>Últimos vídeos</h2>
+    <ul id="videos"><li class="mut">carregando…</li></ul>
+  </section>
+</main>
+
+<script>
+const PEDACO = 8 * 1024 * 1024;
+const $ = (id) => document.getElementById(id);
+const fuso = { timeZone: 'America/Sao_Paulo' };
+const hora = (ms) => new Date(ms).toLocaleTimeString('pt-BR', { ...fuso, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+const dia = (ms) => new Date(ms).toLocaleDateString('pt-BR', { ...fuso, weekday: 'short', day: '2-digit', month: '2-digit' });
+const mb = (b) => b >= 1024 ** 3 ? `${(b / 1024 ** 3).toFixed(2)} GB` : `${Math.round(b / 1024 ** 2)} MB`;
+const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
+const escapar = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+function situacao(texto, tipo = '') {
+  $('situacao').textContent = texto;
+  $('situacao').className = tipo;
+}
+
+async function api(caminho, opcoes) {
+  const r = await fetch(`/api${caminho}`, opcoes);
+  if (r.status === 401) { location.href = '/painel'; throw new Error('sessão expirou'); }
+  const corpo = await r.json().catch(() => ({}));
+  return { r, corpo };
+}
+
+$('arquivo').addEventListener('change', () => {
+  const f = $('arquivo').files[0];
+  $('btnSubir').disabled = !f;
+  $('quanto').textContent = f ? `${f.name} · ${mb(f.size)}` : '';
+  $('barra').style.width = '0';
+  situacao('');
+});
+
+// A tela apagar faz o celular pausar a página, e o upload para junto
+let travaDeTela = null;
+async function manterTelaLigada(ligar) {
+  try {
+    if (ligar && 'wakeLock' in navigator) travaDeTela = await navigator.wakeLock.request('screen');
+    if (!ligar && travaDeTela) { await travaDeTela.release(); travaDeTela = null; }
+  } catch {}
+}
+
+$('btnSubir').addEventListener('click', async () => {
+  const f = $('arquivo').files[0];
+  if (!f) return;
+  $('btnSubir').disabled = true;
+  $('arquivo').disabled = true;
+  await manterTelaLigada(true);
+  try {
+    await subir(f);
+  } catch (err) {
+    situacao(`Parou: ${err.message}. Escolhe o mesmo arquivo e manda de novo pra continuar.`, 'ruim');
+  } finally {
+    await manterTelaLigada(false);
+    $('btnSubir').disabled = false;
+    $('arquivo').disabled = false;
+  }
+});
+
+async function subir(f) {
+  // Mesmo arquivo = mesmo identificador: é isso que deixa continuar depois
+  const id = `${f.size}-${f.lastModified}-${f.name}`.replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 160);
+  const inicio = await api(`/video/envio/${encodeURIComponent(id)}?tamanho=${f.size}`);
+  if (!inicio.r.ok) throw new Error(inicio.corpo.erro || `servidor respondeu ${inicio.r.status}`);
+  let recebido = inicio.corpo.recebido || 0;
+  if (recebido > 0) situacao(`Continuando de ${mb(recebido)}…`);
+  else situacao('Subindo…');
+
+  const comecou = Date.now();
+  const recebidoNoInicio = recebido;
+  let falhasSeguidas = 0;
+
+  while (recebido < f.size) {
+    mostrarProgresso(recebido, f.size, comecou, recebidoNoInicio);
+    try {
+      const { r, corpo } = await api(`/video/envio/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/octet-stream', 'x-offset': String(recebido) },
+        body: f.slice(recebido, recebido + PEDACO),
+      });
+      if (r.ok || r.status === 409) {
+        recebido = corpo.recebido;
+        falhasSeguidas = 0;
+        continue;
+      }
+      throw new Error(corpo.erro || `servidor respondeu ${r.status}`);
+    } catch (err) {
+      falhasSeguidas++;
+      if (falhasSeguidas > 20) throw err;
+      situacao(`Conexão falhou (${err.message}). Tentando de novo…`, 'ruim');
+      await esperar(Math.min(3000 * falhasSeguidas, 30000));
+      const { corpo } = await api(`/video/envio/${encodeURIComponent(id)}`).catch(() => ({ corpo: {} }));
+      if (Number.isFinite(corpo.recebido)) recebido = corpo.recebido;
+      situacao('Subindo…');
+    }
+  }
+  mostrarProgresso(recebido, f.size, comecou, recebidoNoInicio);
+
+  const fim = await api(`/video/envio/${encodeURIComponent(id)}/concluir`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ nome: f.name, tamanho: f.size }),
+  });
+  if (!fim.r.ok) throw new Error(fim.corpo.erro || `servidor respondeu ${fim.r.status}`);
+  situacao('✅ Subiu! Agora o bot importa e corta — os replays chegam no grupo em alguns minutos.', 'ok');
+  $('ritmo').textContent = '';
+  carregarEstado();
+}
+
+function mostrarProgresso(recebido, total, comecou, base) {
+  $('barra').style.width = `${(recebido / total) * 100}%`;
+  $('quanto').textContent = `${mb(recebido)} de ${mb(total)} · ${Math.floor((recebido / total) * 100)}%`;
+  const segundos = (Date.now() - comecou) / 1000;
+  const porSegundo = (recebido - base) / Math.max(segundos, 1);
+  if (segundos > 5 && porSegundo > 0) {
+    const faltam = Math.round((total - recebido) / porSegundo / 60);
+    $('ritmo').textContent = `${((porSegundo * 8) / 1e6).toFixed(1)} Mbps · falta ${faltam < 1 ? 'menos de 1 min' : `~${faltam} min`}`;
+  }
+}
+
+const duracao = (s) => (s < 60 ? `${s}s` : `${s / 60} min`);
+const ROTULO = { processando: 'processando', pronto: 'pronto', erro: 'erro' };
+
+async function carregarEstado() {
+  const { r, corpo } = await api('/video/estado');
+  if (!r.ok) return;
+
+  $('pendentes').innerHTML = corpo.pendentes.length
+    ? corpo.pendentes.map((p) => `<li>${dia(p.momento)} ${hora(p.momento)} — ${duracao(p.segundos)}${p.autor ? ` <span class="mut">(${escapar(p.autor)})</span>` : ''}</li>`).join('')
+    : '<li class="mut">Nenhum. Manda #replay no grupo de admins durante o jogo.</li>';
+
+  $('videos').innerHTML = corpo.videos.length
+    ? corpo.videos.map((v) => {
+      const intervalo = v.inicio ? `${dia(v.inicio)} · ${hora(v.inicio).slice(0, 5)} → ${hora(v.fim).slice(0, 5)}` : escapar(v.nome);
+      const replays = v.replays.map((rp) => rp.status === 'enviado' && rp.arquivo
+        ? `<a href="/api/video/corte/${encodeURIComponent(rp.arquivo)}">${hora(rp.momento)} (${duracao(rp.segundos)})</a>`
+        : `${hora(rp.momento)} <span class="mut">(${escapar(rp.status)})</span>`).join(' · ');
+      return `<li class="video">
+        <div class="linha1"><span>${intervalo}</span><span class="chip ${escapar(v.status)}">${ROTULO[v.status] || escapar(v.status)}</span></div>
+        ${v.erro ? `<div class="replays">${escapar(v.erro)}</div>` : ''}
+        ${replays ? `<div class="replays">Replays: ${replays}</div>` : (v.status === 'pronto' ? '<div class="replays mut">Nenhum replay nesse horário.</div>' : '')}
+      </li>`;
+    }).join('')
+    : '<li class="mut">Nenhum vídeo ainda.</li>';
+
+  // Enquanto algum estiver processando, atualiza sozinho
+  if (corpo.videos.some((v) => v.status === 'processando')) setTimeout(carregarEstado, 5000);
+}
+
+carregarEstado();
+</script>
+</body>
+</html>
