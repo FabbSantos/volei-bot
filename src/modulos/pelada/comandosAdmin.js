@@ -29,7 +29,7 @@ const REGEX_ADICIONAR_DE = /^#adicionarde\s+(.+?)(\s+quieto)?$/i;
 const REGEX_REMOVER_DE = /^#removerde\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$/i;
 // Cobrança manual, na hora, sem mexer no lembrete diário automático:
 // #cobrarde = recado geral (mira = principal sem pagar); #cobrarsubiude =
-// só quem subiu da espera (prazo de sexta 17h)
+// só quem subiu da espera (prazo: dia do jogo, 17h)
 const REGEX_COBRAR_DE = /^#cobrarde\s+(.+)$/i;
 const REGEX_COBRAR_SUBIU_DE = /^#cobrarsubiude\s+(.+)$/i;
 // #abrirlistade <grupo> DD/MM [valor] [nome] — abre a lista da pelada daqui,
@@ -160,7 +160,7 @@ async function cobrar(msg, termo, soPromovidos) {
   }
 
   try {
-    const recado = soPromovidos ? montarLembreteSubiu(alvo) : montarLembretePagamento(alvo);
+    const recado = soPromovidos ? montarLembreteSubiu(alvo, lista.data_jogo) : montarLembretePagamento(alvo, lista.data_jogo);
     await msg.enviarPara(r.grupo.chat_id, recado.texto, { mentionedList: recado.mencoes });
     const figurinha = acharFigurinhaCobranca(nomesAlvo);
     if (msg.enviarFigurinhaPara && figurinha && fs.existsSync(figurinha)) {

@@ -1,6 +1,11 @@
 // Textos da pelada: cobrança (lembrete diário e disparos manuais) e o
 // cutucão de quem pede #lista antes de existir lista.
 const { semAcento } = require('../../nucleo/texto');
+const { diaDaSemanaDoJogo } = require('../../nucleo/tempo');
+
+// O prazo é o dia do jogo: "sexta, 12h" na pelada de sexta, "terça, 12h"
+// numa extra de terça. Sem data legível, vale a sexta de sempre.
+const diaDoPrazo = (dataJogo) => diaDaSemanaDoJogo(dataJogo) || 'sexta';
 
 // Marca quem tem WhatsApp conhecido (@numero vira menção no WhatsApp) e
 // deixa o nome cru pra quem foi cadastrado na mão
@@ -53,25 +58,27 @@ function zoeiraSemLista(quemMandou) {
 
 // Textos de cobrança — usados pelo lembrete diário automático e pelos
 // disparos manuais #cobrarde / #cobrarsubiude
-function montarLembretePagamento(pendentes) {
+function montarLembretePagamento(pendentes, dataJogo) {
   const { texto: naMira, mencoes } = comMencoes(pendentes);
+  const dia = diaDoPrazo(dataJogo);
   const texto = (
     `⏰ *Recado do agiota* 🏐\n\n` +
-    `Quem ainda não pagou a pelada da semana tem até *sexta, 12h* pra acertar — ` +
+    `Quem ainda não pagou a pelada da semana tem até *${dia}, 12h* pra acertar — ` +
     `depois disso sai da lista e a espera assume a vaga.\n` +
-    `Quem subir da espera tem até *sexta, 17h* pra pagar.\n\n` +
+    `Quem subir da espera tem até *${dia}, 17h* pra pagar.\n\n` +
     `⏳ Na mira do agiota: ${naMira}\n\n` +
     `Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. 🤝`
   );
   return { texto, mencoes };
 }
 
-function montarLembreteSubiu(nomes) {
+function montarLembreteSubiu(nomes, dataJogo) {
   const { texto: quem, mencoes } = comMencoes(nomes);
+  const dia = diaDoPrazo(dataJogo);
   const texto = (
     `📣 *Atenção, reforços!* 🏐\n\n` +
     `${quem}: vocês subiram da espera pra lista!\n` +
-    `O prazo de vocês é até *sexta, 17h* pra fazer o pagamento — senão a vaga passa pro próximo da espera.\n\n` +
+    `O prazo de vocês é até *${dia}, 17h* pra fazer o pagamento — senão a vaga passa pro próximo da espera.\n\n` +
     `Manda o comprovante aqui que os admins dão o ✅. O agiota tá de olho. 👀`
   );
   return { texto, mencoes };

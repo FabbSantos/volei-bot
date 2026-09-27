@@ -415,7 +415,7 @@ function resumoPagamentos(listaId) {
         nome: e.mensalista ? `${e.nome} (mês)` : e.nome,
         numero: numeroSintetico(e.numero) ? null : e.numero,
       })),
-    // Quem subiu da espera e ainda não pagou — prazo próprio (sexta 17h)
+    // Quem subiu da espera e ainda não pagou — prazo próprio (dia do jogo, 17h)
     promovidosPendentes: principal
       .filter((e) => e.promovido && !estaEmDia(e))
       .map((e) => e.nome),

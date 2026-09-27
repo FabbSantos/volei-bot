@@ -72,7 +72,7 @@
 *#renomearde <grupo> 5 Nome Certo* — corrige o nome de quem está na posição 5 (silencioso)
 *#removerde <grupo> 14* — tira da lista semanal (aceita faixa); a espera sobe e o grupo é avisado
 *#cobrarde <grupo>* — solta o recado do agiota agora (mira = principal sem pagar)
-*#cobrarsubiude <grupo>* — cobra só quem subiu da espera (prazo sexta 17h)
+*#cobrarsubiude <grupo>* — cobra só quem subiu da espera (prazo: dia do jogo, 17h)
 *#timesde <grupo> 3* — PRÉVIA dos times (só você vê); mostra os salvos se já existirem
 *#timesde <grupo> 3 enviar* — posta no grupo · *... refazer* — remonta do zero
 *#importarelencode <grupo>* — importa o elenco/notas da planilha antiga (uma vez)
@@ -160,7 +160,7 @@ Repetir #ativargrupo num grupo já ativo só atualiza o tamanho.
 *#renomearde <grupo> 5 Nome Certo* — corrige o nome de quem está na posição 5 (silencioso)
 *#removerde <grupo> 14* — tira da lista semanal (aceita faixa); a espera sobe e o grupo é avisado
 *#cobrarde <grupo>* — solta o recado do agiota agora (mira = principal sem pagar)
-*#cobrarsubiude <grupo>* — cobra só quem subiu da espera (prazo sexta 17h)
+*#cobrarsubiude <grupo>* — cobra só quem subiu da espera (prazo: dia do jogo, 17h)
 *#timesde <grupo> 3* — PRÉVIA dos times (só você vê); mostra os salvos se já existirem
 *#timesde <grupo> 3 enviar* — posta no grupo · *... refazer* — remonta do zero
 *#importarelencode <grupo>* — importa o elenco/notas da planilha antiga (uma vez)
@@ -1012,8 +1012,8 @@ _(vazia)_
 >>> [admin/grupoadmin] #cobrarde riachuelo
 --> [g1@g.us] {"mentionedList":["5521900000005@c.us"]} ⏰ *Recado do agiota* 🏐
 
-Quem ainda não pagou a pelada da semana tem até *sexta, 12h* pra acertar — depois disso sai da lista e a espera assume a vaga.
-Quem subir da espera tem até *sexta, 17h* pra pagar.
+Quem ainda não pagou a pelada da semana tem até *segunda, 12h* pra acertar — depois disso sai da lista e a espera assume a vaga.
+Quem subir da espera tem até *segunda, 17h* pra pagar.
 
 ⏳ Na mira do agiota: Maria Convidada, @5521900000005
 
@@ -1045,7 +1045,7 @@ _(vazia)_
 --> [g1@g.us] {"mentionedList":["5521900000006@c.us","5521900000007@c.us"]} 📣 *Atenção, reforços!* 🏐
 
 @5521900000006, @5521900000007: vocês subiram da espera pra lista!
-O prazo de vocês é até *sexta, 17h* pra fazer o pagamento — senão a vaga passa pro próximo da espera.
+O prazo de vocês é até *segunda, 17h* pra fazer o pagamento — senão a vaga passa pro próximo da espera.
 
 Manda o comprovante aqui que os admins dão o ✅. O agiota tá de olho. 👀
 --> [g1@g.us] [figurinha] <raiz>/assets/cade-meu-pix-2.webp
@@ -1466,13 +1466,13 @@ Manda *#admin* pra ver a sintaxe de tudo.
 <<< 🎬 Nenhum replay esperando vídeo.
 
 >>> [admin/grupoadmin] #replay
-<<< 🎬 Replay anotado: 12:18:29, 30s pra trás. Sai quando o vídeo subir.
+<<< 🎬 Replay anotado: 12:18:31, 30s pra trás. Sai quando o vídeo subir.
 
 >>> [admin/grupoadmin] #Replay2
-<<< 🎬 Replay anotado: 12:18:31, 2 min pra trás. Sai quando o vídeo subir.
+<<< 🎬 Replay anotado: 12:18:33, 2 min pra trás. Sai quando o vídeo subir.
 
 >>> [admin/grupoadmin] #replay 9
-<<< 🎬 Replay anotado: 12:18:33, 5 min pra trás (o máximo é 5 min). Sai quando o vídeo subir.
+<<< 🎬 Replay anotado: 12:18:35, 5 min pra trás (o máximo é 5 min). Sai quando o vídeo subir.
 
 >>> [admin/grupoadmin] #replay abc
 <<< Não entendi o formato 🤔 Exemplos:
@@ -1482,9 +1482,9 @@ Manda *#admin* pra ver a sintaxe de tudo.
 
 >>> [admin/grupoadmin] #replays
 <<< 🎬 *3 replay(s) esperando o vídeo subir:*
-• 18/09 12:18:29 — 30s (Fabricio)
-• 18/09 12:18:31 — 2 min (Fabricio)
-• 18/09 12:18:33 — 5 min (Fabricio)
+• 18/09 12:18:31 — 30s (Fabricio)
+• 18/09 12:18:33 — 2 min (Fabricio)
+• 18/09 12:18:35 — 5 min (Fabricio)
 
 >>> [admin/grupoadmin] #listargrupos
 <<< 📋 *Grupos cadastrados (3):*
@@ -1523,8 +1523,8 @@ Manda *#admin* pra ver a sintaxe de tudo.
 >>> [admin/grupoadmin] #cobrarde riachuelo
 --> [g1@g.us] {"mentionedList":["5521900000002@c.us","5521900000005@c.us","5521900000006@c.us","5521900000007@c.us"]} ⏰ *Recado do agiota* 🏐
 
-Quem ainda não pagou a pelada da semana tem até *sexta, 12h* pra acertar — depois disso sai da lista e a espera assume a vaga.
-Quem subir da espera tem até *sexta, 17h* pra pagar.
+Quem ainda não pagou a pelada da semana tem até *quarta, 12h* pra acertar — depois disso sai da lista e a espera assume a vaga.
+Quem subir da espera tem até *quarta, 17h* pra pagar.
 
 ⏳ Na mira do agiota: @5521900000002, @5521900000005, @5521900000006, @5521900000007
 
@@ -1592,7 +1592,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Aces",
    "numero": "5521900000008@c.us",
-   "criado_em": "2026-09-18T15:12:37.000Z",
+   "criado_em": "2026-09-18T15:12:39.000Z",
    "altura": null,
    "apelidos": [
     "A6"
@@ -1695,7 +1695,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Andressa não Urach",
    "numero": null,
-   "criado_em": "2026-09-18T15:08:49.000Z",
+   "criado_em": "2026-09-18T15:08:51.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -1796,7 +1796,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Camila Vitorino",
    "numero": null,
-   "criado_em": "2026-09-18T15:08:01.000Z",
+   "criado_em": "2026-09-18T15:08:03.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -1897,7 +1897,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Camila W.",
    "numero": null,
-   "criado_em": "2026-09-18T15:10:13.000Z",
+   "criado_em": "2026-09-18T15:10:15.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -1998,7 +1998,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Carlos Brugger",
    "numero": null,
-   "criado_em": "2026-09-18T15:09:25.000Z",
+   "criado_em": "2026-09-18T15:09:27.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -2099,7 +2099,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Diego Borges",
    "numero": null,
-   "criado_em": "2026-09-18T15:07:39.000Z",
+   "criado_em": "2026-09-18T15:07:41.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -2200,7 +2200,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Dvd",
    "numero": null,
-   "criado_em": "2026-09-18T15:11:19.000Z",
+   "criado_em": "2026-09-18T15:11:21.000Z",
    "altura": null,
    "apelidos": [
     "David"
@@ -2303,7 +2303,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Fabrício Bahiense",
    "numero": null,
-   "criado_em": "2026-09-18T15:06:51.000Z",
+   "criado_em": "2026-09-18T15:06:53.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -2404,7 +2404,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Kamila Vianna",
    "numero": "5521900000005@c.us",
-   "criado_em": "2026-09-18T15:07:09.000Z",
+   "criado_em": "2026-09-18T15:07:11.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -2505,7 +2505,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Marcel Garcia",
    "numero": "5521900000002@c.us",
-   "criado_em": "2026-09-18T15:06:33.000Z",
+   "criado_em": "2026-09-18T15:06:35.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -2606,7 +2606,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Marcelle",
    "numero": null,
-   "criado_em": "2026-09-18T15:09:07.000Z",
+   "criado_em": "2026-09-18T15:09:09.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -2707,7 +2707,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Pedro Moura",
    "numero": null,
-   "criado_em": "2026-09-18T15:10:43.000Z",
+   "criado_em": "2026-09-18T15:10:45.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -2808,7 +2808,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Ryan Araújo",
    "numero": null,
-   "criado_em": "2026-09-18T15:11:01.000Z",
+   "criado_em": "2026-09-18T15:11:03.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -2909,7 +2909,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Stephanie Bastos",
    "numero": null,
-   "criado_em": "2026-09-18T15:12:55.000Z",
+   "criado_em": "2026-09-18T15:12:57.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -3010,7 +3010,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Thiago",
    "numero": null,
-   "criado_em": "2026-09-18T15:11:37.000Z",
+   "criado_em": "2026-09-18T15:11:39.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -3111,7 +3111,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Thiago Prata",
    "numero": "5521900000006@c.us",
-   "criado_em": "2026-09-18T15:08:19.000Z",
+   "criado_em": "2026-09-18T15:08:21.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -3212,7 +3212,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Vini",
    "numero": "5521900000007@c.us",
-   "criado_em": "2026-09-18T15:12:07.000Z",
+   "criado_em": "2026-09-18T15:12:09.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -3313,7 +3313,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "W. Luketa",
    "numero": null,
-   "criado_em": "2026-09-18T15:09:43.000Z",
+   "criado_em": "2026-09-18T15:09:45.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -3439,7 +3439,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
  "chat_id": "g1@g.us",
  "nome": "Novato Painel",
  "numero": "5521900000010@c.us",
- "criado_em": "2026-09-18T15:18:40.000Z",
+ "criado_em": "2026-09-18T15:18:43.000Z",
  "altura": null
 }
 
@@ -3778,7 +3778,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "mudancasDeNivel": [
     {
      "habilidade": 4,
-     "em": "2026-09-18T15:12:39.000Z"
+     "em": "2026-09-18T15:12:41.000Z"
     }
    ]
   },
@@ -3809,7 +3809,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "mudancasDeNivel": [
     {
      "habilidade": 2,
-     "em": "2026-09-18T15:08:51.000Z"
+     "em": "2026-09-18T15:08:53.000Z"
     }
    ]
   },
@@ -3840,7 +3840,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "mudancasDeNivel": [
     {
      "habilidade": 2,
-     "em": "2026-09-18T15:08:03.000Z"
+     "em": "2026-09-18T15:08:05.000Z"
     }
    ]
   },
@@ -3871,55 +3871,55 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "mudancasDeNivel": [
     {
      "habilidade": 3,
-     "em": "2026-09-18T15:10:15.000Z"
+     "em": "2026-09-18T15:10:17.000Z"
     },
     {
      "habilidade": 3.2,
-     "em": "2026-09-18T15:10:20.000Z"
-    },
-    {
-     "habilidade": 3.3333333333333335,
      "em": "2026-09-18T15:10:22.000Z"
     },
     {
-     "habilidade": 3.4285714285714284,
+     "habilidade": 3.3333333333333335,
      "em": "2026-09-18T15:10:24.000Z"
     },
     {
-     "habilidade": 3.5,
+     "habilidade": 3.4285714285714284,
      "em": "2026-09-18T15:10:26.000Z"
     },
     {
-     "habilidade": 3.4444444444444446,
+     "habilidade": 3.5,
      "em": "2026-09-18T15:10:28.000Z"
     },
     {
-     "habilidade": 3.4,
+     "habilidade": 3.4444444444444446,
      "em": "2026-09-18T15:10:30.000Z"
     },
     {
-     "habilidade": 3.3636363636363638,
+     "habilidade": 3.4,
      "em": "2026-09-18T15:10:32.000Z"
     },
     {
-     "habilidade": 3.3333333333333335,
+     "habilidade": 3.3636363636363638,
      "em": "2026-09-18T15:10:34.000Z"
     },
     {
-     "habilidade": 3.3846153846153846,
+     "habilidade": 3.3333333333333335,
      "em": "2026-09-18T15:10:36.000Z"
     },
     {
-     "habilidade": 3.4285714285714284,
+     "habilidade": 3.3846153846153846,
      "em": "2026-09-18T15:10:38.000Z"
     },
     {
-     "habilidade": 3.466666666666667,
+     "habilidade": 3.4285714285714284,
      "em": "2026-09-18T15:10:40.000Z"
     },
     {
-     "habilidade": 3.5,
+     "habilidade": 3.466666666666667,
      "em": "2026-09-18T15:10:42.000Z"
+    },
+    {
+     "habilidade": 3.5,
+     "em": "2026-09-18T15:10:44.000Z"
     }
    ]
   },
@@ -3950,7 +3950,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "mudancasDeNivel": [
     {
      "habilidade": 3,
-     "em": "2026-09-18T15:09:27.000Z"
+     "em": "2026-09-18T15:09:29.000Z"
     }
    ]
   },
@@ -3981,23 +3981,23 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "mudancasDeNivel": [
     {
      "habilidade": 3,
-     "em": "2026-09-18T15:07:41.000Z"
+     "em": "2026-09-18T15:07:43.000Z"
     },
     {
      "habilidade": 2.923076923076923,
-     "em": "2026-09-18T15:07:54.000Z"
-    },
-    {
-     "habilidade": 2.857142857142857,
      "em": "2026-09-18T15:07:56.000Z"
     },
     {
-     "habilidade": 2.8,
+     "habilidade": 2.857142857142857,
      "em": "2026-09-18T15:07:58.000Z"
     },
     {
-     "habilidade": 2.75,
+     "habilidade": 2.8,
      "em": "2026-09-18T15:08:00.000Z"
+    },
+    {
+     "habilidade": 2.75,
+     "em": "2026-09-18T15:08:02.000Z"
     }
    ]
   },
@@ -4028,7 +4028,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "mudancasDeNivel": [
     {
      "habilidade": 3,
-     "em": "2026-09-18T15:11:21.000Z"
+     "em": "2026-09-18T15:11:23.000Z"
     }
    ]
   },
@@ -4059,7 +4059,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "mudancasDeNivel": [
     {
      "habilidade": 3,
-     "em": "2026-09-18T15:06:53.000Z"
+     "em": "2026-09-18T15:06:55.000Z"
     }
    ]
   },
@@ -4090,59 +4090,59 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "mudancasDeNivel": [
     {
      "habilidade": 3,
-     "em": "2026-09-18T15:07:11.000Z"
+     "em": "2026-09-18T15:07:13.000Z"
     },
     {
      "habilidade": 2.8,
-     "em": "2026-09-18T15:07:16.000Z"
-    },
-    {
-     "habilidade": 2.6666666666666665,
      "em": "2026-09-18T15:07:18.000Z"
     },
     {
-     "habilidade": 2.5714285714285716,
+     "habilidade": 2.6666666666666665,
      "em": "2026-09-18T15:07:20.000Z"
     },
     {
-     "habilidade": 2.5,
+     "habilidade": 2.5714285714285716,
      "em": "2026-09-18T15:07:22.000Z"
     },
     {
-     "habilidade": 2.5555555555555554,
+     "habilidade": 2.5,
      "em": "2026-09-18T15:07:24.000Z"
     },
     {
-     "habilidade": 2.6,
+     "habilidade": 2.5555555555555554,
      "em": "2026-09-18T15:07:26.000Z"
     },
     {
-     "habilidade": 2.6363636363636362,
+     "habilidade": 2.6,
      "em": "2026-09-18T15:07:28.000Z"
     },
     {
-     "habilidade": 2.6666666666666665,
+     "habilidade": 2.6363636363636362,
      "em": "2026-09-18T15:07:30.000Z"
     },
     {
-     "habilidade": 2.6923076923076925,
+     "habilidade": 2.6666666666666665,
      "em": "2026-09-18T15:07:32.000Z"
     },
     {
-     "habilidade": 2.7142857142857144,
+     "habilidade": 2.6923076923076925,
      "em": "2026-09-18T15:07:34.000Z"
     },
     {
-     "habilidade": 2.7333333333333334,
+     "habilidade": 2.7142857142857144,
      "em": "2026-09-18T15:07:36.000Z"
     },
     {
-     "habilidade": 2.75,
+     "habilidade": 2.7333333333333334,
      "em": "2026-09-18T15:07:38.000Z"
     },
     {
+     "habilidade": 2.75,
+     "em": "2026-09-18T15:07:40.000Z"
+    },
+    {
      "habilidade": 2.875,
-     "em": "2026-09-18T15:18:44.000Z"
+     "em": "2026-09-18T15:18:47.000Z"
     }
    ]
   },
@@ -4173,7 +4173,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "mudancasDeNivel": [
     {
      "habilidade": 3,
-     "em": "2026-09-18T15:06:35.000Z"
+     "em": "2026-09-18T15:06:37.000Z"
     }
    ]
   },
@@ -4204,7 +4204,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "mudancasDeNivel": [
     {
      "habilidade": 2,
-     "em": "2026-09-18T15:09:09.000Z"
+     "em": "2026-09-18T15:09:11.000Z"
     }
    ]
   },
@@ -4261,7 +4261,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "mudancasDeNivel": [
     {
      "habilidade": 2,
-     "em": "2026-09-18T15:10:45.000Z"
+     "em": "2026-09-18T15:10:47.000Z"
     }
    ]
   },
@@ -4292,7 +4292,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "mudancasDeNivel": [
     {
      "habilidade": 3,
-     "em": "2026-09-18T15:11:03.000Z"
+     "em": "2026-09-18T15:11:05.000Z"
     }
    ]
   },
@@ -4323,7 +4323,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "mudancasDeNivel": [
     {
      "habilidade": 2,
-     "em": "2026-09-18T15:12:57.000Z"
+     "em": "2026-09-18T15:12:59.000Z"
     }
    ]
   },
@@ -4354,55 +4354,55 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "mudancasDeNivel": [
     {
      "habilidade": 2,
-     "em": "2026-09-18T15:11:39.000Z"
+     "em": "2026-09-18T15:11:41.000Z"
     },
     {
      "habilidade": 2.2,
-     "em": "2026-09-18T15:11:44.000Z"
-    },
-    {
-     "habilidade": 2.3333333333333335,
      "em": "2026-09-18T15:11:46.000Z"
     },
     {
-     "habilidade": 2.4285714285714284,
+     "habilidade": 2.3333333333333335,
      "em": "2026-09-18T15:11:48.000Z"
     },
     {
-     "habilidade": 2.5,
+     "habilidade": 2.4285714285714284,
      "em": "2026-09-18T15:11:50.000Z"
     },
     {
-     "habilidade": 2.5555555555555554,
+     "habilidade": 2.5,
      "em": "2026-09-18T15:11:52.000Z"
     },
     {
-     "habilidade": 2.6,
+     "habilidade": 2.5555555555555554,
      "em": "2026-09-18T15:11:54.000Z"
     },
     {
-     "habilidade": 2.6363636363636362,
+     "habilidade": 2.6,
      "em": "2026-09-18T15:11:56.000Z"
     },
     {
-     "habilidade": 2.6666666666666665,
+     "habilidade": 2.6363636363636362,
      "em": "2026-09-18T15:11:58.000Z"
     },
     {
-     "habilidade": 2.6923076923076925,
+     "habilidade": 2.6666666666666665,
      "em": "2026-09-18T15:12:00.000Z"
     },
     {
-     "habilidade": 2.7142857142857144,
+     "habilidade": 2.6923076923076925,
      "em": "2026-09-18T15:12:02.000Z"
     },
     {
-     "habilidade": 2.7333333333333334,
+     "habilidade": 2.7142857142857144,
      "em": "2026-09-18T15:12:04.000Z"
     },
     {
-     "habilidade": 2.75,
+     "habilidade": 2.7333333333333334,
      "em": "2026-09-18T15:12:06.000Z"
+    },
+    {
+     "habilidade": 2.75,
+     "em": "2026-09-18T15:12:08.000Z"
     }
    ]
   },
@@ -4433,55 +4433,55 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "mudancasDeNivel": [
     {
      "habilidade": 4,
-     "em": "2026-09-18T15:08:21.000Z"
+     "em": "2026-09-18T15:08:23.000Z"
     },
     {
      "habilidade": 3.8,
-     "em": "2026-09-18T15:08:26.000Z"
-    },
-    {
-     "habilidade": 3.6666666666666665,
      "em": "2026-09-18T15:08:28.000Z"
     },
     {
-     "habilidade": 3.5714285714285716,
+     "habilidade": 3.6666666666666665,
      "em": "2026-09-18T15:08:30.000Z"
     },
     {
-     "habilidade": 3.5,
+     "habilidade": 3.5714285714285716,
      "em": "2026-09-18T15:08:32.000Z"
     },
     {
-     "habilidade": 3.5555555555555554,
+     "habilidade": 3.5,
      "em": "2026-09-18T15:08:34.000Z"
     },
     {
-     "habilidade": 3.6,
+     "habilidade": 3.5555555555555554,
      "em": "2026-09-18T15:08:36.000Z"
     },
     {
-     "habilidade": 3.6363636363636362,
+     "habilidade": 3.6,
      "em": "2026-09-18T15:08:38.000Z"
     },
     {
-     "habilidade": 3.6666666666666665,
+     "habilidade": 3.6363636363636362,
      "em": "2026-09-18T15:08:40.000Z"
     },
     {
-     "habilidade": 3.6153846153846154,
+     "habilidade": 3.6666666666666665,
      "em": "2026-09-18T15:08:42.000Z"
     },
     {
-     "habilidade": 3.5714285714285716,
+     "habilidade": 3.6153846153846154,
      "em": "2026-09-18T15:08:44.000Z"
     },
     {
-     "habilidade": 3.533333333333333,
+     "habilidade": 3.5714285714285716,
      "em": "2026-09-18T15:08:46.000Z"
     },
     {
-     "habilidade": 3.5,
+     "habilidade": 3.533333333333333,
      "em": "2026-09-18T15:08:48.000Z"
+    },
+    {
+     "habilidade": 3.5,
+     "em": "2026-09-18T15:08:50.000Z"
     }
    ]
   },
@@ -4512,55 +4512,55 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "mudancasDeNivel": [
     {
      "habilidade": 4,
-     "em": "2026-09-18T15:12:09.000Z"
+     "em": "2026-09-18T15:12:11.000Z"
     },
     {
      "habilidade": 3.8,
-     "em": "2026-09-18T15:12:14.000Z"
-    },
-    {
-     "habilidade": 3.6666666666666665,
      "em": "2026-09-18T15:12:16.000Z"
     },
     {
-     "habilidade": 3.5714285714285716,
+     "habilidade": 3.6666666666666665,
      "em": "2026-09-18T15:12:18.000Z"
     },
     {
-     "habilidade": 3.5,
+     "habilidade": 3.5714285714285716,
      "em": "2026-09-18T15:12:20.000Z"
     },
     {
-     "habilidade": 3.5555555555555554,
+     "habilidade": 3.5,
      "em": "2026-09-18T15:12:22.000Z"
     },
     {
-     "habilidade": 3.6,
+     "habilidade": 3.5555555555555554,
      "em": "2026-09-18T15:12:24.000Z"
     },
     {
-     "habilidade": 3.6363636363636362,
+     "habilidade": 3.6,
      "em": "2026-09-18T15:12:26.000Z"
     },
     {
-     "habilidade": 3.6666666666666665,
+     "habilidade": 3.6363636363636362,
      "em": "2026-09-18T15:12:28.000Z"
     },
     {
-     "habilidade": 3.6153846153846154,
+     "habilidade": 3.6666666666666665,
      "em": "2026-09-18T15:12:30.000Z"
     },
     {
-     "habilidade": 3.5714285714285716,
+     "habilidade": 3.6153846153846154,
      "em": "2026-09-18T15:12:32.000Z"
     },
     {
-     "habilidade": 3.533333333333333,
+     "habilidade": 3.5714285714285716,
      "em": "2026-09-18T15:12:34.000Z"
     },
     {
-     "habilidade": 3.5,
+     "habilidade": 3.533333333333333,
      "em": "2026-09-18T15:12:36.000Z"
+    },
+    {
+     "habilidade": 3.5,
+     "em": "2026-09-18T15:12:38.000Z"
     }
    ]
   },
@@ -4591,55 +4591,55 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "mudancasDeNivel": [
     {
      "habilidade": 4,
-     "em": "2026-09-18T15:09:45.000Z"
+     "em": "2026-09-18T15:09:47.000Z"
     },
     {
      "habilidade": 3.8,
-     "em": "2026-09-18T15:09:50.000Z"
-    },
-    {
-     "habilidade": 3.6666666666666665,
      "em": "2026-09-18T15:09:52.000Z"
     },
     {
-     "habilidade": 3.5714285714285716,
+     "habilidade": 3.6666666666666665,
      "em": "2026-09-18T15:09:54.000Z"
     },
     {
-     "habilidade": 3.5,
+     "habilidade": 3.5714285714285716,
      "em": "2026-09-18T15:09:56.000Z"
     },
     {
-     "habilidade": 3.4444444444444446,
+     "habilidade": 3.5,
      "em": "2026-09-18T15:09:58.000Z"
     },
     {
-     "habilidade": 3.4,
+     "habilidade": 3.4444444444444446,
      "em": "2026-09-18T15:10:00.000Z"
     },
     {
-     "habilidade": 3.3636363636363638,
+     "habilidade": 3.4,
      "em": "2026-09-18T15:10:02.000Z"
     },
     {
-     "habilidade": 3.3333333333333335,
+     "habilidade": 3.3636363636363638,
      "em": "2026-09-18T15:10:04.000Z"
     },
     {
-     "habilidade": 3.3076923076923075,
+     "habilidade": 3.3333333333333335,
      "em": "2026-09-18T15:10:06.000Z"
     },
     {
-     "habilidade": 3.2857142857142856,
+     "habilidade": 3.3076923076923075,
      "em": "2026-09-18T15:10:08.000Z"
     },
     {
-     "habilidade": 3.2666666666666666,
+     "habilidade": 3.2857142857142856,
      "em": "2026-09-18T15:10:10.000Z"
     },
     {
-     "habilidade": 3.25,
+     "habilidade": 3.2666666666666666,
      "em": "2026-09-18T15:10:12.000Z"
+    },
+    {
+     "habilidade": 3.25,
+     "em": "2026-09-18T15:10:14.000Z"
     }
    ]
   }
@@ -4765,12 +4765,12 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "altos": 1
   }
  ],
- "atualizadoEm": "2026-09-18T15:18:46.000Z"
+ "atualizadoEm": "2026-09-18T15:18:49.000Z"
 }
 
 >>> POST /api/times/salvar {"grupo":"g1@g.us","times":[{"jogadores":[{"nome":"Diego","nota":4}]},{"jogadores":[{"nome":"Aces"}]}]}
 <<< 200 {
- "atualizadoEm": "2026-09-18T15:18:47.000Z",
+ "atualizadoEm": "2026-09-18T15:18:50.000Z",
  "times": [
   {
    "numero": 1,
@@ -4838,7 +4838,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Aces",
    "numero": "5521900000008@c.us",
-   "criado_em": "2026-09-18T15:12:37.000Z",
+   "criado_em": "2026-09-18T15:12:39.000Z",
    "altura": null,
    "apelidos": [
     "A6"
@@ -4941,7 +4941,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Andressa não Urach",
    "numero": null,
-   "criado_em": "2026-09-18T15:08:49.000Z",
+   "criado_em": "2026-09-18T15:08:51.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -5042,7 +5042,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Camila Vitorino",
    "numero": null,
-   "criado_em": "2026-09-18T15:08:01.000Z",
+   "criado_em": "2026-09-18T15:08:03.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -5143,7 +5143,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Camila W.",
    "numero": null,
-   "criado_em": "2026-09-18T15:10:13.000Z",
+   "criado_em": "2026-09-18T15:10:15.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -5244,7 +5244,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Carlos Brugger",
    "numero": null,
-   "criado_em": "2026-09-18T15:09:25.000Z",
+   "criado_em": "2026-09-18T15:09:27.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -5345,7 +5345,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Diego Borges",
    "numero": null,
-   "criado_em": "2026-09-18T15:07:39.000Z",
+   "criado_em": "2026-09-18T15:07:41.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -5446,7 +5446,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Dvd",
    "numero": null,
-   "criado_em": "2026-09-18T15:11:19.000Z",
+   "criado_em": "2026-09-18T15:11:21.000Z",
    "altura": null,
    "apelidos": [
     "David"
@@ -5549,7 +5549,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Fabrício Bahiense",
    "numero": null,
-   "criado_em": "2026-09-18T15:06:51.000Z",
+   "criado_em": "2026-09-18T15:06:53.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -5650,7 +5650,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Kamila Vianna",
    "numero": "5521900000005@c.us",
-   "criado_em": "2026-09-18T15:07:09.000Z",
+   "criado_em": "2026-09-18T15:07:11.000Z",
    "altura": "alto",
    "apelidos": [],
    "votos": [
@@ -5751,7 +5751,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Marcel G.",
    "numero": "5521900000002@c.us",
-   "criado_em": "2026-09-18T15:06:33.000Z",
+   "criado_em": "2026-09-18T15:06:35.000Z",
    "altura": null,
    "apelidos": [
     "Marcel Garcia"
@@ -5854,7 +5854,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Marcelle",
    "numero": null,
-   "criado_em": "2026-09-18T15:09:07.000Z",
+   "criado_em": "2026-09-18T15:09:09.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -5955,7 +5955,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Novato Painel",
    "numero": "5521900000010@c.us",
-   "criado_em": "2026-09-18T15:18:40.000Z",
+   "criado_em": "2026-09-18T15:18:43.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [],
@@ -5975,7 +5975,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Pedro Moura",
    "numero": null,
-   "criado_em": "2026-09-18T15:10:43.000Z",
+   "criado_em": "2026-09-18T15:10:45.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -6076,7 +6076,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Ryan Araújo",
    "numero": null,
-   "criado_em": "2026-09-18T15:11:01.000Z",
+   "criado_em": "2026-09-18T15:11:03.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -6177,7 +6177,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Stephanie Bastos",
    "numero": null,
-   "criado_em": "2026-09-18T15:12:55.000Z",
+   "criado_em": "2026-09-18T15:12:57.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -6278,7 +6278,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Thiago",
    "numero": null,
-   "criado_em": "2026-09-18T15:11:37.000Z",
+   "criado_em": "2026-09-18T15:11:39.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -6379,7 +6379,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Thiago Prata",
    "numero": "5521900000006@c.us",
-   "criado_em": "2026-09-18T15:08:19.000Z",
+   "criado_em": "2026-09-18T15:08:21.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -6480,7 +6480,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "Vini",
    "numero": "5521900000007@c.us",
-   "criado_em": "2026-09-18T15:12:07.000Z",
+   "criado_em": "2026-09-18T15:12:09.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -6581,7 +6581,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "chat_id": "g1@g.us",
    "nome": "W. Luketa",
    "numero": null,
-   "criado_em": "2026-09-18T15:09:43.000Z",
+   "criado_em": "2026-09-18T15:09:45.000Z",
    "altura": null,
    "apelidos": [],
    "votos": [
@@ -6719,34 +6719,34 @@ Montados com tecnologia da NASA 🚀
 Bom jogo! 🔥
 
 === apelidos (apelido, criado_em, id, jogador_id)
-{"apelido":"A6","criado_em":"2026-09-18T15:13:13.000Z","id":1,"jogador_id":17}
-{"apelido":"David","criado_em":"2026-09-18T15:13:14.000Z","id":2,"jogador_id":14}
-{"apelido":"Marcel Garcia","criado_em":"2026-09-18T15:18:41.000Z","id":5,"jogador_id":1}
+{"apelido":"A6","criado_em":"2026-09-18T15:13:15.000Z","id":1,"jogador_id":17}
+{"apelido":"David","criado_em":"2026-09-18T15:13:16.000Z","id":2,"jogador_id":14}
+{"apelido":"Marcel Garcia","criado_em":"2026-09-18T15:18:44.000Z","id":5,"jogador_id":1}
 
 === entradas (id, lista_id, mensalista, nome, numero, pago, promovido, timestamp, tipo, valor_pago_centavos)
 {"id":9,"lista_id":2,"mensalista":1,"nome":"Marcel Garcia","numero":"5521900000002@c.us","pago":0,"promovido":0,"timestamp":"2026-09-18T15:03:13.000Z","tipo":"principal","valor_pago_centavos":0}
 {"id":12,"lista_id":2,"mensalista":0,"nome":"Kamila","numero":"5521900000005@c.us","pago":0,"promovido":0,"timestamp":"2026-09-18T15:03:38.000Z","tipo":"principal","valor_pago_centavos":0}
 {"id":13,"lista_id":2,"mensalista":0,"nome":"Thiago Prata","numero":"5521900000006@c.us","pago":0,"promovido":1,"timestamp":"2026-09-18T15:03:43.000Z","tipo":"principal","valor_pago_centavos":0}
 {"id":14,"lista_id":2,"mensalista":0,"nome":"Vini","numero":"5521900000007@c.us","pago":0,"promovido":1,"timestamp":"2026-09-18T15:03:48.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":16,"lista_id":4,"mensalista":1,"nome":"Aces","numero":"5521900000008@c.us","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:17.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":17,"lista_id":4,"mensalista":0,"nome":"Marcel Garcia","numero":"planilha-marcel-garcia@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:18.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":18,"lista_id":4,"mensalista":0,"nome":"Fabrício Bahiense","numero":"planilha-fabr-cio-bahiense@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:19.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":19,"lista_id":4,"mensalista":0,"nome":"Kamila Vianna","numero":"planilha-kamila-vianna@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:20.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":20,"lista_id":4,"mensalista":0,"nome":"Diego Borges","numero":"planilha-diego-borges@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:21.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":21,"lista_id":4,"mensalista":0,"nome":"Camila Vitorino","numero":"planilha-camila-vitorino@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:22.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":22,"lista_id":4,"mensalista":0,"nome":"Thiago Prata","numero":"planilha-thiago-prata@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:23.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":23,"lista_id":4,"mensalista":0,"nome":"Andressa não Urach","numero":"planilha-andressa-n-o-urach@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:24.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":24,"lista_id":4,"mensalista":0,"nome":"Marcelle","numero":"planilha-marcelle@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:25.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":25,"lista_id":4,"mensalista":0,"nome":"Carlos Brugger","numero":"planilha-carlos-brugger@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:26.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":26,"lista_id":4,"mensalista":0,"nome":"W. Luketa","numero":"planilha-w-luketa@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:27.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":27,"lista_id":4,"mensalista":0,"nome":"Camila W.","numero":"planilha-camila-w-@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:28.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":28,"lista_id":4,"mensalista":0,"nome":"Pedro Moura","numero":"planilha-pedro-moura@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:29.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":29,"lista_id":4,"mensalista":0,"nome":"Ryan Araújo","numero":"planilha-ryan-ara-jo@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:30.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":30,"lista_id":4,"mensalista":0,"nome":"Dvd","numero":"planilha-dvd@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:31.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":31,"lista_id":4,"mensalista":0,"nome":"Thiago","numero":"planilha-thiago@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:32.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":32,"lista_id":4,"mensalista":0,"nome":"Vini","numero":"planilha-vini@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:33.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":33,"lista_id":4,"mensalista":0,"nome":"Aces","numero":"planilha-aces@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:34.000Z","tipo":"principal","valor_pago_centavos":0}
-{"id":34,"lista_id":4,"mensalista":0,"nome":"Stephanie Bastos","numero":"planilha-stephanie-bastos@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:35.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":16,"lista_id":4,"mensalista":1,"nome":"Aces","numero":"5521900000008@c.us","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:19.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":17,"lista_id":4,"mensalista":0,"nome":"Marcel Garcia","numero":"planilha-marcel-garcia@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:20.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":18,"lista_id":4,"mensalista":0,"nome":"Fabrício Bahiense","numero":"planilha-fabr-cio-bahiense@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:21.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":19,"lista_id":4,"mensalista":0,"nome":"Kamila Vianna","numero":"planilha-kamila-vianna@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:22.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":20,"lista_id":4,"mensalista":0,"nome":"Diego Borges","numero":"planilha-diego-borges@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:23.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":21,"lista_id":4,"mensalista":0,"nome":"Camila Vitorino","numero":"planilha-camila-vitorino@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:24.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":22,"lista_id":4,"mensalista":0,"nome":"Thiago Prata","numero":"planilha-thiago-prata@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:25.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":23,"lista_id":4,"mensalista":0,"nome":"Andressa não Urach","numero":"planilha-andressa-n-o-urach@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:26.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":24,"lista_id":4,"mensalista":0,"nome":"Marcelle","numero":"planilha-marcelle@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:27.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":25,"lista_id":4,"mensalista":0,"nome":"Carlos Brugger","numero":"planilha-carlos-brugger@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:28.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":26,"lista_id":4,"mensalista":0,"nome":"W. Luketa","numero":"planilha-w-luketa@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:29.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":27,"lista_id":4,"mensalista":0,"nome":"Camila W.","numero":"planilha-camila-w-@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:30.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":28,"lista_id":4,"mensalista":0,"nome":"Pedro Moura","numero":"planilha-pedro-moura@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:31.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":29,"lista_id":4,"mensalista":0,"nome":"Ryan Araújo","numero":"planilha-ryan-ara-jo@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:32.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":30,"lista_id":4,"mensalista":0,"nome":"Dvd","numero":"planilha-dvd@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:33.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":31,"lista_id":4,"mensalista":0,"nome":"Thiago","numero":"planilha-thiago@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:34.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":32,"lista_id":4,"mensalista":0,"nome":"Vini","numero":"planilha-vini@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:35.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":33,"lista_id":4,"mensalista":0,"nome":"Aces","numero":"planilha-aces@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:36.000Z","tipo":"principal","valor_pago_centavos":0}
+{"id":34,"lista_id":4,"mensalista":0,"nome":"Stephanie Bastos","numero":"planilha-stephanie-bastos@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:37.000Z","tipo":"principal","valor_pago_centavos":0}
 
 === grupos (ativo, chat_id, eh_admin, id, limite_espera, limite_mensalistas, limite_principal, mes_processado, nome, pre_lista_aberta, primeira_mensagem_em, valor_mes_centavos, valor_padrao_centavos)
 {"ativo":1,"chat_id":"g1@g.us","eh_admin":0,"id":1,"limite_espera":2,"limite_mensalistas":10,"limite_principal":4,"mes_processado":"2026-09","nome":"Vôlei Riachuelo","pre_lista_aberta":1,"primeira_mensagem_em":"2026-09-18T15:00:01.000Z","valor_mes_centavos":6000,"valor_padrao_centavos":0}
@@ -6754,415 +6754,415 @@ Bom jogo! 🔥
 {"ativo":0,"chat_id":"adm@g.us","eh_admin":0,"id":3,"limite_espera":6,"limite_mensalistas":12,"limite_principal":18,"mes_processado":null,"nome":"Admins do vôlei","pre_lista_aberta":0,"primeira_mensagem_em":"2026-09-18T15:00:03.000Z","valor_mes_centavos":0,"valor_padrao_centavos":0}
 
 === historico_habilidade (em, habilidade, id, jogador_id)
-{"em":"2026-09-18T15:06:35.000Z","habilidade":3,"id":1,"jogador_id":1}
-{"em":"2026-09-18T15:06:53.000Z","habilidade":3,"id":2,"jogador_id":2}
-{"em":"2026-09-18T15:07:11.000Z","habilidade":3,"id":3,"jogador_id":3}
-{"em":"2026-09-18T15:07:16.000Z","habilidade":2.8,"id":4,"jogador_id":3}
-{"em":"2026-09-18T15:07:18.000Z","habilidade":2.6666666666666665,"id":5,"jogador_id":3}
-{"em":"2026-09-18T15:07:20.000Z","habilidade":2.5714285714285716,"id":6,"jogador_id":3}
-{"em":"2026-09-18T15:07:22.000Z","habilidade":2.5,"id":7,"jogador_id":3}
-{"em":"2026-09-18T15:07:24.000Z","habilidade":2.5555555555555554,"id":8,"jogador_id":3}
-{"em":"2026-09-18T15:07:26.000Z","habilidade":2.6,"id":9,"jogador_id":3}
-{"em":"2026-09-18T15:07:28.000Z","habilidade":2.6363636363636362,"id":10,"jogador_id":3}
-{"em":"2026-09-18T15:07:30.000Z","habilidade":2.6666666666666665,"id":11,"jogador_id":3}
-{"em":"2026-09-18T15:07:32.000Z","habilidade":2.6923076923076925,"id":12,"jogador_id":3}
-{"em":"2026-09-18T15:07:34.000Z","habilidade":2.7142857142857144,"id":13,"jogador_id":3}
-{"em":"2026-09-18T15:07:36.000Z","habilidade":2.7333333333333334,"id":14,"jogador_id":3}
-{"em":"2026-09-18T15:07:38.000Z","habilidade":2.75,"id":15,"jogador_id":3}
-{"em":"2026-09-18T15:07:41.000Z","habilidade":3,"id":16,"jogador_id":4}
-{"em":"2026-09-18T15:07:54.000Z","habilidade":2.923076923076923,"id":17,"jogador_id":4}
-{"em":"2026-09-18T15:07:56.000Z","habilidade":2.857142857142857,"id":18,"jogador_id":4}
-{"em":"2026-09-18T15:07:58.000Z","habilidade":2.8,"id":19,"jogador_id":4}
-{"em":"2026-09-18T15:08:00.000Z","habilidade":2.75,"id":20,"jogador_id":4}
-{"em":"2026-09-18T15:08:21.000Z","habilidade":4,"id":22,"jogador_id":6}
-{"em":"2026-09-18T15:08:26.000Z","habilidade":3.8,"id":23,"jogador_id":6}
-{"em":"2026-09-18T15:08:28.000Z","habilidade":3.6666666666666665,"id":24,"jogador_id":6}
-{"em":"2026-09-18T15:08:30.000Z","habilidade":3.5714285714285716,"id":25,"jogador_id":6}
-{"em":"2026-09-18T15:08:32.000Z","habilidade":3.5,"id":26,"jogador_id":6}
-{"em":"2026-09-18T15:08:34.000Z","habilidade":3.5555555555555554,"id":27,"jogador_id":6}
-{"em":"2026-09-18T15:08:36.000Z","habilidade":3.6,"id":28,"jogador_id":6}
-{"em":"2026-09-18T15:08:38.000Z","habilidade":3.6363636363636362,"id":29,"jogador_id":6}
-{"em":"2026-09-18T15:08:40.000Z","habilidade":3.6666666666666665,"id":30,"jogador_id":6}
-{"em":"2026-09-18T15:08:42.000Z","habilidade":3.6153846153846154,"id":31,"jogador_id":6}
-{"em":"2026-09-18T15:08:44.000Z","habilidade":3.5714285714285716,"id":32,"jogador_id":6}
-{"em":"2026-09-18T15:08:46.000Z","habilidade":3.533333333333333,"id":33,"jogador_id":6}
-{"em":"2026-09-18T15:08:48.000Z","habilidade":3.5,"id":34,"jogador_id":6}
-{"em":"2026-09-18T15:08:51.000Z","habilidade":2,"id":35,"jogador_id":7}
-{"em":"2026-09-18T15:09:09.000Z","habilidade":2,"id":36,"jogador_id":8}
-{"em":"2026-09-18T15:09:27.000Z","habilidade":3,"id":37,"jogador_id":9}
-{"em":"2026-09-18T15:09:45.000Z","habilidade":4,"id":38,"jogador_id":10}
-{"em":"2026-09-18T15:09:50.000Z","habilidade":3.8,"id":39,"jogador_id":10}
-{"em":"2026-09-18T15:09:52.000Z","habilidade":3.6666666666666665,"id":40,"jogador_id":10}
-{"em":"2026-09-18T15:09:54.000Z","habilidade":3.5714285714285716,"id":41,"jogador_id":10}
-{"em":"2026-09-18T15:09:56.000Z","habilidade":3.5,"id":42,"jogador_id":10}
-{"em":"2026-09-18T15:09:58.000Z","habilidade":3.4444444444444446,"id":43,"jogador_id":10}
-{"em":"2026-09-18T15:10:00.000Z","habilidade":3.4,"id":44,"jogador_id":10}
-{"em":"2026-09-18T15:10:02.000Z","habilidade":3.3636363636363638,"id":45,"jogador_id":10}
-{"em":"2026-09-18T15:10:04.000Z","habilidade":3.3333333333333335,"id":46,"jogador_id":10}
-{"em":"2026-09-18T15:10:06.000Z","habilidade":3.3076923076923075,"id":47,"jogador_id":10}
-{"em":"2026-09-18T15:10:08.000Z","habilidade":3.2857142857142856,"id":48,"jogador_id":10}
-{"em":"2026-09-18T15:10:10.000Z","habilidade":3.2666666666666666,"id":49,"jogador_id":10}
-{"em":"2026-09-18T15:10:12.000Z","habilidade":3.25,"id":50,"jogador_id":10}
-{"em":"2026-09-18T15:10:15.000Z","habilidade":3,"id":51,"jogador_id":11}
-{"em":"2026-09-18T15:10:20.000Z","habilidade":3.2,"id":52,"jogador_id":11}
-{"em":"2026-09-18T15:10:22.000Z","habilidade":3.3333333333333335,"id":53,"jogador_id":11}
-{"em":"2026-09-18T15:10:24.000Z","habilidade":3.4285714285714284,"id":54,"jogador_id":11}
-{"em":"2026-09-18T15:10:26.000Z","habilidade":3.5,"id":55,"jogador_id":11}
-{"em":"2026-09-18T15:10:28.000Z","habilidade":3.4444444444444446,"id":56,"jogador_id":11}
-{"em":"2026-09-18T15:10:30.000Z","habilidade":3.4,"id":57,"jogador_id":11}
-{"em":"2026-09-18T15:10:32.000Z","habilidade":3.3636363636363638,"id":58,"jogador_id":11}
-{"em":"2026-09-18T15:10:34.000Z","habilidade":3.3333333333333335,"id":59,"jogador_id":11}
-{"em":"2026-09-18T15:10:36.000Z","habilidade":3.3846153846153846,"id":60,"jogador_id":11}
-{"em":"2026-09-18T15:10:38.000Z","habilidade":3.4285714285714284,"id":61,"jogador_id":11}
-{"em":"2026-09-18T15:10:40.000Z","habilidade":3.466666666666667,"id":62,"jogador_id":11}
-{"em":"2026-09-18T15:10:42.000Z","habilidade":3.5,"id":63,"jogador_id":11}
-{"em":"2026-09-18T15:10:45.000Z","habilidade":2,"id":64,"jogador_id":12}
-{"em":"2026-09-18T15:11:03.000Z","habilidade":3,"id":65,"jogador_id":13}
-{"em":"2026-09-18T15:11:21.000Z","habilidade":3,"id":66,"jogador_id":14}
-{"em":"2026-09-18T15:11:39.000Z","habilidade":2,"id":67,"jogador_id":15}
-{"em":"2026-09-18T15:11:44.000Z","habilidade":2.2,"id":68,"jogador_id":15}
-{"em":"2026-09-18T15:11:46.000Z","habilidade":2.3333333333333335,"id":69,"jogador_id":15}
-{"em":"2026-09-18T15:11:48.000Z","habilidade":2.4285714285714284,"id":70,"jogador_id":15}
-{"em":"2026-09-18T15:11:50.000Z","habilidade":2.5,"id":71,"jogador_id":15}
-{"em":"2026-09-18T15:11:52.000Z","habilidade":2.5555555555555554,"id":72,"jogador_id":15}
-{"em":"2026-09-18T15:11:54.000Z","habilidade":2.6,"id":73,"jogador_id":15}
-{"em":"2026-09-18T15:11:56.000Z","habilidade":2.6363636363636362,"id":74,"jogador_id":15}
-{"em":"2026-09-18T15:11:58.000Z","habilidade":2.6666666666666665,"id":75,"jogador_id":15}
-{"em":"2026-09-18T15:12:00.000Z","habilidade":2.6923076923076925,"id":76,"jogador_id":15}
-{"em":"2026-09-18T15:12:02.000Z","habilidade":2.7142857142857144,"id":77,"jogador_id":15}
-{"em":"2026-09-18T15:12:04.000Z","habilidade":2.7333333333333334,"id":78,"jogador_id":15}
-{"em":"2026-09-18T15:12:06.000Z","habilidade":2.75,"id":79,"jogador_id":15}
-{"em":"2026-09-18T15:12:09.000Z","habilidade":4,"id":80,"jogador_id":16}
-{"em":"2026-09-18T15:12:14.000Z","habilidade":3.8,"id":81,"jogador_id":16}
-{"em":"2026-09-18T15:12:16.000Z","habilidade":3.6666666666666665,"id":82,"jogador_id":16}
-{"em":"2026-09-18T15:12:18.000Z","habilidade":3.5714285714285716,"id":83,"jogador_id":16}
-{"em":"2026-09-18T15:12:20.000Z","habilidade":3.5,"id":84,"jogador_id":16}
-{"em":"2026-09-18T15:12:22.000Z","habilidade":3.5555555555555554,"id":85,"jogador_id":16}
-{"em":"2026-09-18T15:12:24.000Z","habilidade":3.6,"id":86,"jogador_id":16}
-{"em":"2026-09-18T15:12:26.000Z","habilidade":3.6363636363636362,"id":87,"jogador_id":16}
-{"em":"2026-09-18T15:12:28.000Z","habilidade":3.6666666666666665,"id":88,"jogador_id":16}
-{"em":"2026-09-18T15:12:30.000Z","habilidade":3.6153846153846154,"id":89,"jogador_id":16}
-{"em":"2026-09-18T15:12:32.000Z","habilidade":3.5714285714285716,"id":90,"jogador_id":16}
-{"em":"2026-09-18T15:12:34.000Z","habilidade":3.533333333333333,"id":91,"jogador_id":16}
-{"em":"2026-09-18T15:12:36.000Z","habilidade":3.5,"id":92,"jogador_id":16}
-{"em":"2026-09-18T15:12:39.000Z","habilidade":4,"id":93,"jogador_id":17}
-{"em":"2026-09-18T15:12:57.000Z","habilidade":2,"id":94,"jogador_id":18}
-{"em":"2026-09-18T15:18:44.000Z","habilidade":2.875,"id":95,"jogador_id":3}
+{"em":"2026-09-18T15:06:37.000Z","habilidade":3,"id":1,"jogador_id":1}
+{"em":"2026-09-18T15:06:55.000Z","habilidade":3,"id":2,"jogador_id":2}
+{"em":"2026-09-18T15:07:13.000Z","habilidade":3,"id":3,"jogador_id":3}
+{"em":"2026-09-18T15:07:18.000Z","habilidade":2.8,"id":4,"jogador_id":3}
+{"em":"2026-09-18T15:07:20.000Z","habilidade":2.6666666666666665,"id":5,"jogador_id":3}
+{"em":"2026-09-18T15:07:22.000Z","habilidade":2.5714285714285716,"id":6,"jogador_id":3}
+{"em":"2026-09-18T15:07:24.000Z","habilidade":2.5,"id":7,"jogador_id":3}
+{"em":"2026-09-18T15:07:26.000Z","habilidade":2.5555555555555554,"id":8,"jogador_id":3}
+{"em":"2026-09-18T15:07:28.000Z","habilidade":2.6,"id":9,"jogador_id":3}
+{"em":"2026-09-18T15:07:30.000Z","habilidade":2.6363636363636362,"id":10,"jogador_id":3}
+{"em":"2026-09-18T15:07:32.000Z","habilidade":2.6666666666666665,"id":11,"jogador_id":3}
+{"em":"2026-09-18T15:07:34.000Z","habilidade":2.6923076923076925,"id":12,"jogador_id":3}
+{"em":"2026-09-18T15:07:36.000Z","habilidade":2.7142857142857144,"id":13,"jogador_id":3}
+{"em":"2026-09-18T15:07:38.000Z","habilidade":2.7333333333333334,"id":14,"jogador_id":3}
+{"em":"2026-09-18T15:07:40.000Z","habilidade":2.75,"id":15,"jogador_id":3}
+{"em":"2026-09-18T15:07:43.000Z","habilidade":3,"id":16,"jogador_id":4}
+{"em":"2026-09-18T15:07:56.000Z","habilidade":2.923076923076923,"id":17,"jogador_id":4}
+{"em":"2026-09-18T15:07:58.000Z","habilidade":2.857142857142857,"id":18,"jogador_id":4}
+{"em":"2026-09-18T15:08:00.000Z","habilidade":2.8,"id":19,"jogador_id":4}
+{"em":"2026-09-18T15:08:02.000Z","habilidade":2.75,"id":20,"jogador_id":4}
+{"em":"2026-09-18T15:08:23.000Z","habilidade":4,"id":22,"jogador_id":6}
+{"em":"2026-09-18T15:08:28.000Z","habilidade":3.8,"id":23,"jogador_id":6}
+{"em":"2026-09-18T15:08:30.000Z","habilidade":3.6666666666666665,"id":24,"jogador_id":6}
+{"em":"2026-09-18T15:08:32.000Z","habilidade":3.5714285714285716,"id":25,"jogador_id":6}
+{"em":"2026-09-18T15:08:34.000Z","habilidade":3.5,"id":26,"jogador_id":6}
+{"em":"2026-09-18T15:08:36.000Z","habilidade":3.5555555555555554,"id":27,"jogador_id":6}
+{"em":"2026-09-18T15:08:38.000Z","habilidade":3.6,"id":28,"jogador_id":6}
+{"em":"2026-09-18T15:08:40.000Z","habilidade":3.6363636363636362,"id":29,"jogador_id":6}
+{"em":"2026-09-18T15:08:42.000Z","habilidade":3.6666666666666665,"id":30,"jogador_id":6}
+{"em":"2026-09-18T15:08:44.000Z","habilidade":3.6153846153846154,"id":31,"jogador_id":6}
+{"em":"2026-09-18T15:08:46.000Z","habilidade":3.5714285714285716,"id":32,"jogador_id":6}
+{"em":"2026-09-18T15:08:48.000Z","habilidade":3.533333333333333,"id":33,"jogador_id":6}
+{"em":"2026-09-18T15:08:50.000Z","habilidade":3.5,"id":34,"jogador_id":6}
+{"em":"2026-09-18T15:08:53.000Z","habilidade":2,"id":35,"jogador_id":7}
+{"em":"2026-09-18T15:09:11.000Z","habilidade":2,"id":36,"jogador_id":8}
+{"em":"2026-09-18T15:09:29.000Z","habilidade":3,"id":37,"jogador_id":9}
+{"em":"2026-09-18T15:09:47.000Z","habilidade":4,"id":38,"jogador_id":10}
+{"em":"2026-09-18T15:09:52.000Z","habilidade":3.8,"id":39,"jogador_id":10}
+{"em":"2026-09-18T15:09:54.000Z","habilidade":3.6666666666666665,"id":40,"jogador_id":10}
+{"em":"2026-09-18T15:09:56.000Z","habilidade":3.5714285714285716,"id":41,"jogador_id":10}
+{"em":"2026-09-18T15:09:58.000Z","habilidade":3.5,"id":42,"jogador_id":10}
+{"em":"2026-09-18T15:10:00.000Z","habilidade":3.4444444444444446,"id":43,"jogador_id":10}
+{"em":"2026-09-18T15:10:02.000Z","habilidade":3.4,"id":44,"jogador_id":10}
+{"em":"2026-09-18T15:10:04.000Z","habilidade":3.3636363636363638,"id":45,"jogador_id":10}
+{"em":"2026-09-18T15:10:06.000Z","habilidade":3.3333333333333335,"id":46,"jogador_id":10}
+{"em":"2026-09-18T15:10:08.000Z","habilidade":3.3076923076923075,"id":47,"jogador_id":10}
+{"em":"2026-09-18T15:10:10.000Z","habilidade":3.2857142857142856,"id":48,"jogador_id":10}
+{"em":"2026-09-18T15:10:12.000Z","habilidade":3.2666666666666666,"id":49,"jogador_id":10}
+{"em":"2026-09-18T15:10:14.000Z","habilidade":3.25,"id":50,"jogador_id":10}
+{"em":"2026-09-18T15:10:17.000Z","habilidade":3,"id":51,"jogador_id":11}
+{"em":"2026-09-18T15:10:22.000Z","habilidade":3.2,"id":52,"jogador_id":11}
+{"em":"2026-09-18T15:10:24.000Z","habilidade":3.3333333333333335,"id":53,"jogador_id":11}
+{"em":"2026-09-18T15:10:26.000Z","habilidade":3.4285714285714284,"id":54,"jogador_id":11}
+{"em":"2026-09-18T15:10:28.000Z","habilidade":3.5,"id":55,"jogador_id":11}
+{"em":"2026-09-18T15:10:30.000Z","habilidade":3.4444444444444446,"id":56,"jogador_id":11}
+{"em":"2026-09-18T15:10:32.000Z","habilidade":3.4,"id":57,"jogador_id":11}
+{"em":"2026-09-18T15:10:34.000Z","habilidade":3.3636363636363638,"id":58,"jogador_id":11}
+{"em":"2026-09-18T15:10:36.000Z","habilidade":3.3333333333333335,"id":59,"jogador_id":11}
+{"em":"2026-09-18T15:10:38.000Z","habilidade":3.3846153846153846,"id":60,"jogador_id":11}
+{"em":"2026-09-18T15:10:40.000Z","habilidade":3.4285714285714284,"id":61,"jogador_id":11}
+{"em":"2026-09-18T15:10:42.000Z","habilidade":3.466666666666667,"id":62,"jogador_id":11}
+{"em":"2026-09-18T15:10:44.000Z","habilidade":3.5,"id":63,"jogador_id":11}
+{"em":"2026-09-18T15:10:47.000Z","habilidade":2,"id":64,"jogador_id":12}
+{"em":"2026-09-18T15:11:05.000Z","habilidade":3,"id":65,"jogador_id":13}
+{"em":"2026-09-18T15:11:23.000Z","habilidade":3,"id":66,"jogador_id":14}
+{"em":"2026-09-18T15:11:41.000Z","habilidade":2,"id":67,"jogador_id":15}
+{"em":"2026-09-18T15:11:46.000Z","habilidade":2.2,"id":68,"jogador_id":15}
+{"em":"2026-09-18T15:11:48.000Z","habilidade":2.3333333333333335,"id":69,"jogador_id":15}
+{"em":"2026-09-18T15:11:50.000Z","habilidade":2.4285714285714284,"id":70,"jogador_id":15}
+{"em":"2026-09-18T15:11:52.000Z","habilidade":2.5,"id":71,"jogador_id":15}
+{"em":"2026-09-18T15:11:54.000Z","habilidade":2.5555555555555554,"id":72,"jogador_id":15}
+{"em":"2026-09-18T15:11:56.000Z","habilidade":2.6,"id":73,"jogador_id":15}
+{"em":"2026-09-18T15:11:58.000Z","habilidade":2.6363636363636362,"id":74,"jogador_id":15}
+{"em":"2026-09-18T15:12:00.000Z","habilidade":2.6666666666666665,"id":75,"jogador_id":15}
+{"em":"2026-09-18T15:12:02.000Z","habilidade":2.6923076923076925,"id":76,"jogador_id":15}
+{"em":"2026-09-18T15:12:04.000Z","habilidade":2.7142857142857144,"id":77,"jogador_id":15}
+{"em":"2026-09-18T15:12:06.000Z","habilidade":2.7333333333333334,"id":78,"jogador_id":15}
+{"em":"2026-09-18T15:12:08.000Z","habilidade":2.75,"id":79,"jogador_id":15}
+{"em":"2026-09-18T15:12:11.000Z","habilidade":4,"id":80,"jogador_id":16}
+{"em":"2026-09-18T15:12:16.000Z","habilidade":3.8,"id":81,"jogador_id":16}
+{"em":"2026-09-18T15:12:18.000Z","habilidade":3.6666666666666665,"id":82,"jogador_id":16}
+{"em":"2026-09-18T15:12:20.000Z","habilidade":3.5714285714285716,"id":83,"jogador_id":16}
+{"em":"2026-09-18T15:12:22.000Z","habilidade":3.5,"id":84,"jogador_id":16}
+{"em":"2026-09-18T15:12:24.000Z","habilidade":3.5555555555555554,"id":85,"jogador_id":16}
+{"em":"2026-09-18T15:12:26.000Z","habilidade":3.6,"id":86,"jogador_id":16}
+{"em":"2026-09-18T15:12:28.000Z","habilidade":3.6363636363636362,"id":87,"jogador_id":16}
+{"em":"2026-09-18T15:12:30.000Z","habilidade":3.6666666666666665,"id":88,"jogador_id":16}
+{"em":"2026-09-18T15:12:32.000Z","habilidade":3.6153846153846154,"id":89,"jogador_id":16}
+{"em":"2026-09-18T15:12:34.000Z","habilidade":3.5714285714285716,"id":90,"jogador_id":16}
+{"em":"2026-09-18T15:12:36.000Z","habilidade":3.533333333333333,"id":91,"jogador_id":16}
+{"em":"2026-09-18T15:12:38.000Z","habilidade":3.5,"id":92,"jogador_id":16}
+{"em":"2026-09-18T15:12:41.000Z","habilidade":4,"id":93,"jogador_id":17}
+{"em":"2026-09-18T15:12:59.000Z","habilidade":2,"id":94,"jogador_id":18}
+{"em":"2026-09-18T15:18:47.000Z","habilidade":2.875,"id":95,"jogador_id":3}
 
 === inadimplentes (chat_id, criado_em, id, nome, numero, valor_centavos)
 
 === jogadores (altura, chat_id, criado_em, id, nome, numero)
-{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:06:33.000Z","id":1,"nome":"Marcel G.","numero":"5521900000002@c.us"}
-{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:06:51.000Z","id":2,"nome":"Fabrício Bahiense","numero":null}
-{"altura":"alto","chat_id":"g1@g.us","criado_em":"2026-09-18T15:07:09.000Z","id":3,"nome":"Kamila Vianna","numero":"5521900000005@c.us"}
-{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:07:39.000Z","id":4,"nome":"Diego Borges","numero":null}
-{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:08:19.000Z","id":6,"nome":"Thiago Prata","numero":"5521900000006@c.us"}
-{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:08:49.000Z","id":7,"nome":"Andressa não Urach","numero":null}
-{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:09:07.000Z","id":8,"nome":"Marcelle","numero":null}
-{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:09:25.000Z","id":9,"nome":"Carlos Brugger","numero":null}
-{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:09:43.000Z","id":10,"nome":"W. Luketa","numero":null}
-{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:10:13.000Z","id":11,"nome":"Camila W.","numero":null}
-{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:10:43.000Z","id":12,"nome":"Pedro Moura","numero":null}
-{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:11:01.000Z","id":13,"nome":"Ryan Araújo","numero":null}
-{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:11:19.000Z","id":14,"nome":"Dvd","numero":null}
-{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:11:37.000Z","id":15,"nome":"Thiago","numero":null}
-{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:12:07.000Z","id":16,"nome":"Vini","numero":"5521900000007@c.us"}
-{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:12:37.000Z","id":17,"nome":"Aces","numero":"5521900000008@c.us"}
-{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:12:55.000Z","id":18,"nome":"Stephanie Bastos","numero":null}
-{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:18:40.000Z","id":19,"nome":"Novato Painel","numero":"5521900000010@c.us"}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:06:35.000Z","id":1,"nome":"Marcel G.","numero":"5521900000002@c.us"}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:06:53.000Z","id":2,"nome":"Fabrício Bahiense","numero":null}
+{"altura":"alto","chat_id":"g1@g.us","criado_em":"2026-09-18T15:07:11.000Z","id":3,"nome":"Kamila Vianna","numero":"5521900000005@c.us"}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:07:41.000Z","id":4,"nome":"Diego Borges","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:08:21.000Z","id":6,"nome":"Thiago Prata","numero":"5521900000006@c.us"}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:08:51.000Z","id":7,"nome":"Andressa não Urach","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:09:09.000Z","id":8,"nome":"Marcelle","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:09:27.000Z","id":9,"nome":"Carlos Brugger","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:09:45.000Z","id":10,"nome":"W. Luketa","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:10:15.000Z","id":11,"nome":"Camila W.","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:10:45.000Z","id":12,"nome":"Pedro Moura","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:11:03.000Z","id":13,"nome":"Ryan Araújo","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:11:21.000Z","id":14,"nome":"Dvd","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:11:39.000Z","id":15,"nome":"Thiago","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:12:09.000Z","id":16,"nome":"Vini","numero":"5521900000007@c.us"}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:12:39.000Z","id":17,"nome":"Aces","numero":"5521900000008@c.us"}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:12:57.000Z","id":18,"nome":"Stephanie Bastos","numero":null}
+{"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:18:43.000Z","id":19,"nome":"Novato Painel","numero":"5521900000010@c.us"}
 
 === listas (chat_id, criada_em, data_jogo, id, lembrete_em, nome, status, valor_centavos)
 {"chat_id":"g1@g.us","criada_em":"2026-09-18T15:03:10.000Z","data_jogo":"14/10","id":2,"lembrete_em":null,"nome":"Sexta Nova","status":"encerrada","valor_centavos":1700}
 {"chat_id":"g1@g.us","criada_em":"2026-07-31T21:00:00.000Z","data_jogo":"31/07","id":4,"lembrete_em":null,"nome":"Pelada da planilha","status":"encerrada","valor_centavos":0}
 
 === mensalidades (id, mensalista_id, mes, pago_em, valor_centavos)
-{"id":5,"mensalista_id":3,"mes":"2026-09","pago_em":"2026-09-18T15:05:17.000Z","valor_centavos":5300}
+{"id":5,"mensalista_id":3,"mes":"2026-09","pago_em":"2026-09-18T15:05:19.000Z","valor_centavos":5300}
 
 === mensalistas (chat_id, criado_em, espera, fixo, id, nome, numero)
 {"chat_id":"g1@g.us","criado_em":"2026-09-18T15:01:40.000Z","espera":0,"fixo":1,"id":3,"nome":"Aces","numero":"5521900000008@c.us"}
 
 === notas_do_dia (atualizado_em, id, jogador_id, lista_id, nota, observacao)
-{"atualizado_em":"2026-09-18T15:18:45.000Z","id":1,"jogador_id":3,"lista_id":2,"nota":4.5,"observacao":"bom"}
+{"atualizado_em":"2026-09-18T15:18:48.000Z","id":1,"jogador_id":3,"lista_id":2,"nota":4.5,"observacao":"bom"}
 
 === replays (arquivo, autor, chat_id, criado_em, erro, id, momento, segundos, status, video_id)
-{"arquivo":null,"autor":"Fabricio","chat_id":"adm@g.us","criado_em":1789744710000,"erro":null,"id":1,"momento":1789744709000,"segundos":30,"status":"pendente","video_id":null}
-{"arquivo":null,"autor":"Fabricio","chat_id":"adm@g.us","criado_em":1789744712000,"erro":null,"id":2,"momento":1789744711000,"segundos":120,"status":"pendente","video_id":null}
-{"arquivo":null,"autor":"Fabricio","chat_id":"adm@g.us","criado_em":1789744714000,"erro":null,"id":3,"momento":1789744713000,"segundos":300,"status":"pendente","video_id":null}
+{"arquivo":null,"autor":"Fabricio","chat_id":"adm@g.us","criado_em":1789744712000,"erro":null,"id":1,"momento":1789744711000,"segundos":30,"status":"pendente","video_id":null}
+{"arquivo":null,"autor":"Fabricio","chat_id":"adm@g.us","criado_em":1789744714000,"erro":null,"id":2,"momento":1789744713000,"segundos":120,"status":"pendente","video_id":null}
+{"arquivo":null,"autor":"Fabricio","chat_id":"adm@g.us","criado_em":1789744716000,"erro":null,"id":3,"momento":1789744715000,"segundos":300,"status":"pendente","video_id":null}
 
 === times_montados (atualizado_em, dados, lista_id)
 
 === videos (aviso, criado_em, drive_id, erro, fim, id, inicio, nome, status, tamanho)
 
 === votos_habilidade (atualizado_em, fundamento, id, jogador_id, nota, votante)
-{"atualizado_em":"2026-09-18T15:13:36.000Z","fundamento":"ataque","id":1,"jogador_id":1,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:13:37.000Z","fundamento":"defesa","id":2,"jogador_id":1,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:13:38.000Z","fundamento":"levantamento","id":3,"jogador_id":1,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:13:39.000Z","fundamento":"saque","id":4,"jogador_id":1,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:13:40.000Z","fundamento":"ataque","id":5,"jogador_id":1,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:13:41.000Z","fundamento":"defesa","id":6,"jogador_id":1,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:13:42.000Z","fundamento":"levantamento","id":7,"jogador_id":1,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:13:43.000Z","fundamento":"saque","id":8,"jogador_id":1,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:13:44.000Z","fundamento":"ataque","id":9,"jogador_id":1,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:13:45.000Z","fundamento":"defesa","id":10,"jogador_id":1,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:13:46.000Z","fundamento":"levantamento","id":11,"jogador_id":1,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:13:47.000Z","fundamento":"saque","id":12,"jogador_id":1,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:13:48.000Z","fundamento":"ataque","id":13,"jogador_id":1,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:13:49.000Z","fundamento":"defesa","id":14,"jogador_id":1,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:13:50.000Z","fundamento":"levantamento","id":15,"jogador_id":1,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:13:51.000Z","fundamento":"saque","id":16,"jogador_id":1,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:13:52.000Z","fundamento":"ataque","id":17,"jogador_id":2,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:13:53.000Z","fundamento":"defesa","id":18,"jogador_id":2,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:13:54.000Z","fundamento":"levantamento","id":19,"jogador_id":2,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:13:55.000Z","fundamento":"saque","id":20,"jogador_id":2,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:13:56.000Z","fundamento":"ataque","id":21,"jogador_id":2,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:13:57.000Z","fundamento":"defesa","id":22,"jogador_id":2,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:13:58.000Z","fundamento":"levantamento","id":23,"jogador_id":2,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:13:59.000Z","fundamento":"saque","id":24,"jogador_id":2,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:14:00.000Z","fundamento":"ataque","id":25,"jogador_id":2,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:14:01.000Z","fundamento":"defesa","id":26,"jogador_id":2,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:14:02.000Z","fundamento":"levantamento","id":27,"jogador_id":2,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:14:03.000Z","fundamento":"saque","id":28,"jogador_id":2,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:14:04.000Z","fundamento":"ataque","id":29,"jogador_id":2,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:14:05.000Z","fundamento":"defesa","id":30,"jogador_id":2,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:14:06.000Z","fundamento":"levantamento","id":31,"jogador_id":2,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:14:07.000Z","fundamento":"saque","id":32,"jogador_id":2,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:18:43.000Z","fundamento":"ataque","id":33,"jogador_id":3,"nota":5,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:14:09.000Z","fundamento":"defesa","id":34,"jogador_id":3,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:14:10.000Z","fundamento":"levantamento","id":35,"jogador_id":3,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:14:11.000Z","fundamento":"saque","id":36,"jogador_id":3,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:14:12.000Z","fundamento":"ataque","id":37,"jogador_id":3,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:14:13.000Z","fundamento":"defesa","id":38,"jogador_id":3,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:14:14.000Z","fundamento":"levantamento","id":39,"jogador_id":3,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:14:15.000Z","fundamento":"saque","id":40,"jogador_id":3,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:14:16.000Z","fundamento":"ataque","id":41,"jogador_id":3,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:14:17.000Z","fundamento":"defesa","id":42,"jogador_id":3,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:14:18.000Z","fundamento":"levantamento","id":43,"jogador_id":3,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:14:19.000Z","fundamento":"saque","id":44,"jogador_id":3,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:14:20.000Z","fundamento":"ataque","id":45,"jogador_id":3,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:14:21.000Z","fundamento":"defesa","id":46,"jogador_id":3,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:14:22.000Z","fundamento":"levantamento","id":47,"jogador_id":3,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:14:23.000Z","fundamento":"saque","id":48,"jogador_id":3,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:14:24.000Z","fundamento":"ataque","id":49,"jogador_id":4,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:14:25.000Z","fundamento":"defesa","id":50,"jogador_id":4,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:14:26.000Z","fundamento":"levantamento","id":51,"jogador_id":4,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:14:27.000Z","fundamento":"saque","id":52,"jogador_id":4,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:14:28.000Z","fundamento":"ataque","id":53,"jogador_id":4,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:14:29.000Z","fundamento":"defesa","id":54,"jogador_id":4,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:14:30.000Z","fundamento":"levantamento","id":55,"jogador_id":4,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:14:31.000Z","fundamento":"saque","id":56,"jogador_id":4,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:14:32.000Z","fundamento":"ataque","id":57,"jogador_id":4,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:14:33.000Z","fundamento":"defesa","id":58,"jogador_id":4,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:14:34.000Z","fundamento":"levantamento","id":59,"jogador_id":4,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:14:35.000Z","fundamento":"saque","id":60,"jogador_id":4,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:14:36.000Z","fundamento":"ataque","id":61,"jogador_id":4,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:14:37.000Z","fundamento":"defesa","id":62,"jogador_id":4,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:14:38.000Z","fundamento":"levantamento","id":63,"jogador_id":4,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:14:39.000Z","fundamento":"saque","id":64,"jogador_id":4,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:14:56.000Z","fundamento":"ataque","id":81,"jogador_id":6,"nota":4,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:14:57.000Z","fundamento":"defesa","id":82,"jogador_id":6,"nota":4,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:14:58.000Z","fundamento":"levantamento","id":83,"jogador_id":6,"nota":4,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:14:59.000Z","fundamento":"saque","id":84,"jogador_id":6,"nota":4,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:15:00.000Z","fundamento":"ataque","id":85,"jogador_id":6,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:15:01.000Z","fundamento":"defesa","id":86,"jogador_id":6,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:15:02.000Z","fundamento":"levantamento","id":87,"jogador_id":6,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:15:03.000Z","fundamento":"saque","id":88,"jogador_id":6,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:15:04.000Z","fundamento":"ataque","id":89,"jogador_id":6,"nota":4,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:15:05.000Z","fundamento":"defesa","id":90,"jogador_id":6,"nota":4,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:15:06.000Z","fundamento":"levantamento","id":91,"jogador_id":6,"nota":4,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:15:07.000Z","fundamento":"saque","id":92,"jogador_id":6,"nota":4,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:15:08.000Z","fundamento":"ataque","id":93,"jogador_id":6,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:15:09.000Z","fundamento":"defesa","id":94,"jogador_id":6,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:15:10.000Z","fundamento":"levantamento","id":95,"jogador_id":6,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:15:11.000Z","fundamento":"saque","id":96,"jogador_id":6,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:15:12.000Z","fundamento":"ataque","id":97,"jogador_id":7,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:15:13.000Z","fundamento":"defesa","id":98,"jogador_id":7,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:15:14.000Z","fundamento":"levantamento","id":99,"jogador_id":7,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:15:15.000Z","fundamento":"saque","id":100,"jogador_id":7,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:15:16.000Z","fundamento":"ataque","id":101,"jogador_id":7,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:15:17.000Z","fundamento":"defesa","id":102,"jogador_id":7,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:15:18.000Z","fundamento":"levantamento","id":103,"jogador_id":7,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:15:19.000Z","fundamento":"saque","id":104,"jogador_id":7,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:15:20.000Z","fundamento":"ataque","id":105,"jogador_id":7,"nota":2,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:15:21.000Z","fundamento":"defesa","id":106,"jogador_id":7,"nota":2,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:15:22.000Z","fundamento":"levantamento","id":107,"jogador_id":7,"nota":2,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:15:23.000Z","fundamento":"saque","id":108,"jogador_id":7,"nota":2,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:15:24.000Z","fundamento":"ataque","id":109,"jogador_id":7,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:15:25.000Z","fundamento":"defesa","id":110,"jogador_id":7,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:15:26.000Z","fundamento":"levantamento","id":111,"jogador_id":7,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:15:27.000Z","fundamento":"saque","id":112,"jogador_id":7,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:15:28.000Z","fundamento":"ataque","id":113,"jogador_id":8,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:15:29.000Z","fundamento":"defesa","id":114,"jogador_id":8,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:15:30.000Z","fundamento":"levantamento","id":115,"jogador_id":8,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:15:31.000Z","fundamento":"saque","id":116,"jogador_id":8,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:15:32.000Z","fundamento":"ataque","id":117,"jogador_id":8,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:15:33.000Z","fundamento":"defesa","id":118,"jogador_id":8,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:15:34.000Z","fundamento":"levantamento","id":119,"jogador_id":8,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:15:35.000Z","fundamento":"saque","id":120,"jogador_id":8,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:15:36.000Z","fundamento":"ataque","id":121,"jogador_id":8,"nota":2,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:15:37.000Z","fundamento":"defesa","id":122,"jogador_id":8,"nota":2,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:15:38.000Z","fundamento":"levantamento","id":123,"jogador_id":8,"nota":2,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:15:39.000Z","fundamento":"saque","id":124,"jogador_id":8,"nota":2,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:15:40.000Z","fundamento":"ataque","id":125,"jogador_id":8,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:15:41.000Z","fundamento":"defesa","id":126,"jogador_id":8,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:15:42.000Z","fundamento":"levantamento","id":127,"jogador_id":8,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:15:43.000Z","fundamento":"saque","id":128,"jogador_id":8,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:15:44.000Z","fundamento":"ataque","id":129,"jogador_id":9,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:15:45.000Z","fundamento":"defesa","id":130,"jogador_id":9,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:15:46.000Z","fundamento":"levantamento","id":131,"jogador_id":9,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:15:47.000Z","fundamento":"saque","id":132,"jogador_id":9,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:15:48.000Z","fundamento":"ataque","id":133,"jogador_id":9,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:15:49.000Z","fundamento":"defesa","id":134,"jogador_id":9,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:15:50.000Z","fundamento":"levantamento","id":135,"jogador_id":9,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:15:51.000Z","fundamento":"saque","id":136,"jogador_id":9,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:15:52.000Z","fundamento":"ataque","id":137,"jogador_id":9,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:15:53.000Z","fundamento":"defesa","id":138,"jogador_id":9,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:15:54.000Z","fundamento":"levantamento","id":139,"jogador_id":9,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:15:55.000Z","fundamento":"saque","id":140,"jogador_id":9,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:15:56.000Z","fundamento":"ataque","id":141,"jogador_id":9,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:15:57.000Z","fundamento":"defesa","id":142,"jogador_id":9,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:15:58.000Z","fundamento":"levantamento","id":143,"jogador_id":9,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:15:59.000Z","fundamento":"saque","id":144,"jogador_id":9,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:16:00.000Z","fundamento":"ataque","id":145,"jogador_id":10,"nota":4,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:16:01.000Z","fundamento":"defesa","id":146,"jogador_id":10,"nota":4,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:16:02.000Z","fundamento":"levantamento","id":147,"jogador_id":10,"nota":4,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:16:03.000Z","fundamento":"saque","id":148,"jogador_id":10,"nota":4,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:16:04.000Z","fundamento":"ataque","id":149,"jogador_id":10,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:16:05.000Z","fundamento":"defesa","id":150,"jogador_id":10,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:16:06.000Z","fundamento":"levantamento","id":151,"jogador_id":10,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:16:07.000Z","fundamento":"saque","id":152,"jogador_id":10,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:16:08.000Z","fundamento":"ataque","id":153,"jogador_id":10,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:16:09.000Z","fundamento":"defesa","id":154,"jogador_id":10,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:16:10.000Z","fundamento":"levantamento","id":155,"jogador_id":10,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:16:11.000Z","fundamento":"saque","id":156,"jogador_id":10,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:16:12.000Z","fundamento":"ataque","id":157,"jogador_id":10,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:16:13.000Z","fundamento":"defesa","id":158,"jogador_id":10,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:16:14.000Z","fundamento":"levantamento","id":159,"jogador_id":10,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:16:15.000Z","fundamento":"saque","id":160,"jogador_id":10,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:16:16.000Z","fundamento":"ataque","id":161,"jogador_id":11,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:16:17.000Z","fundamento":"defesa","id":162,"jogador_id":11,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:16:18.000Z","fundamento":"levantamento","id":163,"jogador_id":11,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:16:19.000Z","fundamento":"saque","id":164,"jogador_id":11,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:16:20.000Z","fundamento":"ataque","id":165,"jogador_id":11,"nota":4,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:16:21.000Z","fundamento":"defesa","id":166,"jogador_id":11,"nota":4,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:16:22.000Z","fundamento":"levantamento","id":167,"jogador_id":11,"nota":4,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:16:23.000Z","fundamento":"saque","id":168,"jogador_id":11,"nota":4,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:16:24.000Z","fundamento":"ataque","id":169,"jogador_id":11,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:16:25.000Z","fundamento":"defesa","id":170,"jogador_id":11,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:16:26.000Z","fundamento":"levantamento","id":171,"jogador_id":11,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:16:27.000Z","fundamento":"saque","id":172,"jogador_id":11,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:16:28.000Z","fundamento":"ataque","id":173,"jogador_id":11,"nota":4,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:16:29.000Z","fundamento":"defesa","id":174,"jogador_id":11,"nota":4,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:16:30.000Z","fundamento":"levantamento","id":175,"jogador_id":11,"nota":4,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:16:31.000Z","fundamento":"saque","id":176,"jogador_id":11,"nota":4,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:16:32.000Z","fundamento":"ataque","id":177,"jogador_id":12,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:16:33.000Z","fundamento":"defesa","id":178,"jogador_id":12,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:16:34.000Z","fundamento":"levantamento","id":179,"jogador_id":12,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:16:35.000Z","fundamento":"saque","id":180,"jogador_id":12,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:16:36.000Z","fundamento":"ataque","id":181,"jogador_id":12,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:16:37.000Z","fundamento":"defesa","id":182,"jogador_id":12,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:16:38.000Z","fundamento":"levantamento","id":183,"jogador_id":12,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:16:39.000Z","fundamento":"saque","id":184,"jogador_id":12,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:16:40.000Z","fundamento":"ataque","id":185,"jogador_id":12,"nota":2,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:16:41.000Z","fundamento":"defesa","id":186,"jogador_id":12,"nota":2,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:16:42.000Z","fundamento":"levantamento","id":187,"jogador_id":12,"nota":2,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:16:43.000Z","fundamento":"saque","id":188,"jogador_id":12,"nota":2,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:16:44.000Z","fundamento":"ataque","id":189,"jogador_id":12,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:16:45.000Z","fundamento":"defesa","id":190,"jogador_id":12,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:16:46.000Z","fundamento":"levantamento","id":191,"jogador_id":12,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:16:47.000Z","fundamento":"saque","id":192,"jogador_id":12,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:16:48.000Z","fundamento":"ataque","id":193,"jogador_id":13,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:16:49.000Z","fundamento":"defesa","id":194,"jogador_id":13,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:16:50.000Z","fundamento":"levantamento","id":195,"jogador_id":13,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:16:51.000Z","fundamento":"saque","id":196,"jogador_id":13,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:16:52.000Z","fundamento":"ataque","id":197,"jogador_id":13,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:16:53.000Z","fundamento":"defesa","id":198,"jogador_id":13,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:16:54.000Z","fundamento":"levantamento","id":199,"jogador_id":13,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:16:55.000Z","fundamento":"saque","id":200,"jogador_id":13,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:16:56.000Z","fundamento":"ataque","id":201,"jogador_id":13,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:16:57.000Z","fundamento":"defesa","id":202,"jogador_id":13,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:16:58.000Z","fundamento":"levantamento","id":203,"jogador_id":13,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:16:59.000Z","fundamento":"saque","id":204,"jogador_id":13,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:17:00.000Z","fundamento":"ataque","id":205,"jogador_id":13,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:17:01.000Z","fundamento":"defesa","id":206,"jogador_id":13,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:17:02.000Z","fundamento":"levantamento","id":207,"jogador_id":13,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:17:03.000Z","fundamento":"saque","id":208,"jogador_id":13,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:17:04.000Z","fundamento":"ataque","id":209,"jogador_id":14,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:17:05.000Z","fundamento":"defesa","id":210,"jogador_id":14,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:17:06.000Z","fundamento":"levantamento","id":211,"jogador_id":14,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:17:07.000Z","fundamento":"saque","id":212,"jogador_id":14,"nota":3,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:17:08.000Z","fundamento":"ataque","id":213,"jogador_id":14,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:17:09.000Z","fundamento":"defesa","id":214,"jogador_id":14,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:17:10.000Z","fundamento":"levantamento","id":215,"jogador_id":14,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:17:11.000Z","fundamento":"saque","id":216,"jogador_id":14,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:17:12.000Z","fundamento":"ataque","id":217,"jogador_id":14,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:17:13.000Z","fundamento":"defesa","id":218,"jogador_id":14,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:17:14.000Z","fundamento":"levantamento","id":219,"jogador_id":14,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:17:15.000Z","fundamento":"saque","id":220,"jogador_id":14,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:17:16.000Z","fundamento":"ataque","id":221,"jogador_id":14,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:17:17.000Z","fundamento":"defesa","id":222,"jogador_id":14,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:17:18.000Z","fundamento":"levantamento","id":223,"jogador_id":14,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:17:19.000Z","fundamento":"saque","id":224,"jogador_id":14,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:17:20.000Z","fundamento":"ataque","id":225,"jogador_id":15,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:17:21.000Z","fundamento":"defesa","id":226,"jogador_id":15,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:17:22.000Z","fundamento":"levantamento","id":227,"jogador_id":15,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:17:23.000Z","fundamento":"saque","id":228,"jogador_id":15,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:17:24.000Z","fundamento":"ataque","id":229,"jogador_id":15,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:17:25.000Z","fundamento":"defesa","id":230,"jogador_id":15,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:17:26.000Z","fundamento":"levantamento","id":231,"jogador_id":15,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:17:27.000Z","fundamento":"saque","id":232,"jogador_id":15,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:17:28.000Z","fundamento":"ataque","id":233,"jogador_id":15,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:17:29.000Z","fundamento":"defesa","id":234,"jogador_id":15,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:17:30.000Z","fundamento":"levantamento","id":235,"jogador_id":15,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:17:31.000Z","fundamento":"saque","id":236,"jogador_id":15,"nota":3,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:17:32.000Z","fundamento":"ataque","id":237,"jogador_id":15,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:17:33.000Z","fundamento":"defesa","id":238,"jogador_id":15,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:17:34.000Z","fundamento":"levantamento","id":239,"jogador_id":15,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:17:35.000Z","fundamento":"saque","id":240,"jogador_id":15,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:17:36.000Z","fundamento":"ataque","id":241,"jogador_id":16,"nota":4,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:17:37.000Z","fundamento":"defesa","id":242,"jogador_id":16,"nota":4,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:17:38.000Z","fundamento":"levantamento","id":243,"jogador_id":16,"nota":4,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:17:39.000Z","fundamento":"saque","id":244,"jogador_id":16,"nota":4,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:17:40.000Z","fundamento":"ataque","id":245,"jogador_id":16,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:17:41.000Z","fundamento":"defesa","id":246,"jogador_id":16,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:17:42.000Z","fundamento":"levantamento","id":247,"jogador_id":16,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:17:43.000Z","fundamento":"saque","id":248,"jogador_id":16,"nota":3,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:17:44.000Z","fundamento":"ataque","id":249,"jogador_id":16,"nota":4,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:17:45.000Z","fundamento":"defesa","id":250,"jogador_id":16,"nota":4,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:17:46.000Z","fundamento":"levantamento","id":251,"jogador_id":16,"nota":4,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:17:47.000Z","fundamento":"saque","id":252,"jogador_id":16,"nota":4,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:17:48.000Z","fundamento":"ataque","id":253,"jogador_id":16,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:17:49.000Z","fundamento":"defesa","id":254,"jogador_id":16,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:17:50.000Z","fundamento":"levantamento","id":255,"jogador_id":16,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:17:51.000Z","fundamento":"saque","id":256,"jogador_id":16,"nota":3,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:17:52.000Z","fundamento":"ataque","id":257,"jogador_id":17,"nota":4,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:17:53.000Z","fundamento":"defesa","id":258,"jogador_id":17,"nota":4,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:17:54.000Z","fundamento":"levantamento","id":259,"jogador_id":17,"nota":4,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:17:55.000Z","fundamento":"saque","id":260,"jogador_id":17,"nota":4,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:17:56.000Z","fundamento":"ataque","id":261,"jogador_id":17,"nota":4,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:17:57.000Z","fundamento":"defesa","id":262,"jogador_id":17,"nota":4,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:17:58.000Z","fundamento":"levantamento","id":263,"jogador_id":17,"nota":4,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:17:59.000Z","fundamento":"saque","id":264,"jogador_id":17,"nota":4,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:18:00.000Z","fundamento":"ataque","id":265,"jogador_id":17,"nota":4,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:18:01.000Z","fundamento":"defesa","id":266,"jogador_id":17,"nota":4,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:18:02.000Z","fundamento":"levantamento","id":267,"jogador_id":17,"nota":4,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:18:03.000Z","fundamento":"saque","id":268,"jogador_id":17,"nota":4,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:18:04.000Z","fundamento":"ataque","id":269,"jogador_id":17,"nota":4,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:18:05.000Z","fundamento":"defesa","id":270,"jogador_id":17,"nota":4,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:18:06.000Z","fundamento":"levantamento","id":271,"jogador_id":17,"nota":4,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:18:07.000Z","fundamento":"saque","id":272,"jogador_id":17,"nota":4,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:18:08.000Z","fundamento":"ataque","id":273,"jogador_id":18,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:18:09.000Z","fundamento":"defesa","id":274,"jogador_id":18,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:18:10.000Z","fundamento":"levantamento","id":275,"jogador_id":18,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:18:11.000Z","fundamento":"saque","id":276,"jogador_id":18,"nota":2,"votante":"Fabrício"}
-{"atualizado_em":"2026-09-18T15:18:12.000Z","fundamento":"ataque","id":277,"jogador_id":18,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:18:13.000Z","fundamento":"defesa","id":278,"jogador_id":18,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:18:14.000Z","fundamento":"levantamento","id":279,"jogador_id":18,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:18:15.000Z","fundamento":"saque","id":280,"jogador_id":18,"nota":2,"votante":"Diego"}
-{"atualizado_em":"2026-09-18T15:18:16.000Z","fundamento":"ataque","id":281,"jogador_id":18,"nota":2,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:18:17.000Z","fundamento":"defesa","id":282,"jogador_id":18,"nota":2,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:18:18.000Z","fundamento":"levantamento","id":283,"jogador_id":18,"nota":2,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:18:19.000Z","fundamento":"saque","id":284,"jogador_id":18,"nota":2,"votante":"Marcel"}
-{"atualizado_em":"2026-09-18T15:18:20.000Z","fundamento":"ataque","id":285,"jogador_id":18,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:18:21.000Z","fundamento":"defesa","id":286,"jogador_id":18,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:18:22.000Z","fundamento":"levantamento","id":287,"jogador_id":18,"nota":2,"votante":"Bianca"}
-{"atualizado_em":"2026-09-18T15:18:23.000Z","fundamento":"saque","id":288,"jogador_id":18,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:13:38.000Z","fundamento":"ataque","id":1,"jogador_id":1,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:13:39.000Z","fundamento":"defesa","id":2,"jogador_id":1,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:13:40.000Z","fundamento":"levantamento","id":3,"jogador_id":1,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:13:41.000Z","fundamento":"saque","id":4,"jogador_id":1,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:13:42.000Z","fundamento":"ataque","id":5,"jogador_id":1,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:13:43.000Z","fundamento":"defesa","id":6,"jogador_id":1,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:13:44.000Z","fundamento":"levantamento","id":7,"jogador_id":1,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:13:45.000Z","fundamento":"saque","id":8,"jogador_id":1,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:13:46.000Z","fundamento":"ataque","id":9,"jogador_id":1,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:13:47.000Z","fundamento":"defesa","id":10,"jogador_id":1,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:13:48.000Z","fundamento":"levantamento","id":11,"jogador_id":1,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:13:49.000Z","fundamento":"saque","id":12,"jogador_id":1,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:13:50.000Z","fundamento":"ataque","id":13,"jogador_id":1,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:13:51.000Z","fundamento":"defesa","id":14,"jogador_id":1,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:13:52.000Z","fundamento":"levantamento","id":15,"jogador_id":1,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:13:53.000Z","fundamento":"saque","id":16,"jogador_id":1,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:13:54.000Z","fundamento":"ataque","id":17,"jogador_id":2,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:13:55.000Z","fundamento":"defesa","id":18,"jogador_id":2,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:13:56.000Z","fundamento":"levantamento","id":19,"jogador_id":2,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:13:57.000Z","fundamento":"saque","id":20,"jogador_id":2,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:13:58.000Z","fundamento":"ataque","id":21,"jogador_id":2,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:13:59.000Z","fundamento":"defesa","id":22,"jogador_id":2,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:00.000Z","fundamento":"levantamento","id":23,"jogador_id":2,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:01.000Z","fundamento":"saque","id":24,"jogador_id":2,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:02.000Z","fundamento":"ataque","id":25,"jogador_id":2,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:03.000Z","fundamento":"defesa","id":26,"jogador_id":2,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:04.000Z","fundamento":"levantamento","id":27,"jogador_id":2,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:05.000Z","fundamento":"saque","id":28,"jogador_id":2,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:06.000Z","fundamento":"ataque","id":29,"jogador_id":2,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:07.000Z","fundamento":"defesa","id":30,"jogador_id":2,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:08.000Z","fundamento":"levantamento","id":31,"jogador_id":2,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:09.000Z","fundamento":"saque","id":32,"jogador_id":2,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:18:46.000Z","fundamento":"ataque","id":33,"jogador_id":3,"nota":5,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:11.000Z","fundamento":"defesa","id":34,"jogador_id":3,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:12.000Z","fundamento":"levantamento","id":35,"jogador_id":3,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:13.000Z","fundamento":"saque","id":36,"jogador_id":3,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:14.000Z","fundamento":"ataque","id":37,"jogador_id":3,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:15.000Z","fundamento":"defesa","id":38,"jogador_id":3,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:16.000Z","fundamento":"levantamento","id":39,"jogador_id":3,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:17.000Z","fundamento":"saque","id":40,"jogador_id":3,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:18.000Z","fundamento":"ataque","id":41,"jogador_id":3,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:19.000Z","fundamento":"defesa","id":42,"jogador_id":3,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:20.000Z","fundamento":"levantamento","id":43,"jogador_id":3,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:21.000Z","fundamento":"saque","id":44,"jogador_id":3,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:22.000Z","fundamento":"ataque","id":45,"jogador_id":3,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:23.000Z","fundamento":"defesa","id":46,"jogador_id":3,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:24.000Z","fundamento":"levantamento","id":47,"jogador_id":3,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:25.000Z","fundamento":"saque","id":48,"jogador_id":3,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:26.000Z","fundamento":"ataque","id":49,"jogador_id":4,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:27.000Z","fundamento":"defesa","id":50,"jogador_id":4,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:28.000Z","fundamento":"levantamento","id":51,"jogador_id":4,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:29.000Z","fundamento":"saque","id":52,"jogador_id":4,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:30.000Z","fundamento":"ataque","id":53,"jogador_id":4,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:31.000Z","fundamento":"defesa","id":54,"jogador_id":4,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:32.000Z","fundamento":"levantamento","id":55,"jogador_id":4,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:33.000Z","fundamento":"saque","id":56,"jogador_id":4,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:14:34.000Z","fundamento":"ataque","id":57,"jogador_id":4,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:35.000Z","fundamento":"defesa","id":58,"jogador_id":4,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:36.000Z","fundamento":"levantamento","id":59,"jogador_id":4,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:37.000Z","fundamento":"saque","id":60,"jogador_id":4,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:14:38.000Z","fundamento":"ataque","id":61,"jogador_id":4,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:39.000Z","fundamento":"defesa","id":62,"jogador_id":4,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:40.000Z","fundamento":"levantamento","id":63,"jogador_id":4,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:41.000Z","fundamento":"saque","id":64,"jogador_id":4,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:14:58.000Z","fundamento":"ataque","id":81,"jogador_id":6,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:14:59.000Z","fundamento":"defesa","id":82,"jogador_id":6,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:00.000Z","fundamento":"levantamento","id":83,"jogador_id":6,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:01.000Z","fundamento":"saque","id":84,"jogador_id":6,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:02.000Z","fundamento":"ataque","id":85,"jogador_id":6,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:03.000Z","fundamento":"defesa","id":86,"jogador_id":6,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:04.000Z","fundamento":"levantamento","id":87,"jogador_id":6,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:05.000Z","fundamento":"saque","id":88,"jogador_id":6,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:06.000Z","fundamento":"ataque","id":89,"jogador_id":6,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:07.000Z","fundamento":"defesa","id":90,"jogador_id":6,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:08.000Z","fundamento":"levantamento","id":91,"jogador_id":6,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:09.000Z","fundamento":"saque","id":92,"jogador_id":6,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:10.000Z","fundamento":"ataque","id":93,"jogador_id":6,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:11.000Z","fundamento":"defesa","id":94,"jogador_id":6,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:12.000Z","fundamento":"levantamento","id":95,"jogador_id":6,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:13.000Z","fundamento":"saque","id":96,"jogador_id":6,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:14.000Z","fundamento":"ataque","id":97,"jogador_id":7,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:15.000Z","fundamento":"defesa","id":98,"jogador_id":7,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:16.000Z","fundamento":"levantamento","id":99,"jogador_id":7,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:17.000Z","fundamento":"saque","id":100,"jogador_id":7,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:18.000Z","fundamento":"ataque","id":101,"jogador_id":7,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:19.000Z","fundamento":"defesa","id":102,"jogador_id":7,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:20.000Z","fundamento":"levantamento","id":103,"jogador_id":7,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:21.000Z","fundamento":"saque","id":104,"jogador_id":7,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:22.000Z","fundamento":"ataque","id":105,"jogador_id":7,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:23.000Z","fundamento":"defesa","id":106,"jogador_id":7,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:24.000Z","fundamento":"levantamento","id":107,"jogador_id":7,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:25.000Z","fundamento":"saque","id":108,"jogador_id":7,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:26.000Z","fundamento":"ataque","id":109,"jogador_id":7,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:27.000Z","fundamento":"defesa","id":110,"jogador_id":7,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:28.000Z","fundamento":"levantamento","id":111,"jogador_id":7,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:29.000Z","fundamento":"saque","id":112,"jogador_id":7,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:30.000Z","fundamento":"ataque","id":113,"jogador_id":8,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:31.000Z","fundamento":"defesa","id":114,"jogador_id":8,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:32.000Z","fundamento":"levantamento","id":115,"jogador_id":8,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:33.000Z","fundamento":"saque","id":116,"jogador_id":8,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:34.000Z","fundamento":"ataque","id":117,"jogador_id":8,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:35.000Z","fundamento":"defesa","id":118,"jogador_id":8,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:36.000Z","fundamento":"levantamento","id":119,"jogador_id":8,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:37.000Z","fundamento":"saque","id":120,"jogador_id":8,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:38.000Z","fundamento":"ataque","id":121,"jogador_id":8,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:39.000Z","fundamento":"defesa","id":122,"jogador_id":8,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:40.000Z","fundamento":"levantamento","id":123,"jogador_id":8,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:41.000Z","fundamento":"saque","id":124,"jogador_id":8,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:42.000Z","fundamento":"ataque","id":125,"jogador_id":8,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:43.000Z","fundamento":"defesa","id":126,"jogador_id":8,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:44.000Z","fundamento":"levantamento","id":127,"jogador_id":8,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:45.000Z","fundamento":"saque","id":128,"jogador_id":8,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:46.000Z","fundamento":"ataque","id":129,"jogador_id":9,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:47.000Z","fundamento":"defesa","id":130,"jogador_id":9,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:48.000Z","fundamento":"levantamento","id":131,"jogador_id":9,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:49.000Z","fundamento":"saque","id":132,"jogador_id":9,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:15:50.000Z","fundamento":"ataque","id":133,"jogador_id":9,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:51.000Z","fundamento":"defesa","id":134,"jogador_id":9,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:52.000Z","fundamento":"levantamento","id":135,"jogador_id":9,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:53.000Z","fundamento":"saque","id":136,"jogador_id":9,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:15:54.000Z","fundamento":"ataque","id":137,"jogador_id":9,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:55.000Z","fundamento":"defesa","id":138,"jogador_id":9,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:56.000Z","fundamento":"levantamento","id":139,"jogador_id":9,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:57.000Z","fundamento":"saque","id":140,"jogador_id":9,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:15:58.000Z","fundamento":"ataque","id":141,"jogador_id":9,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:15:59.000Z","fundamento":"defesa","id":142,"jogador_id":9,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:00.000Z","fundamento":"levantamento","id":143,"jogador_id":9,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:01.000Z","fundamento":"saque","id":144,"jogador_id":9,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:02.000Z","fundamento":"ataque","id":145,"jogador_id":10,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:03.000Z","fundamento":"defesa","id":146,"jogador_id":10,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:04.000Z","fundamento":"levantamento","id":147,"jogador_id":10,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:05.000Z","fundamento":"saque","id":148,"jogador_id":10,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:06.000Z","fundamento":"ataque","id":149,"jogador_id":10,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:07.000Z","fundamento":"defesa","id":150,"jogador_id":10,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:08.000Z","fundamento":"levantamento","id":151,"jogador_id":10,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:09.000Z","fundamento":"saque","id":152,"jogador_id":10,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:10.000Z","fundamento":"ataque","id":153,"jogador_id":10,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:11.000Z","fundamento":"defesa","id":154,"jogador_id":10,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:12.000Z","fundamento":"levantamento","id":155,"jogador_id":10,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:13.000Z","fundamento":"saque","id":156,"jogador_id":10,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:14.000Z","fundamento":"ataque","id":157,"jogador_id":10,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:15.000Z","fundamento":"defesa","id":158,"jogador_id":10,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:16.000Z","fundamento":"levantamento","id":159,"jogador_id":10,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:17.000Z","fundamento":"saque","id":160,"jogador_id":10,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:18.000Z","fundamento":"ataque","id":161,"jogador_id":11,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:19.000Z","fundamento":"defesa","id":162,"jogador_id":11,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:20.000Z","fundamento":"levantamento","id":163,"jogador_id":11,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:21.000Z","fundamento":"saque","id":164,"jogador_id":11,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:22.000Z","fundamento":"ataque","id":165,"jogador_id":11,"nota":4,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:23.000Z","fundamento":"defesa","id":166,"jogador_id":11,"nota":4,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:24.000Z","fundamento":"levantamento","id":167,"jogador_id":11,"nota":4,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:25.000Z","fundamento":"saque","id":168,"jogador_id":11,"nota":4,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:26.000Z","fundamento":"ataque","id":169,"jogador_id":11,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:27.000Z","fundamento":"defesa","id":170,"jogador_id":11,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:28.000Z","fundamento":"levantamento","id":171,"jogador_id":11,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:29.000Z","fundamento":"saque","id":172,"jogador_id":11,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:30.000Z","fundamento":"ataque","id":173,"jogador_id":11,"nota":4,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:31.000Z","fundamento":"defesa","id":174,"jogador_id":11,"nota":4,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:32.000Z","fundamento":"levantamento","id":175,"jogador_id":11,"nota":4,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:33.000Z","fundamento":"saque","id":176,"jogador_id":11,"nota":4,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:34.000Z","fundamento":"ataque","id":177,"jogador_id":12,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:35.000Z","fundamento":"defesa","id":178,"jogador_id":12,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:36.000Z","fundamento":"levantamento","id":179,"jogador_id":12,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:37.000Z","fundamento":"saque","id":180,"jogador_id":12,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:38.000Z","fundamento":"ataque","id":181,"jogador_id":12,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:39.000Z","fundamento":"defesa","id":182,"jogador_id":12,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:40.000Z","fundamento":"levantamento","id":183,"jogador_id":12,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:41.000Z","fundamento":"saque","id":184,"jogador_id":12,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:42.000Z","fundamento":"ataque","id":185,"jogador_id":12,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:43.000Z","fundamento":"defesa","id":186,"jogador_id":12,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:44.000Z","fundamento":"levantamento","id":187,"jogador_id":12,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:45.000Z","fundamento":"saque","id":188,"jogador_id":12,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:46.000Z","fundamento":"ataque","id":189,"jogador_id":12,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:47.000Z","fundamento":"defesa","id":190,"jogador_id":12,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:48.000Z","fundamento":"levantamento","id":191,"jogador_id":12,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:49.000Z","fundamento":"saque","id":192,"jogador_id":12,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:16:50.000Z","fundamento":"ataque","id":193,"jogador_id":13,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:51.000Z","fundamento":"defesa","id":194,"jogador_id":13,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:52.000Z","fundamento":"levantamento","id":195,"jogador_id":13,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:53.000Z","fundamento":"saque","id":196,"jogador_id":13,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:16:54.000Z","fundamento":"ataque","id":197,"jogador_id":13,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:55.000Z","fundamento":"defesa","id":198,"jogador_id":13,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:56.000Z","fundamento":"levantamento","id":199,"jogador_id":13,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:57.000Z","fundamento":"saque","id":200,"jogador_id":13,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:16:58.000Z","fundamento":"ataque","id":201,"jogador_id":13,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:16:59.000Z","fundamento":"defesa","id":202,"jogador_id":13,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:00.000Z","fundamento":"levantamento","id":203,"jogador_id":13,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:01.000Z","fundamento":"saque","id":204,"jogador_id":13,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:02.000Z","fundamento":"ataque","id":205,"jogador_id":13,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:03.000Z","fundamento":"defesa","id":206,"jogador_id":13,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:04.000Z","fundamento":"levantamento","id":207,"jogador_id":13,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:05.000Z","fundamento":"saque","id":208,"jogador_id":13,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:06.000Z","fundamento":"ataque","id":209,"jogador_id":14,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:07.000Z","fundamento":"defesa","id":210,"jogador_id":14,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:08.000Z","fundamento":"levantamento","id":211,"jogador_id":14,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:09.000Z","fundamento":"saque","id":212,"jogador_id":14,"nota":3,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:10.000Z","fundamento":"ataque","id":213,"jogador_id":14,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:11.000Z","fundamento":"defesa","id":214,"jogador_id":14,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:12.000Z","fundamento":"levantamento","id":215,"jogador_id":14,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:13.000Z","fundamento":"saque","id":216,"jogador_id":14,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:14.000Z","fundamento":"ataque","id":217,"jogador_id":14,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:15.000Z","fundamento":"defesa","id":218,"jogador_id":14,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:16.000Z","fundamento":"levantamento","id":219,"jogador_id":14,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:17.000Z","fundamento":"saque","id":220,"jogador_id":14,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:18.000Z","fundamento":"ataque","id":221,"jogador_id":14,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:19.000Z","fundamento":"defesa","id":222,"jogador_id":14,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:20.000Z","fundamento":"levantamento","id":223,"jogador_id":14,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:21.000Z","fundamento":"saque","id":224,"jogador_id":14,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:22.000Z","fundamento":"ataque","id":225,"jogador_id":15,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:23.000Z","fundamento":"defesa","id":226,"jogador_id":15,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:24.000Z","fundamento":"levantamento","id":227,"jogador_id":15,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:25.000Z","fundamento":"saque","id":228,"jogador_id":15,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:26.000Z","fundamento":"ataque","id":229,"jogador_id":15,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:27.000Z","fundamento":"defesa","id":230,"jogador_id":15,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:28.000Z","fundamento":"levantamento","id":231,"jogador_id":15,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:29.000Z","fundamento":"saque","id":232,"jogador_id":15,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:30.000Z","fundamento":"ataque","id":233,"jogador_id":15,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:31.000Z","fundamento":"defesa","id":234,"jogador_id":15,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:32.000Z","fundamento":"levantamento","id":235,"jogador_id":15,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:33.000Z","fundamento":"saque","id":236,"jogador_id":15,"nota":3,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:34.000Z","fundamento":"ataque","id":237,"jogador_id":15,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:35.000Z","fundamento":"defesa","id":238,"jogador_id":15,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:36.000Z","fundamento":"levantamento","id":239,"jogador_id":15,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:37.000Z","fundamento":"saque","id":240,"jogador_id":15,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:38.000Z","fundamento":"ataque","id":241,"jogador_id":16,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:39.000Z","fundamento":"defesa","id":242,"jogador_id":16,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:40.000Z","fundamento":"levantamento","id":243,"jogador_id":16,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:41.000Z","fundamento":"saque","id":244,"jogador_id":16,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:42.000Z","fundamento":"ataque","id":245,"jogador_id":16,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:43.000Z","fundamento":"defesa","id":246,"jogador_id":16,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:44.000Z","fundamento":"levantamento","id":247,"jogador_id":16,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:45.000Z","fundamento":"saque","id":248,"jogador_id":16,"nota":3,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:46.000Z","fundamento":"ataque","id":249,"jogador_id":16,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:47.000Z","fundamento":"defesa","id":250,"jogador_id":16,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:48.000Z","fundamento":"levantamento","id":251,"jogador_id":16,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:49.000Z","fundamento":"saque","id":252,"jogador_id":16,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:17:50.000Z","fundamento":"ataque","id":253,"jogador_id":16,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:51.000Z","fundamento":"defesa","id":254,"jogador_id":16,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:52.000Z","fundamento":"levantamento","id":255,"jogador_id":16,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:53.000Z","fundamento":"saque","id":256,"jogador_id":16,"nota":3,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:17:54.000Z","fundamento":"ataque","id":257,"jogador_id":17,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:55.000Z","fundamento":"defesa","id":258,"jogador_id":17,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:56.000Z","fundamento":"levantamento","id":259,"jogador_id":17,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:57.000Z","fundamento":"saque","id":260,"jogador_id":17,"nota":4,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:17:58.000Z","fundamento":"ataque","id":261,"jogador_id":17,"nota":4,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:17:59.000Z","fundamento":"defesa","id":262,"jogador_id":17,"nota":4,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:18:00.000Z","fundamento":"levantamento","id":263,"jogador_id":17,"nota":4,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:18:01.000Z","fundamento":"saque","id":264,"jogador_id":17,"nota":4,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:18:02.000Z","fundamento":"ataque","id":265,"jogador_id":17,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:18:03.000Z","fundamento":"defesa","id":266,"jogador_id":17,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:18:04.000Z","fundamento":"levantamento","id":267,"jogador_id":17,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:18:05.000Z","fundamento":"saque","id":268,"jogador_id":17,"nota":4,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:18:06.000Z","fundamento":"ataque","id":269,"jogador_id":17,"nota":4,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:18:07.000Z","fundamento":"defesa","id":270,"jogador_id":17,"nota":4,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:18:08.000Z","fundamento":"levantamento","id":271,"jogador_id":17,"nota":4,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:18:09.000Z","fundamento":"saque","id":272,"jogador_id":17,"nota":4,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:18:10.000Z","fundamento":"ataque","id":273,"jogador_id":18,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:18:11.000Z","fundamento":"defesa","id":274,"jogador_id":18,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:18:12.000Z","fundamento":"levantamento","id":275,"jogador_id":18,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:18:13.000Z","fundamento":"saque","id":276,"jogador_id":18,"nota":2,"votante":"Fabrício"}
+{"atualizado_em":"2026-09-18T15:18:14.000Z","fundamento":"ataque","id":277,"jogador_id":18,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:18:15.000Z","fundamento":"defesa","id":278,"jogador_id":18,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:18:16.000Z","fundamento":"levantamento","id":279,"jogador_id":18,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:18:17.000Z","fundamento":"saque","id":280,"jogador_id":18,"nota":2,"votante":"Diego"}
+{"atualizado_em":"2026-09-18T15:18:18.000Z","fundamento":"ataque","id":281,"jogador_id":18,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:18:19.000Z","fundamento":"defesa","id":282,"jogador_id":18,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:18:20.000Z","fundamento":"levantamento","id":283,"jogador_id":18,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:18:21.000Z","fundamento":"saque","id":284,"jogador_id":18,"nota":2,"votante":"Marcel"}
+{"atualizado_em":"2026-09-18T15:18:22.000Z","fundamento":"ataque","id":285,"jogador_id":18,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:18:23.000Z","fundamento":"defesa","id":286,"jogador_id":18,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:18:24.000Z","fundamento":"levantamento","id":287,"jogador_id":18,"nota":2,"votante":"Bianca"}
+{"atualizado_em":"2026-09-18T15:18:25.000Z","fundamento":"saque","id":288,"jogador_id":18,"nota":2,"votante":"Bianca"}

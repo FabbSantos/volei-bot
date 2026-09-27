@@ -29,4 +29,22 @@ function agoraBrasilia() {
   };
 }
 
-module.exports = { TZ_BRASILIA, mesAtual, agoraBrasilia };
+// Dia da semana de uma data de jogo "DD/MM" ("sexta", "terça"...). A lista
+// não guarda o ano: vale o ano que deixa a data mais perto de hoje (lista
+// de 02/01 aberta em dezembro é do ano que vem). null se a data não existir.
+const DIAS_DA_SEMANA = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+
+function diaDaSemanaDoJogo(dataJogo, agora = new Date()) {
+  const m = String(dataJogo || '').match(/^(\d{1,2})\/(\d{1,2})$/);
+  if (!m) return null;
+  const [dia, mes] = [Number(m[1]), Number(m[2])];
+  const ano = agora.getUTCFullYear();
+  const candidatas = [ano - 1, ano, ano + 1]
+    .map((a) => new Date(Date.UTC(a, mes - 1, dia)))
+    .filter((d) => d.getUTCDate() === dia && d.getUTCMonth() === mes - 1); // 31/02 não existe
+  if (candidatas.length === 0) return null;
+  const maisPerto = candidatas.reduce((a, b) => (Math.abs(b - agora) < Math.abs(a - agora) ? b : a));
+  return DIAS_DA_SEMANA[maisPerto.getUTCDay()];
+}
+
+module.exports = { TZ_BRASILIA, mesAtual, agoraBrasilia, diaDaSemanaDoJogo };

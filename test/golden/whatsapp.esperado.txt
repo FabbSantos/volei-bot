@@ -124,8 +124,8 @@ Bora!
 >>> [adm@g.us / 444@lid] "#cobrarde riachuelo"
 --> [g1@g.us] {"mentionedList":["5521900000001@c.us"]} ⏰ *Recado do agiota* 🏐
 
-Quem ainda não pagou a pelada da semana tem até *sexta, 12h* pra acertar — depois disso sai da lista e a espera assume a vaga.
-Quem subir da espera tem até *sexta, 17h* pra pagar.
+Quem ainda não pagou a pelada da semana tem até *sábado, 12h* pra acertar — depois disso sai da lista e a espera assume a vaga.
+Quem subir da espera tem até *sábado, 17h* pra pagar.
 
 ⏳ Na mira do agiota: @5521900000001
 
@@ -151,8 +151,8 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
 --- intervalos registrados: 180000, 1800000
 --> [g1@g.us] {"mentionedList":["5521900000001@c.us"]} ⏰ *Recado do agiota* 🏐
 
-Quem ainda não pagou a pelada da semana tem até *sexta, 12h* pra acertar — depois disso sai da lista e a espera assume a vaga.
-Quem subir da espera tem até *sexta, 17h* pra pagar.
+Quem ainda não pagou a pelada da semana tem até *sábado, 12h* pra acertar — depois disso sai da lista e a espera assume a vaga.
+Quem subir da espera tem até *sábado, 17h* pra pagar.
 
 ⏳ Na mira do agiota: @5521900000001
 

@@ -46,7 +46,7 @@ async function enviarLembretesDePagamento(canal) {
     if (resumo.pendentes.length === 0) continue;
     try {
       // Marca quem tem WhatsApp conhecido — cutucão de verdade, com notificação
-      const recado = montarLembretePagamento(resumo.pendentesComZap);
+      const recado = montarLembretePagamento(resumo.pendentesComZap, lista.data_jogo);
       await canal.enviarTexto(lista.chat_id, recado.texto, { mentionedList: recado.mencoes });
       // Figurinha "cadê meu pix" na sequência, se a imagem existir nos assets
       const figurinha = acharFigurinhaCobranca(resumo.pendentes);

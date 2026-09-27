@@ -82,7 +82,7 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 *#renomearde <grupo> 5 Nome Certo* — corrige o nome de quem está na posição 5 (silencioso)
 *#removerde <grupo> 14* — tira da lista semanal (aceita faixa); a espera sobe e o grupo é avisado
 *#cobrarde <grupo>* — solta o recado do agiota agora (mira = principal sem pagar)
-*#cobrarsubiude <grupo>* — cobra só quem subiu da espera (prazo sexta 17h)
+*#cobrarsubiude <grupo>* — cobra só quem subiu da espera (prazo: dia do jogo, 17h)
 *#timesde <grupo> 3* — PRÉVIA dos times (só você vê); mostra os salvos se já existirem
 *#timesde <grupo> 3 enviar* — posta no grupo · *... refazer* — remonta do zero
 *#importarelencode <grupo>* — importa o elenco/notas da planilha antiga (uma vez)
