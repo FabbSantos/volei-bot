@@ -81,7 +81,7 @@ function rotasPainel(api, deps = {}) {
     if (!jogador_id || !votante?.trim()) {
       return res.status(400).json({ erro: 'jogador_id e votante são obrigatórios' });
     }
-    const resultado = elenco.votarHabilidade(jogador_id, votante, fundamento, parseInt(nota, 10));
+    const resultado = elenco.votarHabilidade(jogador_id, votante, fundamento, parseFloat(nota));
     if (resultado.erro) return res.status(400).json(resultado);
     res.json({ ok: true });
   });

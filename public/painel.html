@@ -406,12 +406,12 @@ function desenharElenco() {
               <span class="mut" style="margin-left:0.6rem">um clique e pronto — igual à planilha</span></div>`
           : '⚠️ Preenche "Você é" lá em cima pra avaliar.<br>'}
         <details data-ajuste ${ajusteFinoAberto ? 'open' : ''} ${votante ? '' : 'style="display:none"'}>
-          <summary class="mut" style="cursor:pointer">Ajuste fino por fundamento (opcional, 1–5)</summary>
+          <summary class="mut" style="cursor:pointer">Ajuste fino por fundamento (opcional, 1–5, aceita 0,5)</summary>
           <div style="margin-top:0.4rem">
           ${f.map((x) => `<label style="margin-right:0.8rem">${x}
             <select data-voto="${x}">
               <option value="">–</option>
-              ${[1, 2, 3, 4, 5].map((n) => `<option ${meus[x] === n ? 'selected' : ''}>${n}</option>`).join('')}
+              ${[1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5].map((n) => `<option value="${n}" ${meus[x] === n ? 'selected' : ''}>${String(n).replace('.', ',')}</option>`).join('')}
             </select> <span class="mut">média ${fmt(j.porFundamento[x])}</span></label>`).join('')}
           </div>
         </details>
@@ -452,7 +452,7 @@ function desenharElenco() {
   document.querySelectorAll('#tabElenco [data-voto]').forEach((sel) => {
     sel.addEventListener('change', async () => {
       if (!sel.value) return;
-      await api('/voto', { method: 'POST', body: { jogador_id: jogadorAberto, votante: votanteAtual(), fundamento: sel.dataset.voto, nota: parseInt(sel.value, 10) } });
+      await api('/voto', { method: 'POST', body: { jogador_id: jogadorAberto, votante: votanteAtual(), fundamento: sel.dataset.voto, nota: parseFloat(sel.value) } });
       toast('Voto salvo ✔');
       await carregarElenco();
     });

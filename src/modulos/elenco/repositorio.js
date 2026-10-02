@@ -22,7 +22,7 @@ db.exec(`
     jogador_id INTEGER NOT NULL,
     votante TEXT NOT NULL,          -- quem votou (ex: "Fabrício")
     fundamento TEXT NOT NULL,       -- ataque | defesa | levantamento | saque
-    nota INTEGER NOT NULL,          -- 1-5
+    nota INTEGER NOT NULL,          -- 1-5, de 0,5 em 0,5 (o SQLite guarda 3.5 mesmo na coluna INTEGER)
     atualizado_em TEXT NOT NULL,
     UNIQUE(jogador_id, votante, fundamento),
     FOREIGN KEY (jogador_id) REFERENCES jogadores(id)
@@ -174,9 +174,11 @@ function registrarSnapshotHabilidade(jogadorId) {
     .run(jogadorId, media, new Date().toISOString());
 }
 
+// Nota de 1 a 5, de meio em meio ponto (3,5 separa quem é "mais que 3,
+// menos que 4" — com nota inteira os times saíam desequilibrados)
 function votarHabilidade(jogadorId, votante, fundamento, nota) {
   if (!FUNDAMENTOS.includes(fundamento)) return { erro: 'fundamento_invalido' };
-  if (!(nota >= 1 && nota <= 5)) return { erro: 'nota_invalida' };
+  if (!(nota >= 1 && nota <= 5) || !Number.isInteger(nota * 2)) return { erro: 'nota_invalida' };
   db.prepare(`
     INSERT INTO votos_habilidade (jogador_id, votante, fundamento, nota, atualizado_em)
     VALUES (?, ?, ?, ?, ?)
