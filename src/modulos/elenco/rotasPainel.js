@@ -6,12 +6,16 @@ const elenco = require('./repositorio');
 const times = require('./times');
 const { VOTANTES } = require('./seed');
 
+// Quem avalia além dos 4 da planilha (o seed fica como está: a ordem dele é
+// a das colunas da planilha antiga)
+const VOTANTES_DO_PAINEL = [...VOTANTES, 'Kamila'];
+
 function rotasPainel(api, deps = {}) {
   api.get('/elenco', (req, res) => {
     const grupo = req.query.grupo;
     const semana = elenco.elencoDaSemana(grupo);
     // Votantes: os da planilha + quem já votou por aqui (sem repetir)
-    const votantes = [...new Set([...VOTANTES, ...elenco.listarVotantes(grupo)])]
+    const votantes = [...new Set([...VOTANTES_DO_PAINEL, ...elenco.listarVotantes(grupo)])]
       .sort((a, b) => a.localeCompare(b, 'pt-BR'));
     res.json({
       fundamentos: elenco.FUNDAMENTOS,

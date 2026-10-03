@@ -1392,6 +1392,47 @@ Refina as notas no painel!
 >>> [admin/grupoadmin] #timesde quadra 7
 <<< *Quadra 7* ainda não tem lista.
 
+>>> [admin/grupoadmin] #votos riachuelo -bianca
+
+>>> [admin/privado] #votos riachuelo
+<<< 🗳️ *Votos que contam nas notas* (só você vê isto)
+
+✅ *Bianca* — 72 votos, média 2,78
+✅ *Diego* — 72 votos, média 2,78
+✅ *Fabrício* — 72 votos, média 2,89
+✅ *Marcel* — 72 votos, média 2,89
+
+_#votos riachuelo -nome tira · #votos riachuelo +nome devolve_
+
+>>> [admin/privado] #votos riachuelo -bianca
+<<< 🗳️ *Votos que contam nas notas* (só você vê isto)
+
+🚫 *Bianca* — 72 votos, média 2,78
+✅ *Diego* — 72 votos, média 2,78
+✅ *Fabrício* — 72 votos, média 2,89
+✅ *Marcel* — 72 votos, média 2,89
+
+_#votos riachuelo -nome tira · #votos riachuelo +nome devolve_
+
+>>> [admin/grupoadmin] #timesde riachuelo 2
+<<< Só 1 pessoa(s) na principal da lista 15/10 — não dá pra montar 2 times.
+
+>>> [admin/privado] #votos riachuelo -fulano
+<<< Não conheço o votante "fulano". Votantes: Fabrício, Diego, Marcel, Bianca
+
+>>> [admin/privado] #votos riachuelo +Bianca
+<<< 🗳️ *Votos que contam nas notas* (só você vê isto)
+
+✅ *Bianca* — 72 votos, média 2,78
+✅ *Diego* — 72 votos, média 2,78
+✅ *Fabrício* — 72 votos, média 2,89
+✅ *Marcel* — 72 votos, média 2,89
+
+_#votos riachuelo -nome tira · #votos riachuelo +nome devolve_
+
+>>> [admin/grupoadmin] #timesde riachuelo 2
+<<< Só 1 pessoa(s) na principal da lista 15/10 — não dá pra montar 2 times.
+
 >>> [admin/grupoadmin] #anuncio Jogo confirmado!
 <<< Tem 2 grupos ativos, não sei em qual anunciar:
 • Quadra 7
@@ -1584,6 +1625,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
   "Bianca",
   "Diego",
   "Fabrício",
+  "Kamila",
   "Marcel"
  ],
  "jogadores": [
@@ -4830,6 +4872,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
   "Bianca",
   "Diego",
   "Fabrício",
+  "Kamila",
   "Marcel"
  ],
  "jogadores": [
@@ -6748,10 +6791,10 @@ Bom jogo! 🔥
 {"id":33,"lista_id":4,"mensalista":0,"nome":"Aces","numero":"planilha-aces@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:36.000Z","tipo":"principal","valor_pago_centavos":0}
 {"id":34,"lista_id":4,"mensalista":0,"nome":"Stephanie Bastos","numero":"planilha-stephanie-bastos@import","pago":0,"promovido":0,"timestamp":"2026-09-18T15:13:37.000Z","tipo":"principal","valor_pago_centavos":0}
 
-=== grupos (ativo, chat_id, eh_admin, id, limite_espera, limite_mensalistas, limite_principal, mes_processado, nome, pre_lista_aberta, primeira_mensagem_em, valor_mes_centavos, valor_padrao_centavos)
-{"ativo":1,"chat_id":"g1@g.us","eh_admin":0,"id":1,"limite_espera":2,"limite_mensalistas":10,"limite_principal":4,"mes_processado":"2026-09","nome":"Vôlei Riachuelo","pre_lista_aberta":1,"primeira_mensagem_em":"2026-09-18T15:00:01.000Z","valor_mes_centavos":6000,"valor_padrao_centavos":0}
-{"ativo":0,"chat_id":"g2@g.us","eh_admin":0,"id":2,"limite_espera":6,"limite_mensalistas":12,"limite_principal":18,"mes_processado":null,"nome":"Quadra 7","pre_lista_aberta":0,"primeira_mensagem_em":"2026-09-18T15:00:02.000Z","valor_mes_centavos":0,"valor_padrao_centavos":0}
-{"ativo":0,"chat_id":"adm@g.us","eh_admin":0,"id":3,"limite_espera":6,"limite_mensalistas":12,"limite_principal":18,"mes_processado":null,"nome":"Admins do vôlei","pre_lista_aberta":0,"primeira_mensagem_em":"2026-09-18T15:00:03.000Z","valor_mes_centavos":0,"valor_padrao_centavos":0}
+=== grupos (ativo, chat_id, eh_admin, id, limite_espera, limite_mensalistas, limite_principal, mes_processado, nome, pre_lista_aberta, primeira_mensagem_em, valor_mes_centavos, valor_padrao_centavos, votantes_ignorados)
+{"ativo":1,"chat_id":"g1@g.us","eh_admin":0,"id":1,"limite_espera":2,"limite_mensalistas":10,"limite_principal":4,"mes_processado":"2026-09","nome":"Vôlei Riachuelo","pre_lista_aberta":1,"primeira_mensagem_em":"2026-09-18T15:00:01.000Z","valor_mes_centavos":6000,"valor_padrao_centavos":0,"votantes_ignorados":"[]"}
+{"ativo":0,"chat_id":"g2@g.us","eh_admin":0,"id":2,"limite_espera":6,"limite_mensalistas":12,"limite_principal":18,"mes_processado":null,"nome":"Quadra 7","pre_lista_aberta":0,"primeira_mensagem_em":"2026-09-18T15:00:02.000Z","valor_mes_centavos":0,"valor_padrao_centavos":0,"votantes_ignorados":"[]"}
+{"ativo":0,"chat_id":"adm@g.us","eh_admin":0,"id":3,"limite_espera":6,"limite_mensalistas":12,"limite_principal":18,"mes_processado":null,"nome":"Admins do vôlei","pre_lista_aberta":0,"primeira_mensagem_em":"2026-09-18T15:00:03.000Z","valor_mes_centavos":0,"valor_padrao_centavos":0,"votantes_ignorados":"[]"}
 
 === historico_habilidade (em, habilidade, id, jogador_id)
 {"em":"2026-09-18T15:06:37.000Z","habilidade":3,"id":1,"jogador_id":1}

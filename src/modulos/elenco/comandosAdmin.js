@@ -13,6 +13,10 @@ const seed = require('./seed');
 // envio produzem exatamente os mesmos times
 const REGEX_TIMES_DE = /^#timesde\s+(.+?)(?:\s+([2-6]))?(?:\s+(enviar|refazer))?$/i;
 const REGEX_IMPORTAR_ELENCO_DE = /^#importarelencode\s+(.+)$/i;
+// Quem conta nas médias: #votos riachuelo (situação), "-bianca" tira os
+// votos dela, "+bianca" devolve. Só no privado do dono do bot — fora dele o
+// bot fica mudo, e o comando não aparece em ajuda nenhuma.
+const REGEX_VOTOS = /^#votos\s+(.+?)(?:\s+([+-])\s*(.+))?$/i;
 
 const timesDe = comando(REGEX_TIMES_DE, async (msg, m) => {
   // Nome de grupo terminando em número (ex: "Quadra 7") engoliria a
@@ -131,4 +135,27 @@ const importarElenco = comando(REGEX_IMPORTAR_ELENCO_DE, async (msg, m) => {
   );
 });
 
-module.exports = { comandos: [timesDe, importarElenco] };
+const votos = comando(REGEX_VOTOS, (msg, m) => {
+  if (msg.origem !== 'privado') return;
+  const r = resolverGrupo(m[1]);
+  if (r.mensagem) return msg.reply(r.mensagem);
+  const chatId = r.grupo.chat_id;
+  const conhecidos = [...new Set([...seed.VOTANTES, ...elenco.listarVotantes(chatId)])];
+
+  if (m[2]) {
+    const pedido = m[3].trim().toLowerCase();
+    const votante = conhecidos.find((v) => v.toLowerCase() === pedido);
+    if (!votante) return msg.reply(`Não conheço o votante "${m[3].trim()}". Votantes: ${conhecidos.join(', ')}`);
+    elenco.ignorarVotante(chatId, votante, m[2] === '-');
+  }
+
+  const fora = new Set(elenco.votantesIgnorados(chatId).map((v) => v.toLowerCase()));
+  const linhas = elenco.resumoDosVotantes(chatId).map((v) =>
+    `${fora.has(v.votante.toLowerCase()) ? '🚫' : '✅'} *${v.votante}* — ${v.votos} votos, média ${v.media.toFixed(2).replace('.', ',')}`);
+  return msg.reply(
+    `🗳️ *Votos que contam nas notas* (só você vê isto)\n\n${linhas.join('\n') || 'Ninguém votou ainda.'}\n\n` +
+    `_#votos ${m[1]} -nome tira · #votos ${m[1]} +nome devolve_`
+  );
+});
+
+module.exports = { comandos: [timesDe, importarElenco, votos] };

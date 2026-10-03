@@ -67,6 +67,9 @@ db.exec(`
 `);
 
 migrarColunas('jogadores', { altura: 'TEXT' });
+// Votantes cujos votos ficam FORA das médias do grupo (JSON com os nomes).
+// Os votos continuam guardados: religar devolve tudo como era.
+migrarColunas('grupos', { votantes_ignorados: "TEXT NOT NULL DEFAULT '[]'" });
 
 const FUNDAMENTOS = ['ataque', 'defesa', 'levantamento', 'saque'];
 const ALTURAS = ['alto', 'medio', 'baixo'];
@@ -106,6 +109,47 @@ function adicionarApelido(jogadorId, apelido) {
 
 function removerApelido(jogadorId, apelido) {
   db.prepare('DELETE FROM apelidos WHERE jogador_id = ? AND apelido = ?').run(jogadorId, apelido);
+}
+
+const chave = (votante) => normalizarTexto(votante).trim();
+
+function votantesIgnorados(chatId) {
+  const r = db.prepare('SELECT votantes_ignorados FROM grupos WHERE chat_id = ?').get(chatId);
+  try {
+    const lista = JSON.parse(r?.votantes_ignorados || '[]');
+    return Array.isArray(lista) ? lista : [];
+  } catch {
+    return [];
+  }
+}
+
+// Liga/desliga os votos de alguém nas médias (habilidade, nota p/ times,
+// #timesde). Sem apagar nada. Só pelo privado do dono do bot — não aparece
+// no painel nem na API, de propósito.
+function ignorarVotante(chatId, votante, ignorar) {
+  const nome = String(votante || '').trim();
+  if (!nome) return { erro: 'votante_vazio' };
+  const atuais = votantesIgnorados(chatId).filter((v) => chave(v) !== chave(nome));
+  const novos = ignorar ? [...atuais, nome] : atuais;
+  const info = db.prepare('UPDATE grupos SET votantes_ignorados = ? WHERE chat_id = ?').run(JSON.stringify(novos), chatId);
+  if (info.changes === 0) return { erro: 'grupo_inexistente' };
+  return { votantesIgnorados: novos };
+}
+
+// Filtro dos votos que contam, pro grupo inteiro de uma vez
+function filtroDeVotos(chatId) {
+  const fora = new Set(votantesIgnorados(chatId).map(chave));
+  return (v) => !fora.has(chave(v.votante));
+}
+
+// Votos e média de cada votante no grupo (todos, contando ou não)
+function resumoDosVotantes(chatId) {
+  return db.prepare(`
+    SELECT v.votante, COUNT(*) AS votos, AVG(v.nota) AS media FROM votos_habilidade v
+    JOIN jogadores j ON j.id = v.jogador_id
+    WHERE j.chat_id = ?
+    GROUP BY v.votante ORDER BY v.votante COLLATE NOCASE ASC
+  `).all(chatId);
 }
 
 // Quem já votou neste grupo — alimenta o seletor "Você é" do painel
@@ -157,8 +201,10 @@ function removerJogador(jogadorId) {
 }
 
 function mediaHabilidade(jogadorId) {
-  const r = db.prepare('SELECT AVG(nota) AS m FROM votos_habilidade WHERE jogador_id = ?').get(jogadorId);
-  return r?.m ?? null;
+  const j = db.prepare('SELECT chat_id FROM jogadores WHERE id = ?').get(jogadorId);
+  const conta = filtroDeVotos(j?.chat_id);
+  const votos = db.prepare('SELECT votante, nota FROM votos_habilidade WHERE jogador_id = ?').all(jogadorId).filter(conta);
+  return votos.length ? votos.reduce((s, v) => s + v.nota, 0) / votos.length : null;
 }
 
 // Guarda um ponto só quando a média MUDA — a linha do tempo fica com as
@@ -199,7 +245,9 @@ function darNotaDoDia(jogadorId, listaId, nota, observacao = null) {
 }
 
 // Elenco completo com as médias calculadas:
-// - habilidade: média de TODOS os votos (fundamento × votante), escala 1-5
+// - habilidade: média dos votos (fundamento × votante), escala 1-5 — sem os
+//   votantes desligados pelo dono do bot no privado (grupos.votantes_ignorados); `votos` traz todos, pra
+//   cada um continuar vendo e mudando os próprios
 // - notaTime: o que o montador de times usa — 70% habilidade + 30% média das
 //   últimas 3 notas do dia (quem joga bem/mal em quadra mexe no peso, sem
 //   atropelar a avaliação de base); sem nota do dia, vale a habilidade pura
@@ -208,19 +256,21 @@ function enriquecerJogadores(chatId) {
     'SELECT * FROM jogadores WHERE chat_id = ? ORDER BY nome COLLATE NOCASE ASC'
   ).all(chatId);
 
+  const conta = filtroDeVotos(chatId);
   return jogadores.map((j) => {
     const votos = db.prepare(
       'SELECT votante, fundamento, nota FROM votos_habilidade WHERE jogador_id = ?'
     ).all(j.id);
+    const considerados = votos.filter(conta);
     const porFundamento = {};
     for (const f of FUNDAMENTOS) {
-      const doFundamento = votos.filter((v) => v.fundamento === f);
+      const doFundamento = considerados.filter((v) => v.fundamento === f);
       porFundamento[f] = doFundamento.length
         ? doFundamento.reduce((s, v) => s + v.nota, 0) / doFundamento.length
         : null;
     }
-    const habilidade = votos.length
-      ? votos.reduce((s, v) => s + v.nota, 0) / votos.length
+    const habilidade = considerados.length
+      ? considerados.reduce((s, v) => s + v.nota, 0) / considerados.length
       : null;
 
     const ultimasNotas = db.prepare(`
@@ -478,6 +528,9 @@ module.exports = {
   adicionarApelido,
   removerApelido,
   listarVotantes,
+  votantesIgnorados,
+  ignorarVotante,
+  resumoDosVotantes,
   definirAltura,
   votarHabilidade,
   darNotaDoDia,
