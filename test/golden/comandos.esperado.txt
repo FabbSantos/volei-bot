@@ -1392,7 +1392,7 @@ Refina as notas no painel!
 >>> [admin/grupoadmin] #timesde quadra 7
 <<< *Quadra 7* ainda não tem lista.
 
->>> [admin/grupoadmin] #votos riachuelo -bianca
+>>> [admin/grupoadmin] #votos riachuelo -marcel
 
 >>> [admin/privado] #votos riachuelo
 <<< 🗳️ *Votos que contam nas notas* (só você vê isto)
@@ -1404,13 +1404,13 @@ Refina as notas no painel!
 
 _#votos riachuelo -nome tira · #votos riachuelo +nome devolve_
 
->>> [admin/privado] #votos riachuelo -bianca
+>>> [admin/privado] #votos riachuelo -marcel
 <<< 🗳️ *Votos que contam nas notas* (só você vê isto)
 
-🚫 *Bianca* — 72 votos, média 2,78
+✅ *Bianca* — 72 votos, média 2,78
 ✅ *Diego* — 72 votos, média 2,78
 ✅ *Fabrício* — 72 votos, média 2,89
-✅ *Marcel* — 72 votos, média 2,89
+🚫 *Marcel* — 72 votos, média 2,89
 
 _#votos riachuelo -nome tira · #votos riachuelo +nome devolve_
 
@@ -1420,7 +1420,7 @@ _#votos riachuelo -nome tira · #votos riachuelo +nome devolve_
 >>> [admin/privado] #votos riachuelo -fulano
 <<< Não conheço o votante "fulano". Votantes: Fabrício, Diego, Marcel, Bianca
 
->>> [admin/privado] #votos riachuelo +Bianca
+>>> [admin/privado] #votos riachuelo +Marcel
 <<< 🗳️ *Votos que contam nas notas* (só você vê isto)
 
 ✅ *Bianca* — 72 votos, média 2,78

@@ -236,12 +236,12 @@ async function roteiro() {
   await comoAdmin('#timesde quadra 7');
 
   // ---- #votos: liga/desliga votante nas médias, SÓ no privado do dono
-  await comoAdmin('#votos riachuelo -bianca'); // grupo de admins: bot mudo
+  await comoAdmin('#votos riachuelo -marcel'); // grupo de admins: bot mudo
   await comoAdmin('#votos riachuelo', 'privado');
-  await comoAdmin('#votos riachuelo -bianca', 'privado');
+  await comoAdmin('#votos riachuelo -marcel', 'privado');
   await comoAdmin('#timesde riachuelo 2');
   await comoAdmin('#votos riachuelo -fulano', 'privado');
-  await comoAdmin('#votos riachuelo +Bianca', 'privado');
+  await comoAdmin('#votos riachuelo +Marcel', 'privado');
   await comoAdmin('#timesde riachuelo 2');
 
   await comoAdmin('#anuncio Jogo confirmado!');

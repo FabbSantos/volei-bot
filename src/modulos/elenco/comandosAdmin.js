@@ -13,8 +13,8 @@ const seed = require('./seed');
 // envio produzem exatamente os mesmos times
 const REGEX_TIMES_DE = /^#timesde\s+(.+?)(?:\s+([2-6]))?(?:\s+(enviar|refazer))?$/i;
 const REGEX_IMPORTAR_ELENCO_DE = /^#importarelencode\s+(.+)$/i;
-// Quem conta nas médias: #votos riachuelo (situação), "-bianca" tira os
-// votos dela, "+bianca" devolve. Só no privado do dono do bot — fora dele o
+// Quem conta nas médias: #votos riachuelo (situação), "-nome" tira os
+// votos da pessoa, "+nome" devolve. Só no privado do dono do bot — fora dele o
 // bot fica mudo, e o comando não aparece em ajuda nenhuma.
 const REGEX_VOTOS = /^#votos\s+(.+?)(?:\s+([+-])\s*(.+))?$/i;
 
