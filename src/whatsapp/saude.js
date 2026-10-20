@@ -21,4 +21,14 @@ function avaliarSincronizacao(status, desde, agora, limite = LIMITE_ISLOGGED_MS)
   return { desde: null, reconectar: true, paradoMs: agora - desde };
 }
 
-module.exports = { avaliarSincronizacao, ESTADOS_ESCUTANDO, LIMITE_ISLOGGED_MS };
+// Com a wa-js 4.7 (20/10/2026) a ordem dos avisos inverteu: o "inChat" chega
+// ANTES do "isLogged" (o waitForLogin do wppconnect anuncia "autenticado"
+// atrasado). O rótulo terminava em isLogged com o bot escutando de verdade, e
+// o vigia acima reconectaria a cada poucos minutos. isLogged depois de inChat,
+// na mesma conexão, é atraso de ordem — não é o surdo de 13/09, que nunca
+// chega em inChat.
+function isLoggedAtrasado(status, jaChegouEmInChat) {
+  return status === 'isLogged' && jaChegouEmInChat;
+}
+
+module.exports = { avaliarSincronizacao, isLoggedAtrasado, ESTADOS_ESCUTANDO, LIMITE_ISLOGGED_MS };

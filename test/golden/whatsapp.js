@@ -70,6 +70,9 @@ require.cache[caminhoWpp] = {
       opcoes.catchQR('data:image/png;base64,QR', 'qr', 1);
       opcoes.statusFind('isLogged');
       opcoes.statusFind('inChat');
+      // wa-js 4.7 (20/10/2026): o "isLogged" chega atrasado, depois do inChat —
+      // o /status tem que continuar inChat, senão o vigia reconecta à toa
+      opcoes.statusFind('isLogged');
       return cliente;
     },
   },

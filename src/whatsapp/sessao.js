@@ -5,7 +5,7 @@ const os = require('os');
 const path = require('path');
 const wppconnect = require('@wppconnect-team/wppconnect');
 const { notificarFalha } = require('../nucleo/alertas');
-const { avaliarSincronizacao } = require('./saude');
+const { avaliarSincronizacao, isLoggedAtrasado } = require('./saude');
 
 // browserClose = o Chrome morreu com o processo vivo; autocloseCalled = o
 // wppconnect desistiu de esperar o QR — nos dois casos, sem reconectar aqui
@@ -177,6 +177,7 @@ let jaLogouNestaSessao = false;
 async function iniciarSessao() {
   const geracao = ++geracaoAtual;
   jaLogouNestaSessao = false;
+  let chegouEmInChat = false; // desta conexão — ver isLoggedAtrasado em ./saude
 
   const anterior = clienteAtual;
   clienteAtual = null;
@@ -204,6 +205,11 @@ async function iniciarSessao() {
       },
       statusFind: (statusSession) => {
         if (geracao !== geracaoAtual) return; // evento de cliente aposentado
+        if (isLoggedAtrasado(statusSession, chegouEmInChat)) {
+          console.log('Status da sessão: isLogged depois de inChat — fora de ordem, segue inChat');
+          return;
+        }
+        if (statusSession === 'inChat' || statusSession === 'CONNECTED') chegouEmInChat = true;
         console.log('Status da sessão:', statusSession);
         statusConexao = statusSession;
 
