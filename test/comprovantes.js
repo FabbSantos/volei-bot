@@ -160,6 +160,35 @@ caso('legenda cita quem já pagou: pergunta', () => {
   caso('"blz" não é resposta', () => assert.strictEqual(r('blz'), null));
 }
 
+// Nome que a pessoa escreve × nome do WhatsApp na lista (via elenco/apelidos)
+{
+  const nomes = require('../src/modulos/comprovantes/nomes');
+  const lista = [e(11, 'DiegoB', 'x'), e(12, 'Fontella ✠', 'y'), e(13, 'Vinicius Pavani', 'z'), e(14, 'A6 😎✌🏻 费利佩', 'w'), e(15, 'Zé', 'v'), e(16, 'Diego', 'u')];
+  const apelidos = new Map([
+    [11, ['DiegoB', 'Diego Borges']], [12, ['Fontella ✠', 'Letícia Fontella']], [13, ['Vinicius Pavani', 'Vini']],
+    [14, ['A6 😎✌🏻 费利佩', 'Aces', 'A6']], [15, ['Zé']], [16, ['Diego']],
+  ]);
+  const quem = (texto, pref = []) => {
+    const r = nomes.nomeadosNoTexto(texto, lista, apelidos, pref);
+    return r.ambiguo ? 'ambíguo' : r.nomeados.map((x) => x.nome).join(', ');
+  };
+  caso('"da Letícia" → Fontella ✠ (nome do elenco)', () => assert.strictEqual(quem('da Letícia'), 'Fontella ✠'));
+  caso('"é da Fontella" → Fontella ✠', () => assert.strictEqual(quem('é da Fontella'), 'Fontella ✠'));
+  caso('"vini" → Vinicius Pavani (apelido)', () => assert.strictEqual(quem('do vini'), 'Vinicius Pavani'));
+  caso('"aces" → A6 😎✌🏻 费利佩', () => assert.strictEqual(quem('aces'), 'A6 😎✌🏻 费利佩'));
+  caso('"Zé" (2 letras) → Zé', () => assert.strictEqual(quem('do Zé'), 'Zé'));
+  caso('"Diego" com Diego e DiegoB devendo: ambíguo', () => assert.strictEqual(quem('do Diego'), 'ambíguo'));
+  caso('...mas se o DiegoB era candidato, é ele', () => assert.strictEqual(quem('do Diego', [11]), 'DiegoB'));
+  caso('"Borges" → DiegoB', () => assert.strictEqual(quem('do borges'), 'DiegoB'));
+  caso('Claude devolve "Letícia Fontella" → volta pra Fontella ✠', () =>
+    assert.strictEqual(nomes.entradaPeloNome('Letícia Fontella', lista, apelidos)?.nome, 'Fontella ✠'));
+  caso('Claude devolve com o parêntese → volta pro nome da lista', () =>
+    assert.strictEqual(nomes.entradaPeloNome('Fontella ✠ (também chamado: Letícia Fontella)', lista, apelidos)?.nome, 'Fontella ✠'));
+  caso('nome que não existe → nada', () => assert.strictEqual(nomes.entradaPeloNome('Fulano', lista, apelidos), null));
+  caso('a lista vai pro Claude com os outros nomes', () =>
+    assert.ok(nomes.nomesParaOClaude(lista, apelidos).includes('Fontella ✠ (também chamado: Letícia Fontella)')));
+}
+
 // ------------------------------------------------------------ fluxo inteiro
 async function fluxo() {
   console.log('\ncomprovante de ponta a ponta (Claude de mentira)');
@@ -303,6 +332,40 @@ async function fluxo() {
     comLeitura(leitura({ id_transacao: 'E-CAIO-1', legenda_inclui_remetente: false })));
   caso('legenda "é meu" com o Claude errando: marca o Caio mesmo assim', () =>
     assert.ok(pago('Caio') && !pago('Dani (cvd Caio)') && !perguntaNoGrupo(), JSON.stringify(enviados)));
+
+  // "Diego" na resposta, "DiegoB" na lista: o elenco liga os dois pelo número
+  const elenco = require('../src/modulos/elenco/repositorio');
+  elenco.upsertJogador(G, 'Diego Borges', '5521980334395@c.us');
+  pelada.adicionarEntrada(lista.id, 'DiegoB', '5521980334395@c.us');
+  enviados.length = 0;
+  await comprovantes.receber(porta('5521900000005@c.us', 'Ryan'), grupo, comLeitura(leitura({ id_transacao: 'E-RYAN-3' })));
+  caso('Ryan (pago, Lucas pago) envia mais um: "Pra quem é?"', () => assert.match(perguntaNoGrupo()?.t || '', /Pra quem é\?/));
+  const doDiego = await fala('5521900000005@c.us', 'Ryan', 'do Diego');
+  caso('"do Diego" acha o DiegoB pelo elenco (Diego Borges)', () => assert.ok(doDiego && pago('DiegoB')));
+
+  // "minha filha": a regra fixa não acha nome — o Claude (aqui de mentira)
+  // escolhe entre quem está devendo, e o código confere o nome
+  pelada.adicionarEntrada(lista.id, 'Rui', '5521900000013@c.us');
+  pelada.adicionarEntrada(lista.id, 'Lia (cvd Rui)', 'manual-999@bot');
+  await admin('#pagapor riachuelo Rui > Lia');
+  enviados.length = 0;
+  await comprovantes.receber(porta('5521900000013@c.us', 'Rui'), grupo, comLeitura(leitura({ id_transacao: 'E-RUI-1' })));
+  let perguntaAoClaude = null;
+  const entender = async (dados) => { perguntaAoClaude = dados; return { nomes: ['Lia (cvd Rui)'], inclui_quem_enviou: false }; };
+  const filha = await comprovantes.tentarResposta({ ...porta('5521900000013@c.us', 'Rui', 'minha filha'), midia: null }, grupo, null, { entender });
+  caso('"minha filha" não vira "é meu"', () => assert.ok(!pago('Rui')));
+  caso('o Claude recebe a resposta, quem devia e quem o Rui paga', () => {
+    assert.strictEqual(perguntaAoClaude?.texto, 'minha filha');
+    assert.ok(perguntaAoClaude.nomesDaLista.includes('Lia (cvd Rui)'));
+    assert.deepStrictEqual(perguntaAoClaude.sugeridos.sort(), ['Lia (cvd Rui)', 'Rui']);
+  });
+  caso('e a Lia é marcada', () => assert.ok(filha && pago('Lia (cvd Rui)')));
+  const inventado = async () => ({ nomes: ['Alguém Que Não Existe'], inclui_quem_enviou: false });
+  enviados.length = 0;
+  await comprovantes.receber(porta('5521900000013@c.us', 'Rui'), grupo, comLeitura(leitura({ id_transacao: 'E-RUI-2', valor_centavos: 2400 })));
+  const pRui = perguntaNoGrupo();
+  const nada = await comprovantes.tentarResposta({ ...porta('5521900000013@c.us', 'Rui', 'pro meu primo', pRui?.id), midia: null, idCitado: pRui?.id }, grupo, null, { entender: inventado });
+  caso('nome inventado pelo Claude não marca ninguém', () => assert.ok(nada === true && !pago('Rui')));
 
   await admin('#pagapor riachuelo');
   caso('#pagapor lista quem paga por quem', () => assert.match(respostas.at(-1), /Ana → Bento[\s\S]*Ryan → Lucas[\s\S]*Thiago Rodrigues → Duda/));

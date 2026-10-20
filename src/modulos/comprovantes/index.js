@@ -11,7 +11,8 @@ const elenco = require('../elenco/repositorio');
 const { celebrarPagamentoEm } = require('../figurinhas');
 const { formatarReais } = require('../../nucleo/dinheiro');
 const { numeroSintetico } = require('../../nucleo/numeros');
-const { lerComprovante, lerivel, temChave } = require('./leitor');
+const { lerComprovante, entenderResposta, lerivel, temChave } = require('./leitor');
+const nomes = require('./nomes');
 const { decidir, lerDataHora, nomeCasa, tokens, falaDoRemetente } = require('./decisor');
 const { comMencoes } = require('../pelada/textos');
 const repo = require('./repositorio');
@@ -86,9 +87,16 @@ async function processar(msg, grupo, ler, agora) {
   const lista = pelada.getListaMaisRecente(msg.chatId);
   const entradas = pelada.listarCombinada(lista.id);
   const arquivo = await msg.midia.baixar();
+  // A lista vai com os outros nomes de cada um ("Fontella ✠ (também chamado:
+  // Letícia Fontella)"): a legenda "da Letícia" tem que achar a Fontella
+  const apelidos = nomes.apelidosDasEntradas(msg.chatId, entradas);
   const leitura = await ler({
-    arquivo, mimetype: msg.midia.mimetype, legenda: msg.body || '', nomesDaLista: entradas.map((e) => e.nome),
+    arquivo, mimetype: msg.midia.mimetype, legenda: msg.body || '', nomesDaLista: nomes.nomesParaOClaude(entradas, apelidos),
   });
+  // O que o Claude citou volta pro nome da lista (ou some, se não existe)
+  leitura.legenda_para = (leitura.legenda_para || [])
+    .map((n) => nomes.entradaPeloNome(n, entradas, apelidos)?.nome)
+    .filter(Boolean);
 
   // "é meu" na legenda não depende do humor do modelo: a regra fixa completa
   // (só liga, nunca desliga o que o Claude achou)
@@ -184,17 +192,12 @@ const PRAZO_RESPOSTA_MS = 12 * 60 * 60 * 1000;
 const MAX_PALAVRAS_SEM_CITAR = 5;
 const PALAVRAS_TODOS = ['dois', 'duas', 'ambos', 'ambas', 'todos', 'tres'];
 
-// Resposta → entradas da lista, ou null se não deu pra entender
-function interpretarResposta(texto, pendentes, candidatosIds, remetenteIds) {
+// Resposta → entradas da lista, ou null se não deu pra entender. Os nomes
+// valem pelo da lista, pelo do elenco e pelos apelidos ("Diego" → DiegoB)
+function interpretarResposta(texto, pendentes, candidatosIds, remetenteIds, apelidos = new Map()) {
   const palavras = tokens(texto);
-  const nomeados = [];
-  for (const p of palavras) {
-    const comEsseNome = pendentes.filter((e) => tokens(e.nome)[0] === p);
-    const preferidos = comEsseNome.filter((e) => candidatosIds.includes(e.id));
-    const escolhidos = preferidos.length ? preferidos : comEsseNome;
-    if (escolhidos.length > 1) return null; // dois "Diego" devendo: não chuta
-    nomeados.push(...escolhidos);
-  }
+  const { nomeados, ambiguo } = nomes.nomeadosNoTexto(texto, pendentes, apelidos, candidatosIds);
+  if (ambiguo) return null; // dois "Diego" devendo: não chuta
   const ehDoRemetente = falaDoRemetente(texto, nomeados.length > 0);
 
   const alvos = [
@@ -208,7 +211,7 @@ function interpretarResposta(texto, pendentes, candidatosIds, remetenteIds) {
 
 // Mensagem no grupo da pelada que pode ser a resposta à pergunta do bot.
 // Resolve true se era (e já tratou), false se é conversa normal.
-function tentarResposta(msg, grupo, agora = null) {
+function tentarResposta(msg, grupo, agora = null, opcoes = {}) {
   const texto = String(msg.body || '').trim();
   if (!ligado() || !texto || texto.startsWith('#')) return Promise.resolve(false);
   const achada = repo.perguntaAberta(msg.chatId, {
@@ -221,20 +224,45 @@ function tentarResposta(msg, grupo, agora = null) {
   if (repo.usuario(c.remetente) !== repo.usuario(msg.numero)) return Promise.resolve(false);
   if (!citou && tokens(texto).length > MAX_PALAVRAS_SEM_CITAR) return Promise.resolve(false);
 
-  const resultado = fila.then(() => responder(msg, c, texto, citou));
+  const resultado = fila.then(() => responder(msg, c, texto, citou, opcoes.entender || (temChave() ? entenderResposta : null)));
   fila = resultado.catch((err) => console.warn(`[comprovante] resposta falhou: ${err.message}`));
   return resultado;
 }
 
-async function responder(msg, c, texto, citou) {
+async function responder(msg, c, texto, citou, entender) {
   const atual = repo.getComprovante(c.id);
   if (!atual || atual.status !== 'pendente') return false; // um admin resolveu antes
   const lista = pelada.getLista(c.lista_id);
   if (!lista) return false;
   const pendentes = pelada.listarCombinada(lista.id).filter((e) => !e.pago && !e.mensalista);
-  const alvos = interpretarResposta(texto, pendentes, JSON.parse(c.candidatos || '[]'), JSON.parse(c.do_remetente || '[]'));
+  const candidatosIds = JSON.parse(c.candidatos || '[]');
+  const remetenteIds = JSON.parse(c.do_remetente || '[]');
+  const apelidos = nomes.apelidosDasEntradas(c.chat_id, pendentes);
+  let alvos = interpretarResposta(texto, pendentes, candidatosIds, remetenteIds, apelidos);
+
+  // Regra fixa não entendeu ("minha filha", "a Lê", erro de digitação): o
+  // Claude tenta, escolhendo só entre quem está devendo
+  if (!alvos && entender) {
+    try {
+      const r = await entender({
+        texto,
+        remetente: c.remetente_nome || 'quem enviou',
+        nomesDaLista: nomes.nomesParaOClaude(pendentes, apelidos),
+        sugeridos: pendentes.filter((e) => candidatosIds.includes(e.id)).map((e) => e.nome),
+      });
+      const achados = [
+        ...(r.inclui_quem_enviou ? pendentes.filter((e) => remetenteIds.includes(e.id)) : []),
+        ...r.nomes.map((n) => nomes.entradaPeloNome(n, pendentes, apelidos)).filter(Boolean),
+      ];
+      const unicos = [...new Map(achados.map((e) => [e.id, e])).values()];
+      if (unicos.length) alvos = unicos;
+    } catch (err) {
+      console.warn(`[comprovante] Claude não entendeu a resposta: ${err.message}`);
+    }
+  }
+
   if (!alvos) {
-    if (citou) await msg.reply('Não entendi 😅 Responde com *meu* ou o nome da pessoa (do jeito que está na lista).');
+    if (citou) await msg.reply('Não entendi 😅 Responde com *meu* ou o nome da pessoa.');
     return citou;
   }
   if (alvos.length !== c.pessoas) {
@@ -278,11 +306,18 @@ function acharAlvos(lista, texto) {
     return alvos.every(Boolean) ? { alvos } : { erro: `não tem ninguém na posição ${posicoes.find((p) => !entradas[p - 1])}` };
   }
   const { normalizarTexto } = require('../../nucleo/texto');
+  let apelidos = null;
   const alvos = [];
   for (const parte of partes) {
     const alvo = normalizarTexto(parte);
     const exatos = entradas.filter((e) => normalizarTexto(e.nome) === alvo);
-    const parecidos = exatos.length ? exatos : entradas.filter((e) => normalizarTexto(e.nome).startsWith(alvo));
+    let parecidos = exatos.length ? exatos : entradas.filter((e) => normalizarTexto(e.nome).startsWith(alvo));
+    if (!parecidos.length) {
+      // "Letícia" pra "Fontella ✠": pelo elenco e apelidos
+      apelidos = apelidos || nomes.apelidosDasEntradas(lista.chat_id, entradas);
+      const r = nomes.nomeadosNoTexto(parte, entradas, apelidos);
+      parecidos = r.ambiguo ? entradas.filter((e) => nomes.quemEh(tokens(parte)[0] || '', [e], apelidos).length) : r.nomeados;
+    }
     if (parecidos.length !== 1) {
       return { erro: parecidos.length ? `"${parte}" bate com ${parecidos.map((e) => e.nome).join(', ')}` : `não achei "${parte}" na lista` };
     }
