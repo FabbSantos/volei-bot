@@ -4,7 +4,7 @@
 // Cada módulo exporta a própria lista, e o roteador (src/roteador.js) testa
 // na ordem até um casar. `msg` é a porta pro canal (hoje, o WhatsApp):
 //
-//   grupo da pelada: { body, pushname, chatId, numero, nomeGrupo, reply(texto), midia (imagem/PDF: {mimetype, baixar()}),
+//   grupo da pelada: { body, pushname, chatId, numero, nomeGrupo, reply(texto), midia (imagem/PDF: {mimetype, baixar()}), idCitado,
 //                      enviarPara(chatId, texto), enviarFigurinhaPara(chatId, caminho),
 //                      enviarFigurinha(caminho), ehAdmin(): Promise<bool>,
 //                      remetenteCitado(): Promise<numero|null> }

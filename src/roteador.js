@@ -61,6 +61,9 @@ async function processarMensagem(msg) {
     comprovantes.receber(msg, grupo).catch((err) => console.warn(`[comprovante] ${err.message}`));
   }
 
+  // "meu" / "da Duda": resposta à pergunta do bot sobre um comprovante
+  if (!msg.midia && await comprovantes.tentarResposta(msg, grupo)) return;
+
   if (await despachar(COMANDOS_DO_GRUPO, texto, msg, { grupo })) return;
   return ajuda.responderMalformadoNoGrupo(msg, texto);
 }

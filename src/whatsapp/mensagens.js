@@ -102,6 +102,8 @@ function escutar(client, sessao) {
           : null,
         enviarPara: (chatId, texto, opcoes) => client.sendText(chatId, texto, opcoes),
         enviarFigurinhaPara: (chatId, caminho) => enviarFigurinhaNoChat(client, chatId, caminho),
+        // Qual mensagem esta responde (a pergunta do bot sobre um comprovante)
+        idCitado: message.quotedMsgId || null,
         pushname: message.notifyName || message.sender?.pushname,
         chatId: message.from, // JID do grupo — usado pra isolar cada lista por grupo
         numero,

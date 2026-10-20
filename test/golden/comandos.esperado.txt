@@ -6774,7 +6774,7 @@ Bom jogo! 🔥
 {"apelido":"David","criado_em":"2026-09-18T15:13:16.000Z","id":2,"jogador_id":14}
 {"apelido":"Marcel Garcia","criado_em":"2026-09-18T15:18:44.000Z","id":5,"jogador_id":1}
 
-=== comprovantes (chat_id, chave, criado_em, data_hora, id, lista_id, marcados, motivo, pagador_nome, recebedor_nome, remetente, remetente_nome, status, valor_centavos)
+=== comprovantes (candidatos, chat_id, chave, criado_em, data_hora, do_remetente, id, lista_id, marcados, motivo, pagador_nome, pergunta_em, pergunta_msg_id, pessoas, recebedor_nome, remetente, remetente_nome, status, valor_centavos)
 
 === entradas (id, lista_id, mensalista, nome, numero, pago, promovido, timestamp, tipo, valor_pago_centavos)
 {"id":9,"lista_id":2,"mensalista":1,"nome":"Marcel Garcia","numero":"5521900000002@c.us","pago":0,"promovido":0,"timestamp":"2026-09-18T15:03:13.000Z","tipo":"principal","valor_pago_centavos":0}

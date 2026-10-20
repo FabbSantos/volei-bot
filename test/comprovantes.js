@@ -143,6 +143,23 @@ caso('legenda cita quem já pagou: pergunta', () => {
   assert.match(dec({ entradas, leitura: leitura({ legenda_para: ['Duda'] }), remetente: THIAGO }).motivo, /já está pago/);
 });
 
+// Como o bot entende a resposta à pergunta "é teu ou é pra Duda?"
+{
+  const { interpretarResposta } = comprovantes;
+  const pend = [e(3, 'Thiago Rodrigues', THIAGO), e(4, 'Duda', DUDA), e(6, 'Lucas (cvd Ryan)', 'manual-1@bot'), e(7, 'Diego', 'x'), e(8, 'Diego B', 'y')];
+  const r = (texto) => (interpretarResposta(texto, pend, [3, 4], [3]) || []).map((x) => x.nome).sort().join(', ') || null;
+  caso('resposta "meu" → quem enviou', () => assert.strictEqual(r('meu'), 'Thiago Rodrigues'));
+  caso('resposta "é pra mim" → quem enviou', () => assert.strictEqual(r('é pra mim'), 'Thiago Rodrigues'));
+  caso('resposta "eu" sozinho → quem enviou', () => assert.strictEqual(r('eu'), 'Thiago Rodrigues'));
+  caso('resposta "da Duda" → Duda', () => assert.strictEqual(r('da Duda'), 'Duda'));
+  caso('resposta "eu paguei pra Duda" → só a Duda (o "eu" é sujeito)', () => assert.strictEqual(r('eu paguei pra Duda'), 'Duda'));
+  caso('resposta "eu e a Duda" → os dois', () => assert.strictEqual(r('eu e a Duda'), 'Duda, Thiago Rodrigues'));
+  caso('resposta "os dois" → os candidatos', () => assert.strictEqual(r('os dois'), 'Duda, Thiago Rodrigues'));
+  caso('resposta "do Lucas" → o convidado, mesmo fora dos candidatos', () => assert.strictEqual(r('do Lucas'), 'Lucas (cvd Ryan)'));
+  caso('dois "Diego" devendo: não chuta', () => assert.strictEqual(r('do Diego'), null));
+  caso('"blz" não é resposta', () => assert.strictEqual(r('blz'), null));
+}
+
 // ------------------------------------------------------------ fluxo inteiro
 async function fluxo() {
   console.log('\ncomprovante de ponta a ponta (Claude de mentira)');
@@ -159,80 +176,125 @@ async function fluxo() {
   const grupo = grupos.getGrupo(G);
 
   const enviados = [];
+  let proximoId = 0;
+  const enviar = async (chatId, t, opcoes) => {
+    const id = `bot-${++proximoId}`;
+    enviados.push({ para: chatId, t, id, mencoes: opcoes?.mentionedList || [] });
+    return { id };
+  };
   const porta = (numero, pushname, legenda = '') => ({
     body: legenda, pushname, chatId: G, numero, nomeGrupo: 'Vôlei no Riachuelo',
     midia: { mimetype: 'image/jpeg', baixar: async () => Buffer.from('imagem') },
     reply: async (t) => enviados.push({ para: G, t }),
-    enviarPara: async (chatId, t) => enviados.push({ para: chatId, t }),
+    enviarPara: enviar,
     enviarFigurinha: async () => {},
     enviarFigurinhaPara: async (chatId) => enviados.push({ para: chatId, t: '[figurinha]' }),
   });
+  // Mensagem de texto no grupo (a resposta à pergunta do bot, ou conversa)
+  const fala = (numero, pushname, texto, idCitado = null) => comprovantes.tentarResposta({
+    ...porta(numero, pushname, texto), midia: null, idCitado,
+  }, grupo);
   const comLeitura = (l) => ({ ler: async ({ nomesDaLista }) => { assert.ok(nomesDaLista.includes('Duda')); return l; } });
   const pago = (nome) => pelada.listarCombinada(lista.id).find((x) => x.nome === nome).pago === 1;
+  const perguntaNoGrupo = () => [...enviados].reverse().find((m) => m.para === G && /^🤔/.test(m.t));
+  const ultimoComprovante = () => {
+    const m = [...enviados].reverse().find((x) => x.para === ADM && /Comprovante (\d+)/.test(x.t));
+    return m && m.t.match(/Comprovante (\d+)/)[1];
+  };
 
   // Ryan paga o dele
   const doRyan = leitura({ id_transacao: 'E-RYAN-1' });
   await comprovantes.receber(porta('5521900000005@c.us', 'Ryan'), grupo, comLeitura(doRyan));
-  caso('Ryan mandou: marcou sozinho', () => assert.ok(pago('Ryan')));
+  caso('Ryan enviou: marcou sozinho', () => assert.ok(pago('Ryan')));
   caso('e comemorou no grupo com figurinha', () => {
     assert.ok(enviados.some((m) => m.para === G && /Ryan pagou! ✅/.test(m.t)));
     assert.ok(enviados.some((m) => m.para === G && m.t === '[figurinha]'));
   });
   caso('e avisou os admins do automático', () => assert.ok(enviados.some((m) => m.para === ADM && /🤖✅ \*Ryan\*/.test(m.t))));
 
-  // O mesmo comprovante de novo
+  // O mesmo comprovante de novo: problema de verdade, só pros admins
   enviados.length = 0;
   await comprovantes.receber(porta('5521900000005@c.us', 'Ryan'), grupo, comLeitura(doRyan));
-  caso('comprovante repetido não marca de novo e vai pros admins', () =>
-    assert.ok(enviados.some((m) => m.para === ADM && /já foi usado/.test(m.t))));
+  caso('comprovante repetido: só os admins ficam sabendo', () => {
+    assert.ok(enviados.some((m) => m.para === ADM && /já foi usado/.test(m.t)));
+    assert.ok(!perguntaNoGrupo());
+  });
 
   const respostas = [];
   const admin = (texto) => processarComandoAdmin({
     body: texto, origem: 'grupoadmin', chatId: ADM,
     reply: async (t) => respostas.push(t),
-    enviarPara: async (chatId, t) => enviados.push({ para: chatId, t }),
+    enviarPara: enviar,
     enviarFigurinhaPara: async () => {},
   });
-  const ultimaPergunta = () => {
-    const m = [...enviados].reverse().find((x) => x.para === ADM && /Comprovante (\d+)/.test(x.t));
-    return m && m.t.match(/Comprovante (\d+)/)[1];
-  };
 
-  // Aprendizado: o Ryan (já pago) manda mais R$ 12 — é do convidado dele
+  // O Ryan (já pago) envia mais R$ 12 — é do convidado dele. O bot pergunta
+  // pra ELE no grupo, e a resposta resolve sem admin
   pelada.adicionarEntrada(lista.id, 'Lucas (cvd Ryan)', 'manual-123@bot');
   enviados.length = 0;
   await comprovantes.receber(porta('5521900000005@c.us', 'Ryan'), grupo, comLeitura(leitura({ id_transacao: 'E-RYAN-2' })));
-  caso('Ryan já pago manda outro: ninguém marcado, admins perguntados', () => {
-    assert.ok(!pago('Lucas (cvd Ryan)'));
-    assert.ok(ultimaPergunta(), JSON.stringify(enviados));
+  const p1 = perguntaNoGrupo();
+  caso('Ryan já pago envia outro: pergunta NO GRUPO, marcando ele', () => {
+    assert.ok(p1, JSON.stringify(enviados));
+    assert.match(p1.t, /@5521900000005, recebi teu Pix de R\$ 12,00\. Pra quem é\?/);
+    assert.deepStrictEqual(p1.mencoes, ['5521900000005@c.us']);
   });
-  caso('e o grupo sabe que um admin vai conferir', () => assert.ok(enviados.some((m) => m.para === G && /admin vai conferir/.test(m.t))));
-  const id1 = ultimaPergunta();
+  caso('e os admins só recebem um aviso de que ele foi perguntado', () =>
+    assert.ok(enviados.some((m) => m.para === ADM && /Perguntei pro Ryan no grupo/.test(m.t))));
+  caso('ninguém marcado ainda', () => assert.ok(!pago('Lucas (cvd Ryan)')));
+  const id1 = ultimoComprovante();
+  const tratou = await fala('5521900000005@c.us', 'Ryan', 'é do Lucas');
+  caso('"é do Lucas" (sem citar, curto) marca o Lucas', () => assert.ok(tratou && pago('Lucas (cvd Ryan)')));
+  caso('e aprende que o Ryan paga pelo Lucas', () =>
+    assert.deepStrictEqual(repo.dependentesDe(G, '5521900000005@c.us').map((d) => d.dependente_nome), ['Lucas (cvd Ryan)']));
+  caso('e conta pros admins que ele respondeu', () =>
+    assert.ok(enviados.some((m) => m.para === ADM && /Ryan respondeu no grupo: comprovante \d+ → Lucas/.test(m.t))));
   await admin(`#comprovante ${id1} Lucas`);
-  caso('#comprovante N Lucas marca o convidado', () => assert.ok(pago('Lucas (cvd Ryan)')));
-  caso('e aprende que o Ryan paga pelo Lucas', () => {
-    assert.match(respostas.at(-1), /Aprendi: Ryan paga por Lucas \(cvd Ryan\)/);
-    assert.deepStrictEqual(repo.dependentesDe(G, '5521900000005@c.us').map((d) => d.dependente_nome), ['Lucas (cvd Ryan)']);
-  });
-  await admin(`#comprovante ${id1} Lucas`);
-  caso('resolver de novo não marca duas vezes', () => assert.match(respostas.at(-1), /já foi resolvido/));
+  caso('resolver de novo pelo admin não marca duas vezes', () => assert.match(respostas.at(-1), /já foi resolvido/));
+  const depois = await fala('5521900000005@c.us', 'Ryan', 'meu');
+  caso('depois de resolvido, mensagem do Ryan não é mais resposta', () => assert.strictEqual(depois, false));
 
-  // Vínculo cadastrado: Thiago paga a Duda. R$ 12 sem legenda, os dois devendo
+  // Thiago paga a Duda; R$ 12 sem legenda com os dois devendo. Ele não
+  // responde, e um admin resolve
   await admin('#pagapor riachuelo Thiago > Duda');
   caso('#pagapor cadastra pelo nome', () => assert.match(respostas.at(-1), /Thiago Rodrigues → Duda/));
   enviados.length = 0;
   await comprovantes.receber(porta(THIAGO, 'Thiago Rodrigues'), grupo, comLeitura(leitura({ id_transacao: 'E-THIAGO-1' })));
-  caso('Thiago R$ 12 sem legenda, os dois devendo: pergunta em vez de chutar', () =>
-    assert.ok(!pago('Thiago Rodrigues') && !pago('Duda') && ultimaPergunta()));
-  await admin(`#comprovante ${ultimaPergunta()} Duda`);
-  caso('#comprovante N Duda marca a Duda', () => assert.ok(pago('Duda') && !pago('Thiago Rodrigues')));
-
-  // Agora o Thiago manda os R$ 12 dele: a Duda já está paga, sobra ele
+  caso('Thiago R$ 12, os dois devendo: "É teu ou é pra Duda?"', () => {
+    assert.ok(!pago('Thiago Rodrigues') && !pago('Duda'));
+    assert.match(perguntaNoGrupo()?.t || '', /É teu ou é pra Duda\?/);
+  });
+  await admin(`#comprovante ${ultimoComprovante()} Duda`);
+  caso('o admin resolve com #comprovante N Duda', () => assert.ok(pago('Duda') && !pago('Thiago Rodrigues')));
   await comprovantes.receber(porta(THIAGO, 'Thiago Rodrigues'), grupo, comLeitura(leitura({ id_transacao: 'E-THIAGO-2' })));
   caso('próximo comprovante do Thiago: marca ele sozinho', () => assert.ok(pago('Thiago Rodrigues')));
 
+  // As respostas que valem e as que NÃO podem valer
+  pelada.adicionarEntrada(lista.id, 'Ana', '5521900000011@c.us');
+  pelada.adicionarEntrada(lista.id, 'Bento (cvd Ana)', 'manual-456@bot');
+  await admin('#pagapor riachuelo Ana > Bento');
+  enviados.length = 0;
+  await comprovantes.receber(porta('5521900000011@c.us', 'Ana'), grupo, comLeitura(leitura({ id_transacao: 'E-ANA-1' })));
+  const pAna = perguntaNoGrupo();
+  caso('Ana: "É teu ou é pra Bento (cvd Ana)?"', () => assert.match(pAna?.t || '', /É teu ou é pra Bento \(cvd Ana\)\?/));
+  const outro = await fala('5521900000005@c.us', 'Ryan', 'meu');
+  caso('outra pessoa dizendo "meu" não responde pela Ana', () => assert.ok(outro === false && !pago('Ana') && !pago('Bento (cvd Ana)')));
+  const conversa = await fala('5521900000011@c.us', 'Ana', 'o Bento vai atrasar hoje viu galera');
+  caso('conversa longa sem citar a pergunta não vira resposta', () => assert.ok(conversa === false && !pago('Bento (cvd Ana)')));
+  enviados.length = 0;
+  const demais = await fala('5521900000011@c.us', 'Ana', 'eu e o Bento', pAna.id);
+  caso('"eu e o Bento" pra R$ 12: não marca e explica que é uma pessoa', () => {
+    assert.ok(demais && !pago('Ana') && !pago('Bento (cvd Ana)'));
+    assert.ok(enviados.some((m) => /dá pra 1 pessoa\(s\), e eu entendi Ana e Bento/.test(m.t)), JSON.stringify(enviados));
+  });
+  const certa = await fala('5521900000011@c.us', 'Ana', 'paguei esse pro Bento, o meu eu pago depois', pAna.id);
+  caso('citando a pergunta, "pro Bento, o meu eu pago depois" é ambíguo (2 pra R$ 12): pergunta de novo', () =>
+    assert.ok(certa === true && !pago('Ana') && !pago('Bento (cvd Ana)')));
+  const curta = await fala('5521900000011@c.us', 'Ana', 'do Bento');
+  caso('"do Bento" marca o Bento', () => assert.ok(curta && pago('Bento (cvd Ana)') && !pago('Ana')));
+
   await admin('#pagapor riachuelo');
-  caso('#pagapor lista quem paga por quem', () => assert.match(respostas.at(-1), /Ryan → Lucas[\s\S]*Thiago Rodrigues → Duda/));
+  caso('#pagapor lista quem paga por quem', () => assert.match(respostas.at(-1), /Ana → Bento[\s\S]*Ryan → Lucas[\s\S]*Thiago Rodrigues → Duda/));
   await admin('#naopagapor riachuelo thiago > duda');
   caso('#naopagapor esquece', () => assert.strictEqual(repo.dependentesDe(G, THIAGO).length, 0));
 

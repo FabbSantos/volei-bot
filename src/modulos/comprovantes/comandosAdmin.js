@@ -26,6 +26,16 @@ function acharPessoa(chatId, nome) {
     || comNumero.find((e) => normalizarTexto(e.nome).startsWith(alvo));
 }
 
+// Quem é pago pode não ter WhatsApp ("Bento (cvd Ana)"): acha pelo nome em
+// qualquer entrada do grupo, e usa o nome como está na lista
+function acharDependente(chatId, nome) {
+  const alvo = normalizarTexto(nome).trim();
+  const entradas = pelada.entradasDoGrupo(chatId).reverse();
+  return entradas.find((e) => normalizarTexto(e.nome) === alvo)
+    || entradas.find((e) => nomeCasa(nome, e.nome))
+    || entradas.find((e) => normalizarTexto(e.nome).startsWith(alvo));
+}
+
 function listar(msg, grupo) {
   const vinculos = repo.listarVinculos(grupo.chat_id);
   if (!vinculos.length) return msg.reply(`Ninguém paga por ninguém em *${grupo.nome || grupo.chat_id}* ainda. Ensina com *#pagapor ${grupo.nome?.split(' ').pop() || 'grupo'} Fulano > Ciclano*.`);
@@ -43,10 +53,11 @@ const pagaPor = comando(REGEX_PAGAPOR, (msg, m) => {
   if (!pagador) {
     return msg.reply(`Não sei o WhatsApp de "${m[2]}". Sem problema: quando ele mandar um comprovante e vocês resolverem com *#comprovante*, eu aprendo sozinho.`);
   }
-  const dependente = acharPessoa(r.grupo.chat_id, m[3]);
+  const dependente = acharDependente(r.grupo.chat_id, m[3]);
   repo.vincular(r.grupo.chat_id, {
     pagadorNumero: pagador.numero, pagadorNome: pagador.nome,
-    dependenteNome: dependente?.nome || m[3].trim(), dependenteNumero: dependente?.numero || null,
+    dependenteNome: dependente?.nome || m[3].trim(),
+    dependenteNumero: dependente && !numeroSintetico(dependente.numero) ? dependente.numero : null,
   });
   return listar(msg, r.grupo);
 });

@@ -1,5 +1,5 @@
 // Comprovantes lidos (pra nunca valer duas vezes) e quem paga por quem.
-const { db } = require('../../nucleo/banco');
+const { db, migrarColunas } = require('../../nucleo/banco');
 const { normalizarTexto } = require('../../nucleo/texto');
 
 db.exec(`
@@ -35,6 +35,16 @@ db.exec(`
   );
 `);
 
+// Pergunta "é teu ou da Duda?" feita no grupo pra quem enviou: a resposta
+// dele resolve o comprovante sem precisar de admin
+migrarColunas('comprovantes', {
+  pergunta_em: 'TEXT',        // quando o bot perguntou no grupo (null = só os admins sabem)
+  pergunta_msg_id: 'TEXT',    // a mensagem da pergunta, pra reconhecer quem responde citando
+  pessoas: 'INTEGER',         // quantas pessoas o valor cobre
+  candidatos: 'TEXT',         // ids das entradas que podiam ser (JSON)
+  do_remetente: 'TEXT',       // ids das entradas do próprio remetente — o "meu" (JSON)
+});
+
 // Mesma pessoa no WhatsApp, com ou sem sufixo (@c.us / @lid)
 const usuario = (numero) => String(numero || '').split('@')[0];
 
@@ -65,6 +75,25 @@ function registrar(c) {
     criado_em: new Date().toISOString(),
   });
   return getComprovante(info.lastInsertRowid);
+}
+
+function registrarPergunta(id, { msgId, pessoas, candidatos, doRemetente }) {
+  db.prepare('UPDATE comprovantes SET pergunta_em = ?, pergunta_msg_id = ?, pessoas = ?, candidatos = ?, do_remetente = ? WHERE id = ?')
+    .run(new Date().toISOString(), msgId || null, pessoas, JSON.stringify(candidatos), JSON.stringify(doRemetente), id);
+}
+
+// A pergunta em aberto que essa mensagem responde: citando a pergunta, ou a
+// mais recente pra esse remetente nesse grupo (dentro do prazo)
+function perguntaAberta(chatId, { idCitado = null, remetente = null, desde }) {
+  const abertas = db.prepare(
+    "SELECT * FROM comprovantes WHERE chat_id = ? AND status = 'pendente' AND pergunta_em IS NOT NULL AND pergunta_em >= ? ORDER BY id DESC"
+  ).all(chatId, desde.toISOString());
+  if (idCitado) {
+    const citada = abertas.find((c) => c.pergunta_msg_id === idCitado);
+    if (citada) return { comprovante: citada, citou: true };
+  }
+  const doRemetente = abertas.find((c) => remetente && usuario(c.remetente) === usuario(remetente));
+  return doRemetente ? { comprovante: doRemetente, citou: false } : null;
 }
 
 function getComprovante(id) {
@@ -104,6 +133,6 @@ function listarVinculos(chatId) {
 }
 
 module.exports = {
-  usuario, chaveDoComprovante, jaUsado, registrar, getComprovante, resolver,
+  usuario, chaveDoComprovante, jaUsado, registrar, getComprovante, resolver, registrarPergunta, perguntaAberta,
   dependentesDe, vincular, desvincular, listarVinculos,
 };

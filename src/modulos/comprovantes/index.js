@@ -12,7 +12,8 @@ const { celebrarPagamentoEm } = require('../figurinhas');
 const { formatarReais } = require('../../nucleo/dinheiro');
 const { numeroSintetico } = require('../../nucleo/numeros');
 const { lerComprovante, lerivel, temChave } = require('./leitor');
-const { decidir, lerDataHora } = require('./decisor');
+const { decidir, lerDataHora, nomeCasa, tokens } = require('./decisor');
+const { comMencoes } = require('../pelada/textos');
 const repo = require('./repositorio');
 
 const ligado = () => process.env.COMPROVANTES !== 'off' && Boolean(process.env.PIX_RECEBEDOR);
@@ -124,6 +125,13 @@ async function processar(msg, grupo, ler, agora) {
   }
 
   const c = repo.registrar({ ...base, status: 'pendente', motivo: decisao.motivo });
+
+  // Dúvida só de pra quem é: pergunta pra quem enviou, no grupo, marcando
+  if (decisao.tipo === 'para_quem' && msg.numero && !numeroSintetico(msg.numero)) {
+    await perguntarNoGrupo(msg, grupo, c, lista, decisao, leitura, resumoPix);
+    return;
+  }
+
   await msg.reply('👀 Recebi o comprovante. Um admin vai conferir e marcar.');
   const sugestao = decisao.candidatos.length ? ` (talvez: ${decisao.candidatos.map((e) => e.nome).join(', ')})` : '';
   await avisarAdmins(msg,
@@ -131,6 +139,132 @@ async function processar(msg, grupo, ler, agora) {
     `${resumoPix}\n` +
     `Não marquei: ${decisao.motivo}${sugestao}.\n\n` +
     `Marca com *#comprovante ${c.id} Nome, Nome* (ou posições: *#comprovante ${c.id} 3 5*), ou *#comprovante ${c.id} ignorar*.`);
+}
+
+// "É teu ou é pra Duda?" — no grupo, com @ em quem enviou
+async function perguntarNoGrupo(msg, grupo, c, lista, decisao, leitura, resumoPix) {
+  const { texto: mencao, mencoes } = comMencoes([{ nome: msg.pushname || 'você', numero: msg.numero }]);
+  const proprios = new Set(decisao.doRemetente);
+  const outros = decisao.candidatos.filter((e) => !proprios.has(e.id)).map((e) => e.nome);
+  const valor = formatarReais(leitura.valor_centavos);
+  let duvida;
+  if (decisao.candidatos.length > decisao.pessoas) {
+    duvida = proprios.size
+      ? `É teu${outros.length ? ` ou é pra ${outros.join(' ou ')}` : ''}?`
+      : `É pra ${decisao.candidatos.map((e) => e.nome).join(' ou ')}?`;
+  } else if (decisao.candidatos.length) {
+    duvida = `Ele dá pra ${decisao.pessoas} pessoas — quem mais, além de ${juntarNomes(decisao.candidatos.map((e) => e.nome))}?`;
+  } else {
+    duvida = 'Pra quem é?';
+  }
+  const comoResponder = decisao.pessoas > 1 ? 'os nomes' : '*meu* ou o nome da pessoa';
+  const enviada = await msg.enviarPara(msg.chatId,
+    `🤔 ${mencao}, recebi teu Pix de ${valor}. ${duvida}\nResponde aqui com ${comoResponder}.`,
+    { mentionedList: mencoes });
+  repo.registrarPergunta(c.id, {
+    msgId: enviada?.id || null, pessoas: decisao.pessoas,
+    candidatos: decisao.candidatos.map((e) => e.id), doRemetente: decisao.doRemetente,
+  });
+  await avisarAdmins(msg,
+    `❓ *Comprovante ${c.id}* — ${resumoPix} (lista ${lista.data_jogo} de *${grupo.nome || msg.chatId}*)\n` +
+    `Perguntei pro ${msg.pushname || 'remetente'} no grupo pra quem é. Se ele não responder: *#comprovante ${c.id} Nome*.`);
+}
+
+// Quem enviou o Pix tem 12h pra responder a pergunta do bot
+const PRAZO_RESPOSTA_MS = 12 * 60 * 60 * 1000;
+// "meu", "da Duda", "os dois". Mensagem longa sem citar a pergunta é conversa,
+// não resposta ("a Duda vai atrasar hoje, galera" não vira pagamento da Duda)
+const MAX_PALAVRAS_SEM_CITAR = 5;
+// "meu", "pra mim": sempre é o remetente. "eu" e "minha" só quando não tem
+// nome junto ("eu paguei pra Duda" é da Duda) — ou em "eu e o Bento"
+const PALAVRAS_PROPRIO = ['meu', 'mim', 'proprio', 'propria'];
+const PALAVRAS_PROPRIO_FRACAS = ['eu', 'minha'];
+const PALAVRAS_TODOS = ['dois', 'duas', 'ambos', 'ambas', 'todos', 'tres'];
+
+// Resposta → entradas da lista, ou null se não deu pra entender
+function interpretarResposta(texto, pendentes, candidatosIds, remetenteIds) {
+  const palavras = tokens(texto);
+  const nomeados = [];
+  for (const p of palavras) {
+    const comEsseNome = pendentes.filter((e) => tokens(e.nome)[0] === p);
+    const preferidos = comEsseNome.filter((e) => candidatosIds.includes(e.id));
+    const escolhidos = preferidos.length ? preferidos : comEsseNome;
+    if (escolhidos.length > 1) return null; // dois "Diego" devendo: não chuta
+    nomeados.push(...escolhidos);
+  }
+  const euEOutro = palavras.some((p, i) => p === 'eu' && (palavras[i + 1] === 'e' || palavras[i - 1] === 'e'));
+  const ehDoRemetente = palavras.some((p) => PALAVRAS_PROPRIO.includes(p)) || euEOutro
+    || (!nomeados.length && palavras.some((p) => PALAVRAS_PROPRIO_FRACAS.includes(p)));
+
+  const alvos = [
+    ...(ehDoRemetente ? pendentes.filter((e) => remetenteIds.includes(e.id)) : []),
+    ...(palavras.some((p) => PALAVRAS_TODOS.includes(p)) ? pendentes.filter((e) => candidatosIds.includes(e.id)) : []),
+    ...nomeados,
+  ];
+  const unicos = [...new Map(alvos.map((e) => [e.id, e])).values()];
+  return unicos.length ? unicos : null;
+}
+
+// Mensagem no grupo da pelada que pode ser a resposta à pergunta do bot.
+// Resolve true se era (e já tratou), false se é conversa normal.
+function tentarResposta(msg, grupo, agora = null) {
+  const texto = String(msg.body || '').trim();
+  if (!ligado() || !texto || texto.startsWith('#')) return Promise.resolve(false);
+  const achada = repo.perguntaAberta(msg.chatId, {
+    idCitado: msg.idCitado || null, remetente: msg.numero,
+    desde: new Date((agora || new Date()).getTime() - PRAZO_RESPOSTA_MS),
+  });
+  if (!achada) return Promise.resolve(false);
+  const { comprovante: c, citou } = achada;
+  // Só quem enviou o Pix responde; e sem citar a pergunta, só mensagem curta
+  if (repo.usuario(c.remetente) !== repo.usuario(msg.numero)) return Promise.resolve(false);
+  if (!citou && tokens(texto).length > MAX_PALAVRAS_SEM_CITAR) return Promise.resolve(false);
+
+  const resultado = fila.then(() => responder(msg, c, texto, citou));
+  fila = resultado.catch((err) => console.warn(`[comprovante] resposta falhou: ${err.message}`));
+  return resultado;
+}
+
+async function responder(msg, c, texto, citou) {
+  const atual = repo.getComprovante(c.id);
+  if (!atual || atual.status !== 'pendente') return false; // um admin resolveu antes
+  const lista = pelada.getLista(c.lista_id);
+  if (!lista) return false;
+  const pendentes = pelada.listarCombinada(lista.id).filter((e) => !e.pago && !e.mensalista);
+  const alvos = interpretarResposta(texto, pendentes, JSON.parse(c.candidatos || '[]'), JSON.parse(c.do_remetente || '[]'));
+  if (!alvos) {
+    if (citou) await msg.reply('Não entendi 😅 Responde com *meu* ou o nome da pessoa (do jeito que está na lista).');
+    return citou;
+  }
+  if (alvos.length !== c.pessoas) {
+    await msg.reply(`O Pix de ${formatarReais(c.valor_centavos)} dá pra ${c.pessoas} pessoa(s), e eu entendi ${juntarNomes(alvos.map((e) => e.nome))}. ` +
+      `Me responde com ${c.pessoas === 1 ? 'um nome só' : `${c.pessoas} nomes`}.`);
+    return true;
+  }
+  const marcados = marcar(lista, alvos);
+  repo.resolver(c.id, 'resolvido', marcados);
+  const aprendidos = aprender(c, alvos);
+  await anunciarNoGrupo(msg, c.chat_id, lista, marcados, '_(valeu por avisar!)_');
+  await avisarAdmins(msg, `✅ ${c.remetente_nome || 'Quem enviou'} respondeu no grupo: comprovante ${c.id} → ${juntarNomes(marcados)}.` +
+    (aprendidos.length ? ` Aprendi que ele paga por ${juntarNomes(aprendidos)}.` : ''));
+  return true;
+}
+
+// Guarda quem paga por quem (menos o próprio remetente)
+function aprender(c, alvos) {
+  const aprendidos = [];
+  for (const alvo of alvos) {
+    const ehOProprio = (alvo.numero && repo.usuario(alvo.numero) === repo.usuario(c.remetente))
+      || (c.remetente_nome && nomeCasa(alvo.nome, c.remetente_nome))
+      || (c.pagador_nome && nomeCasa(alvo.nome, c.pagador_nome));
+    if (ehOProprio || !c.remetente) continue;
+    repo.vincular(c.chat_id, {
+      pagadorNumero: c.remetente, pagadorNome: c.remetente_nome,
+      dependenteNome: alvo.nome, dependenteNumero: numeroSintetico(alvo.numero) ? null : alvo.numero,
+    });
+    aprendidos.push(alvo.nome);
+  }
+  return aprendidos;
 }
 
 // Pros comandos de admin: "Duda, Thiago" ou "3 5" → entradas da lista
@@ -172,25 +306,12 @@ async function resolverComprovante(msg, id, texto) {
   const jaPagos = r.alvos.filter((e) => e.pago);
   if (jaPagos.length) return msg.reply(`${jaPagos.map((e) => e.nome).join(', ')} já está pago.`);
 
-  const { nomeCasa } = require('./decisor');
   const marcados = marcar(lista, r.alvos);
   repo.resolver(id, 'resolvido', marcados);
   await anunciarNoGrupo(msg, c.chat_id, lista, marcados, '');
-
-  const aprendidos = [];
-  for (const alvo of r.alvos) {
-    const ehOProprio = (alvo.numero && repo.usuario(alvo.numero) === repo.usuario(c.remetente))
-      || (c.remetente_nome && nomeCasa(alvo.nome, c.remetente_nome))
-      || (c.pagador_nome && nomeCasa(alvo.nome, c.pagador_nome));
-    if (ehOProprio || !c.remetente) continue;
-    repo.vincular(c.chat_id, {
-      pagadorNumero: c.remetente, pagadorNome: c.remetente_nome,
-      dependenteNome: alvo.nome, dependenteNumero: numeroSintetico(alvo.numero) ? null : alvo.numero,
-    });
-    aprendidos.push(alvo.nome);
-  }
+  const aprendidos = aprender(c, r.alvos);
   return msg.reply(`✅ Marquei ${juntarNomes(marcados)}.` +
     (aprendidos.length ? ` Aprendi: ${c.remetente_nome || 'quem enviou'} paga por ${juntarNomes(aprendidos)} — da próxima vez marco sozinho.` : ''));
 }
 
-module.exports = { receber, resolverComprovante, acharAlvos, ligado };
+module.exports = { receber, tentarResposta, interpretarResposta, resolverComprovante, acharAlvos, ligado };

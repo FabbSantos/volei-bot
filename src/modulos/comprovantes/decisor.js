@@ -1,7 +1,10 @@
 // Dado o que o Claude leu no comprovante e o estado da lista, decide:
 //   { acao: 'ignorar' }                       não é comprovante (foto, meme...)
 //   { acao: 'marcar', alvos: [entrada...] }   tudo bate, dá o ✅ sozinho
-//   { acao: 'perguntar', motivo, candidatos } algo não bate: pergunta aos admins
+//   { acao: 'perguntar', motivo, candidatos, tipo }
+//       tipo 'problema': Pix pra outro, repetido, data, valor — só os admins veem
+//       tipo 'para_quem': o Pix é bom, só não dá pra saber de quem — o bot
+//         pergunta no grupo pra quem enviou (pessoas, doRemetente vão junto)
 //
 // O que interessa é PRA QUEM é o pagamento, não quem pagou. As pistas, da
 // mais forte pra mais fraca: a legenda ("eu e a Duda"), quem paga por quem
@@ -56,7 +59,7 @@ function decidir({
   ehDoRemetente = () => false, valorMes = 0, agora = new Date(),
 }) {
   if (!leitura.eh_comprovante_pix) return { acao: 'ignorar' };
-  const perguntar = (motivo, candidatos = []) => ({ acao: 'perguntar', motivo, candidatos });
+  const perguntar = (motivo, candidatos = []) => ({ acao: 'perguntar', tipo: 'problema', motivo, candidatos });
 
   if (leitura.situacao !== 'concluido') {
     return perguntar(leitura.situacao === 'agendado' ? 'é um Pix AGENDADO, não pago ainda' : 'não dá pra ver se o Pix foi concluído');
@@ -84,6 +87,10 @@ function decidir({
     return perguntar(`${formatarReais(leitura.valor_centavos || 0)} não fecha com ${formatarReais(valor)} por pessoa${mensal}`);
   }
   const pessoas = leitura.valor_centavos / valor;
+  // Dúvida só de PRA QUEM é: quem enviou sabe responder melhor que os admins
+  const paraQuem = (motivo, candidatos = []) => ({
+    acao: 'perguntar', tipo: 'para_quem', motivo, candidatos, pessoas, doRemetente: [],
+  });
 
   // Quem ainda deve a LISTA. Mensalista paga pelo mês, não aqui — na extra,
   // os fixos já entram como avulsos e aparecem
@@ -92,9 +99,13 @@ function decidir({
     (e.numero && usuario(e.numero) === usuario(remetente))
     || ehDoRemetente(e)
     || (leitura.pagador_nome && nomeCasa(e.nome, leitura.pagador_nome)));
+  // Quem é o próprio remetente, pra entender "meu" na resposta dele
+  const comRemetente = (d) => ({ ...d, doRemetente: doRemetente.map((e) => e.id) });
   const dosDependentes = pendentes.filter((e) => dependentes.some((d) =>
     (d.dependente_numero && usuario(d.dependente_numero) === usuario(e.numero))
-    || normalizarTexto(d.dependente_nome) === normalizarTexto(e.nome)));
+    || normalizarTexto(d.dependente_nome) === normalizarTexto(e.nome)
+    // "Bento" ensinado com #pagapor casa com "Bento (cvd Ana)" da lista
+    || nomeCasa(d.dependente_nome, e.nome)));
 
   // 1) A legenda manda: "eu e a Duda", "da Kamila"
   if (leitura.legenda_para.length || leitura.legenda_inclui_remetente) {
@@ -105,10 +116,10 @@ function decidir({
     if (jaPagos.length) return perguntar(`a legenda cita ${nomes(jaPagos)}, que já está pago`);
     const alvos = unicos([...(leitura.legenda_inclui_remetente ? doRemetente : []), ...citados]);
     if (alvos.length === pessoas) return { acao: 'marcar', alvos };
-    return perguntar(
+    return comRemetente(paraQuem(
       `${formatarReais(leitura.valor_centavos)} é pra ${pessoas} pessoa(s), mas pela legenda achei ${alvos.length ? nomes(alvos) : 'ninguém devendo'}`,
       alvos,
-    );
+    ));
   }
 
   // 2) Sem legenda: quem enviou + quem ele costuma pagar. A lista PRINCIPAL
@@ -121,15 +132,15 @@ function decidir({
   const candidatos = naPrincipal.length >= pessoas ? naPrincipal : todos;
   if (candidatos.length === pessoas) return { acao: 'marcar', alvos: candidatos };
   if (candidatos.length === 0) {
-    return perguntar(`quem enviou não está devendo na lista e não tem ninguém ligado a ele — é pra quem?`);
+    return comRemetente(paraQuem('quem enviou não está devendo na lista e não tem ninguém ligado a ele — é pra quem?'));
   }
   if (candidatos.length > pessoas) {
-    return perguntar(`${formatarReais(leitura.valor_centavos)} cobre ${pessoas}, mas pode ser de ${nomes(candidatos)}`, candidatos);
+    return comRemetente(paraQuem(`${formatarReais(leitura.valor_centavos)} cobre ${pessoas}, mas pode ser de ${nomes(candidatos)}`, candidatos));
   }
-  return perguntar(
+  return comRemetente(paraQuem(
     `${formatarReais(leitura.valor_centavos)} é pra ${pessoas} pessoas, mas só achei ${nomes(candidatos)} — quem são os outros?`,
     candidatos,
-  );
+  ));
 }
 
 module.exports = { decidir, recebedorConfere, nomeCasa, lerDataHora, tokens };
