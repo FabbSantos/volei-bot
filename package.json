@@ -6,18 +6,20 @@
   "type": "commonjs",
   "scripts": {
     "start": "node src/main.js",
-    "test": "node test/golden/comandos.js && node test/golden/whatsapp.js && node test/casamento.js && node test/video.js && node test/replay.js && node test/drive.js",
+    "test": "node test/golden/comandos.js && node test/golden/whatsapp.js && node test/casamento.js && node test/video.js && node test/replay.js && node test/drive.js && node test/comprovantes.js && node test/comprovante-real.js",
     "gravar": "node src/video.js gravar",
     "importar": "node src/video.js importar",
     "cortar": "node src/video.js cortar",
     "pedacos": "node src/video.js pedacos"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.136.0",
     "@wppconnect-team/wppconnect": "^2.2.5",
     "better-sqlite3": "^11.3.0",
     "chart.js": "^4.5.1",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^2.7.0",
+    "zod": "^4.6.7"
   }
 }

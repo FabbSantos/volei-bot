@@ -12,6 +12,8 @@ const gruposAdmin = require('./modulos/grupos/comandosAdmin');
 const elencoAdmin = require('./modulos/elenco/comandosAdmin');
 const diagnostico = require('./modulos/diagnostico');
 const videoAdmin = require('./modulos/video/comandosAdmin');
+const comprovantes = require('./modulos/comprovantes');
+const comprovantesAdmin = require('./modulos/comprovantes/comandosAdmin');
 const ajuda = require('./modulos/ajuda');
 
 // Dentro do grupo da pelada
@@ -32,6 +34,7 @@ const COMANDOS_DE_ADMIN = [
   ...gruposAdmin.comandos,
   ...diagnostico.comandos,
   ...videoAdmin.comandos,
+  ...comprovantesAdmin.comandos,
   ...ajuda.comandosAdmin,
 ];
 
@@ -50,6 +53,12 @@ async function processarMensagem(msg) {
       return msg.reply('🔒 Esse grupo ainda não foi liberado pra usar o bot. Fala com quem administra.');
     }
     return;
+  }
+
+  // Imagem ou PDF: pode ser comprovante de Pix. Corre por fora (o Claude leva
+  // uns segundos) e a legenda, se tiver comando, segue o caminho normal
+  if (msg.midia) {
+    comprovantes.receber(msg, grupo).catch((err) => console.warn(`[comprovante] ${err.message}`));
   }
 
   if (await despachar(COMANDOS_DO_GRUPO, texto, msg, { grupo })) return;

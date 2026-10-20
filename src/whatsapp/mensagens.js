@@ -37,7 +37,10 @@ function escutar(client, sessao) {
 
   client.onMessage(async (message) => {
     try {
-      if (!message.body) return;
+      // Imagem e PDF chegam sem texto (ou com o texto na legenda): podem ser
+      // comprovante de Pix
+      const ehMidia = ['image', 'document'].includes(message.type);
+      if (!message.body && !ehMidia) return;
       if (message.t && message.t < iniciadoEm) return; // histórico da reconexão
 
       const ehGrupo = message.isGroupMsg || (message.from || '').endsWith('@g.us');
@@ -89,7 +92,19 @@ function escutar(client, sessao) {
       );
 
       await processarMensagem({
-        body: message.body,
+        // Em imagem, o body é a miniatura em base64 — o texto é a legenda
+        body: ehMidia ? (message.caption || '') : message.body,
+        midia: ehMidia
+          ? {
+            mimetype: message.mimetype,
+            baixar: async () => {
+              const dados = await client.downloadMedia(message);
+              return Buffer.from(String(dados).replace(/^data:[^,]*,/, ''), 'base64');
+            },
+          }
+          : null,
+        enviarPara: (chatId, texto, opcoes) => client.sendText(chatId, texto, opcoes),
+        enviarFigurinhaPara: (chatId, caminho) => enviarFigurinhaNoChat(client, chatId, caminho),
         pushname: message.notifyName || message.sender?.pushname,
         chatId: message.from, // JID do grupo — usado pra isolar cada lista por grupo
         numero,

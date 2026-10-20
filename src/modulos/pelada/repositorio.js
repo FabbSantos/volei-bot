@@ -564,6 +564,9 @@ module.exports = {
   historico,
   marcarPagoPorPosicao,
   marcarPagoPorNumero,
+  // Pro comprovante automático: marca a entrada certa e enxerga a lista toda
+  aplicarPago,
+  listarCombinada,
   resumoPagamentos,
   setarValorLista,
   listasParaLembrete,
