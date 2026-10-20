@@ -1,0 +1,16 @@
+# A imagem leva só o código. Banco, sessão do WhatsApp, vídeos e segredos
+# moram em volumes e no env_file do docker-compose. Sem este arquivo, o
+# COPY . . do Dockerfile copiava tudo da pasta da VPS pra dentro da imagem:
+# em 20/10/2026 ela tinha 16,7 GB (6 GB de vídeo do jogo + o banco + a
+# sessão + o .env com as chaves) e o build encheu o disco.
+videos/
+dados/
+gravacoes/
+tokens/
+.env
+node_modules/
+*.db
+*.db-wal
+*.db-shm
+*.xlsx
+*.log
