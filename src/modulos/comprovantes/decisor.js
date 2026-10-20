@@ -143,4 +143,19 @@ function decidir({
   ));
 }
 
-module.exports = { decidir, recebedorConfere, nomeCasa, lerDataHora, tokens };
+// O texto diz "é de quem enviou"? "meu" e "pra mim" sempre; "eu" e "minha"
+// só sem nome junto ("eu paguei pra Duda" é da Duda) — ou em "eu e a Duda".
+// Vale pra legenda e pra resposta à pergunta do bot. Regra fixa, de
+// propósito: em 20/10/2026 o Claude leu a mesma legenda "é meu" certo numa
+// rodada e errado na seguinte.
+const PALAVRAS_PROPRIO = ['meu', 'mim', 'proprio', 'propria'];
+const PALAVRAS_PROPRIO_FRACAS = ['eu', 'minha'];
+
+function falaDoRemetente(texto, temNome) {
+  const palavras = tokens(texto);
+  const euEOutro = palavras.some((p, i) => p === 'eu' && (palavras[i + 1] === 'e' || palavras[i - 1] === 'e'));
+  return palavras.some((p) => PALAVRAS_PROPRIO.includes(p)) || euEOutro
+    || (!temNome && palavras.some((p) => PALAVRAS_PROPRIO_FRACAS.includes(p)));
+}
+
+module.exports = { decidir, recebedorConfere, nomeCasa, lerDataHora, tokens, falaDoRemetente };

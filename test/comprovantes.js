@@ -293,6 +293,17 @@ async function fluxo() {
   const curta = await fala('5521900000011@c.us', 'Ana', 'do Bento');
   caso('"do Bento" marca o Bento', () => assert.ok(curta && pago('Bento (cvd Ana)') && !pago('Ana')));
 
+  // Legenda "é meu" com o Claude errando o campo (aconteceu em 20/10/2026):
+  // a regra fixa do bot completa, e o Caio é marcado em vez de perguntado
+  pelada.adicionarEntrada(lista.id, 'Caio', '5521900000012@c.us');
+  pelada.adicionarEntrada(lista.id, 'Dani (cvd Caio)', 'manual-789@bot');
+  await admin('#pagapor riachuelo Caio > Dani');
+  enviados.length = 0;
+  await comprovantes.receber(porta('5521900000012@c.us', 'Caio', 'é meu'), grupo,
+    comLeitura(leitura({ id_transacao: 'E-CAIO-1', legenda_inclui_remetente: false })));
+  caso('legenda "é meu" com o Claude errando: marca o Caio mesmo assim', () =>
+    assert.ok(pago('Caio') && !pago('Dani (cvd Caio)') && !perguntaNoGrupo(), JSON.stringify(enviados)));
+
   await admin('#pagapor riachuelo');
   caso('#pagapor lista quem paga por quem', () => assert.match(respostas.at(-1), /Ana → Bento[\s\S]*Ryan → Lucas[\s\S]*Thiago Rodrigues → Duda/));
   await admin('#naopagapor riachuelo thiago > duda');

@@ -12,7 +12,7 @@ const { celebrarPagamentoEm } = require('../figurinhas');
 const { formatarReais } = require('../../nucleo/dinheiro');
 const { numeroSintetico } = require('../../nucleo/numeros');
 const { lerComprovante, lerivel, temChave } = require('./leitor');
-const { decidir, lerDataHora, nomeCasa, tokens } = require('./decisor');
+const { decidir, lerDataHora, nomeCasa, tokens, falaDoRemetente } = require('./decisor');
 const { comMencoes } = require('../pelada/textos');
 const repo = require('./repositorio');
 
@@ -89,6 +89,13 @@ async function processar(msg, grupo, ler, agora) {
   const leitura = await ler({
     arquivo, mimetype: msg.midia.mimetype, legenda: msg.body || '', nomesDaLista: entradas.map((e) => e.nome),
   });
+
+  // "é meu" na legenda não depende do humor do modelo: a regra fixa completa
+  // (só liga, nunca desliga o que o Claude achou)
+  const legenda = msg.body || '';
+  const citaNomeDaLista = leitura.legenda_para.length > 0
+    || tokens(legenda).some((p) => entradas.some((e) => tokens(e.nome)[0] === p));
+  if (legenda && falaDoRemetente(legenda, citaNomeDaLista)) leitura.legenda_inclui_remetente = true;
 
   const chave = repo.chaveDoComprovante(leitura);
   const decisao = decidir({
@@ -175,10 +182,6 @@ const PRAZO_RESPOSTA_MS = 12 * 60 * 60 * 1000;
 // "meu", "da Duda", "os dois". Mensagem longa sem citar a pergunta é conversa,
 // não resposta ("a Duda vai atrasar hoje, galera" não vira pagamento da Duda)
 const MAX_PALAVRAS_SEM_CITAR = 5;
-// "meu", "pra mim": sempre é o remetente. "eu" e "minha" só quando não tem
-// nome junto ("eu paguei pra Duda" é da Duda) — ou em "eu e o Bento"
-const PALAVRAS_PROPRIO = ['meu', 'mim', 'proprio', 'propria'];
-const PALAVRAS_PROPRIO_FRACAS = ['eu', 'minha'];
 const PALAVRAS_TODOS = ['dois', 'duas', 'ambos', 'ambas', 'todos', 'tres'];
 
 // Resposta → entradas da lista, ou null se não deu pra entender
@@ -192,9 +195,7 @@ function interpretarResposta(texto, pendentes, candidatosIds, remetenteIds) {
     if (escolhidos.length > 1) return null; // dois "Diego" devendo: não chuta
     nomeados.push(...escolhidos);
   }
-  const euEOutro = palavras.some((p, i) => p === 'eu' && (palavras[i + 1] === 'e' || palavras[i - 1] === 'e'));
-  const ehDoRemetente = palavras.some((p) => PALAVRAS_PROPRIO.includes(p)) || euEOutro
-    || (!nomeados.length && palavras.some((p) => PALAVRAS_PROPRIO_FRACAS.includes(p)));
+  const ehDoRemetente = falaDoRemetente(texto, nomeados.length > 0);
 
   const alvos = [
     ...(ehDoRemetente ? pendentes.filter((e) => remetenteIds.includes(e.id)) : []),
