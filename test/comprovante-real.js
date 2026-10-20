@@ -81,6 +81,24 @@ async function principal() {
       assert.strictEqual(lido.legenda_inclui_remetente, true);
     });
 
+    // Thiago pagando separado: "é meu" num, "da Duda" no outro
+    const meu = await lerComprovante({
+      arquivo: fs.readFileSync(path.join(pasta, 'recibo.png')), mimetype: 'image/png',
+      legenda: 'é meu', nomesDaLista: ['Thiago Rodrigues', 'Duda', 'Ryan'],
+    });
+    caso(`legenda "é meu" = quem enviou, sem mais ninguém (${JSON.stringify(meu.legenda_para)}, inclui remetente: ${meu.legenda_inclui_remetente})`, () => {
+      assert.deepStrictEqual(meu.legenda_para, []);
+      assert.strictEqual(meu.legenda_inclui_remetente, true);
+    });
+    const daDuda = await lerComprovante({
+      arquivo: fs.readFileSync(path.join(pasta, 'recibo.png')), mimetype: 'image/png',
+      legenda: 'esse é o da duda', nomesDaLista: ['Thiago Rodrigues', 'Duda', 'Ryan'],
+    });
+    caso(`legenda "esse é o da duda" = só a Duda (${JSON.stringify(daDuda.legenda_para)}, inclui remetente: ${daDuda.legenda_inclui_remetente})`, () => {
+      assert.deepStrictEqual(daDuda.legenda_para, ['Duda']);
+      assert.strictEqual(daDuda.legenda_inclui_remetente, false);
+    });
+
     const outra = await lerComprovante({
       arquivo: fs.readFileSync(path.join(pasta, 'outra.png')), mimetype: 'image/png', legenda: 'kkkk', nomesDaLista: ['Ryan'],
     });

@@ -100,6 +100,18 @@ caso('Thiago manda R$ 12 sem legenda, os dois devendo: pergunta', () => {
 });
 caso('Thiago manda R$ 12 com legenda "da Duda": marca a Duda', () =>
   assert.strictEqual(alvos(dec({ leitura: leitura({ legenda_para: ['Duda'] }), remetente: THIAGO })), 'Duda'));
+caso('Thiago manda R$ 12 com legenda "é meu", os dois devendo: marca só ele', () =>
+  assert.strictEqual(alvos(dec({ leitura: leitura({ legenda_inclui_remetente: true }), remetente: THIAGO, dependentes: [{ dependente_nome: 'Duda', dependente_numero: DUDA }] })), 'Thiago Rodrigues'));
+caso('e depois "da Duda", com ele já pago: marca a Duda', () => {
+  const entradas = base.entradas.map((x) => (x.nome === 'Thiago Rodrigues' ? { ...x, pago: 1 } : x));
+  assert.strictEqual(alvos(dec({ entradas, leitura: leitura({ legenda_para: ['Duda'] }), remetente: THIAGO, dependentes: [{ dependente_nome: 'Duda', dependente_numero: DUDA }] })), 'Duda');
+});
+caso('na ordem inversa: "da Duda" primeiro, depois "é meu"', () => {
+  const dep = [{ dependente_nome: 'Duda', dependente_numero: DUDA }];
+  assert.strictEqual(alvos(dec({ leitura: leitura({ legenda_para: ['Duda'] }), remetente: THIAGO, dependentes: dep })), 'Duda');
+  const entradas = base.entradas.map((x) => (x.nome === 'Duda' ? { ...x, pago: 1 } : x));
+  assert.strictEqual(alvos(dec({ entradas, leitura: leitura({ legenda_inclui_remetente: true }), remetente: THIAGO, dependentes: dep })), 'Thiago Rodrigues');
+});
 caso('legenda "eu e a Duda" com R$ 24: os dois', () =>
   assert.strictEqual(alvos(dec({ leitura: leitura({ valor_centavos: 2400, legenda_para: ['Duda'], legenda_inclui_remetente: true }), remetente: THIAGO })), 'Duda, Thiago Rodrigues'));
 caso('Pix pra outra pessoa: pergunta', () =>
