@@ -33,14 +33,24 @@ async function avisarAdmins(msg, texto) {
   }
 }
 
-// Dá o ✅, comemora no grupo da pelada como o #pago faz e devolve os nomes
-async function marcarNoGrupo(msg, chatId, lista, alvos, comoFoi) {
+// Dá o ✅ (no banco, na hora) e devolve os nomes. O anúncio vem depois, à
+// parte: mensagem que falha não pode deixar o pagamento sem registro
+function marcar(lista, alvos) {
   for (const alvo of alvos) pelada.aplicarPago(alvo, lista.id, true);
-  const quem = juntarNomes(alvos.map((a) => a.nome));
-  await msg.enviarPara(chatId, `💰 ${quem} ${alvos.length > 1 ? 'pagaram' : 'pagou'}! ✅ ${comoFoi}`);
-  await celebrarPagamentoEm(msg, chatId);
-  await msg.enviarPara(chatId, pelada.montarListaFormatada(lista.id, lista.data_jogo));
   return alvos.map((a) => a.nome);
+}
+
+// Comemora no grupo da pelada como o #pago faz. A figurinha é enfeite: em
+// 20/10/2026 o envio de mídia do WhatsApp Web quebrou ("prepRawMedia") e
+// derrubava o resto — agora só fica no log
+async function anunciarNoGrupo(msg, chatId, lista, nomes, comoFoi) {
+  await msg.enviarPara(chatId, `💰 ${juntarNomes(nomes)} ${nomes.length > 1 ? 'pagaram' : 'pagou'}! ✅ ${comoFoi}`);
+  try {
+    await celebrarPagamentoEm(msg, chatId);
+  } catch (err) {
+    console.warn(`[comprovante] figurinha não saiu: ${err.message}`);
+  }
+  await msg.enviarPara(chatId, pelada.montarListaFormatada(lista.id, lista.data_jogo));
 }
 
 // A entrada é do próprio remetente? (pelo número, ou pelo jogador do elenco
@@ -102,12 +112,14 @@ async function processar(msg, grupo, ler, agora) {
   const resumoPix = `${formatarReais(leitura.valor_centavos || 0)} · Pix de ${leitura.pagador_nome || '?'} · ${quandoLegivel(leitura.data_hora)}`;
 
   if (decisao.acao === 'marcar') {
-    const marcados = await marcarNoGrupo(msg, msg.chatId, lista, decisao.alvos, '_(comprovante conferido pelo bot)_');
+    // Banco primeiro (✅ + comprovante usado), mensagens depois
+    const marcados = marcar(lista, decisao.alvos);
     const c = repo.registrar({ ...base, status: 'marcado', marcados });
     await avisarAdmins(msg,
       `🤖✅ *${juntarNomes(marcados)}* — lista ${lista.data_jogo} de *${grupo.nome || msg.chatId}*\n` +
       `${resumoPix} · mandado por ${msg.pushname || 'alguém'} (comprovante ${c.id})\n` +
       `Errado? *#naopagode ${(grupo.nome || '').split(' ').pop() || 'grupo'} N* desfaz.`);
+    await anunciarNoGrupo(msg, msg.chatId, lista, marcados, '_(comprovante conferido pelo bot)_');
     return;
   }
 
@@ -161,8 +173,9 @@ async function resolverComprovante(msg, id, texto) {
   if (jaPagos.length) return msg.reply(`${jaPagos.map((e) => e.nome).join(', ')} já está pago.`);
 
   const { nomeCasa } = require('./decisor');
-  const marcados = await marcarNoGrupo(msg, c.chat_id, lista, r.alvos, '');
+  const marcados = marcar(lista, r.alvos);
   repo.resolver(id, 'resolvido', marcados);
+  await anunciarNoGrupo(msg, c.chat_id, lista, marcados, '');
 
   const aprendidos = [];
   for (const alvo of r.alvos) {

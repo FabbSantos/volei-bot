@@ -212,6 +212,23 @@ async function fluxo() {
   await admin('#naopagapor riachuelo thiago > duda');
   caso('#naopagapor esquece', () => assert.strictEqual(repo.dependentesDe(G, THIAGO).length, 0));
 
+  // 20/10/2026: a figurinha falhou ("prepRawMedia") no meio e o comprovante
+  // ficou marcado mas sem registro, sem aviso aos admins e sem a lista
+  pelada.adicionarEntrada(lista.id, 'Zé', '5521900000009@c.us');
+  enviados.length = 0;
+  const semFigurinha = {
+    ...porta('5521900000009@c.us', 'Zé'),
+    enviarFigurinhaPara: async () => { throw new Error("Cannot read properties of undefined (reading 'prepRawMedia')"); },
+  };
+  await comprovantes.receber(semFigurinha, grupo, comLeitura(leitura({ id_transacao: 'E-ZE-1' })));
+  caso('figurinha quebrada: o Zé fica marcado mesmo assim', () => assert.ok(pago('Zé')));
+  caso('e o comprovante fica registrado como usado', () => assert.strictEqual(repo.jaUsado('id:E-ZE-1')?.status, 'marcado'));
+  caso('e os admins recebem o 🤖✅, não o ⚠️', () => {
+    assert.ok(enviados.some((m) => m.para === ADM && /🤖✅ \*Zé\*/.test(m.t)));
+    assert.ok(!enviados.some((m) => /Não consegui conferir/.test(m.t)));
+  });
+  caso('e a lista atualizada sai no grupo', () => assert.ok(enviados.some((m) => m.para === G && /Zé ✅/.test(m.t))));
+
   // Sem PIX_RECEBEDOR o módulo fica desligado
   delete process.env.PIX_RECEBEDOR;
   enviados.length = 0;
