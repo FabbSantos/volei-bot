@@ -68,7 +68,7 @@ function decidir({
   }
   if (usado) {
     const quando = new Date(usado.criado_em).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit' });
-    return perguntar(`esse comprovante já foi usado em ${quando}${usado.remetente_nome ? ` (mandado por ${usado.remetente_nome})` : ''}`);
+    return perguntar(`esse comprovante já foi usado em ${quando}${usado.remetente_nome ? ` (enviado por ${usado.remetente_nome})` : ''}`);
   }
 
   const quando = lerDataHora(leitura.data_hora);

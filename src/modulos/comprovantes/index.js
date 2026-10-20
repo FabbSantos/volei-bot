@@ -1,4 +1,4 @@
-// Comprovante de Pix mandado no grupo da pelada: o bot lê com o Claude,
+// Comprovante de Pix enviado no grupo da pelada: o bot lê com o Claude,
 // confere e dá o ✅ sozinho — sem ninguém precisar mandar #pago/#pagode.
 // Quando algo não bate, pergunta no grupo de admins (#comprovante N ...), e a
 // resposta ensina quem paga por quem pra próxima vez.
@@ -117,7 +117,7 @@ async function processar(msg, grupo, ler, agora) {
     const c = repo.registrar({ ...base, status: 'marcado', marcados });
     await avisarAdmins(msg,
       `🤖✅ *${juntarNomes(marcados)}* — lista ${lista.data_jogo} de *${grupo.nome || msg.chatId}*\n` +
-      `${resumoPix} · mandado por ${msg.pushname || 'alguém'} (comprovante ${c.id})\n` +
+      `${resumoPix} · enviado por ${msg.pushname || 'alguém'} (comprovante ${c.id})\n` +
       `Errado? *#naopagode ${(grupo.nome || '').split(' ').pop() || 'grupo'} N* desfaz.`);
     await anunciarNoGrupo(msg, msg.chatId, lista, marcados, '_(comprovante conferido pelo bot)_');
     return;

@@ -15,7 +15,7 @@ function portaDeAdmin(client, message, origem, sessao) {
     body: message.body,
     origem,
     chatId: message.from,
-    // Hora em que a mensagem foi mandada (o #replay corta a partir dela)
+    // Hora em que a mensagem foi enviada (o #replay corta a partir dela)
     enviadoEm: message.t ? message.t * 1000 : null,
     autor: message.notifyName || message.sender?.pushname || null,
     reply: (texto) => client.sendText(message.from, texto),

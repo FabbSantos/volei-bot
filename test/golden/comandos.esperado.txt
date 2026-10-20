@@ -1027,7 +1027,7 @@ Quem subir da espera tem até *segunda, 17h* pra pagar.
 
 Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. 🤝
 --> [g1@g.us] [figurinha] <raiz>/assets/cade-meu-pix-7.webp
-<<< 📣 Cobrança mandada pro grupo (2 na mira). O lembrete diário automático não foi afetado.
+<<< 📣 Cobrança enviada pro grupo (2 na mira). O lembrete diário automático não foi afetado.
 
 >>> [admin/grupoadmin] #removerde riachuelo 2-3
 --> [g1@g.us] ❌ Saiu(ram) da lista: *Maria Convidada*, *Maria Certa*.
@@ -1057,7 +1057,7 @@ O prazo de vocês é até *segunda, 17h* pra fazer o pagamento — senão a vaga
 
 Manda o comprovante aqui que os admins dão o ✅. O agiota tá de olho. 👀
 --> [g1@g.us] [figurinha] <raiz>/assets/cade-meu-pix-2.webp
-<<< 📣 Cobrança mandada pro grupo (2 na mira, só quem subiu da espera). O lembrete diário automático não foi afetado.
+<<< 📣 Cobrança enviada pro grupo (2 na mira, só quem subiu da espera). O lembrete diário automático não foi afetado.
 
 >>> [admin/grupoadmin] #editarlistade riachuelo 14/10 Sexta Nova
 <<< ✏️ Lista corrigida: *12/10* (Sexta 3h) → *14/10* (Sexta Nova). Ninguém saiu da lista.
@@ -1579,7 +1579,7 @@ Quem subir da espera tem até *quarta, 17h* pra pagar.
 
 Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. 🤝
 --> [g1@g.us] [figurinha] <raiz>/assets/cade-meu-pix-7.webp
-<<< 📣 Cobrança mandada pro grupo (4 na mira). O lembrete diário automático não foi afetado.
+<<< 📣 Cobrança enviada pro grupo (4 na mira). O lembrete diário automático não foi afetado.
 
 >>> GET /painel
 <<< 401 <!doctype html>

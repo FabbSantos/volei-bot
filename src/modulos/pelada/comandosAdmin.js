@@ -172,7 +172,7 @@ async function cobrar(msg, termo, soPromovidos) {
   // Disparo manual não carimba o lembrete_em — o recado diário automático
   // segue o cronograma dele normalmente
   return msg.reply(
-    `📣 Cobrança mandada pro grupo (${alvo.length} na mira${soPromovidos ? ', só quem subiu da espera' : ''}). O lembrete diário automático não foi afetado.`
+    `📣 Cobrança enviada pro grupo (${alvo.length} na mira${soPromovidos ? ', só quem subiu da espera' : ''}). O lembrete diário automático não foi afetado.`
   );
 }
 

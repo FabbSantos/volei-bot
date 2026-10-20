@@ -131,7 +131,7 @@ Quem subir da espera tem até *sábado, 17h* pra pagar.
 
 Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. 🤝
 --> [g1@g.us] [figurinha] <raiz>/assets/cade-meu-pix-9.png
---> [adm@g.us] 📣 Cobrança mandada pro grupo (1 na mira). O lembrete diário automático não foi afetado.
+--> [adm@g.us] 📣 Cobrança enviada pro grupo (1 na mira). O lembrete diário automático não foi afetado.
 
 >>> [adm@g.us / 444@lid] "#teste"
 --> [adm@g.us] 🏐 *Tudo certo por aqui.*
