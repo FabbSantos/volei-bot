@@ -4,7 +4,7 @@ const { processarMensagem, processarComandoAdmin } = require('../roteador');
 const { notificarFalha } = require('../nucleo/alertas');
 const grupos = require('../modulos/grupos/repositorio');
 const {
-  ADMIN_NUMBER, enviarFigurinhaNoChat, enviarArquivoNoChat, lidParaNumero, listarAdminsDoGrupo, listarMembrosDoGrupo, ehAdminDoBot, ehAdminDoGrupo,
+  ADMIN_NUMBER, enviarFigurinhaNoChat, enviarArquivoNoChat, baixarMidia, lidParaNumero, listarAdminsDoGrupo, listarMembrosDoGrupo, ehAdminDoBot, ehAdminDoGrupo,
 } = require('./contatos');
 
 const NOME_GRUPO_ALVO = process.env.NOME_GRUPO_ALVO || null; // opcional: filtrar por nome do grupo
@@ -97,10 +97,7 @@ function escutar(client, sessao) {
         midia: ehMidia
           ? {
             mimetype: message.mimetype,
-            baixar: async () => {
-              const dados = await client.downloadMedia(message);
-              return Buffer.from(String(dados).replace(/^data:[^,]*,/, ''), 'base64');
-            },
+            baixar: () => baixarMidia(client, message),
           }
           : null,
         enviarPara: (chatId, texto, opcoes) => client.sendText(chatId, texto, opcoes),

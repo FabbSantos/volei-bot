@@ -37,6 +37,34 @@ async function enviarArquivoNoChat(client, chatId, caminho, legenda) {
   }
 }
 
+// Baixa a imagem/PDF de uma mensagem (o comprovante de Pix). O normal é pelo
+// id; mas o primeiro comprovante de verdade (20/10/2026) chegou no evento SEM
+// id, e o downloadMedia do wppconnect recusou. Sem id, acha a mensagem na
+// conversa pela hora, tipo e autor e baixa por ela.
+const dataUrlParaBuffer = (dados) => Buffer.from(String(dados).replace(/^data:[^,]*,/, ''), 'base64');
+
+async function baixarMidia(client, message) {
+  const id = typeof message.id === 'string' ? message.id : message.id?._serialized;
+  if (id) return dataUrlParaBuffer(await client.downloadMedia(id));
+
+  console.warn(`[midia] mensagem sem id no evento — campos: ${Object.keys(message).slice(0, 40).join(',')}`);
+  const dados = await client.waPage.evaluate(async ({ chatId, t, tipo, autor }) => {
+    const lista = await WPP.chat.getMessages(chatId, { count: 30 });
+    const achada = lista
+      .filter((m) => m.type === tipo && (!t || m.t === t) && (!autor || m.author?._serialized === autor))
+      .pop();
+    if (!achada) return null;
+    return WPP.util.blobToBase64(await WPP.chat.downloadMedia(achada.id._serialized));
+  }, {
+    chatId: message.from || message.chatId,
+    t: message.t || null,
+    tipo: message.type,
+    autor: typeof message.author === 'string' ? message.author : message.author?._serialized || null,
+  });
+  if (!dados) throw new Error('não achei a imagem na conversa pra baixar');
+  return dataUrlParaBuffer(dados);
+}
+
 // Cache da lista de admins por grupo — evita consultar o WhatsApp a cada #pago.
 // 5min de TTL: promover/rebaixar admin no grupo demora até isso pra valer no bot.
 const CACHE_ADMINS_TTL_MS = 5 * 60_000;
@@ -146,6 +174,7 @@ module.exports = {
   ADMIN_NUMBER,
   enviarFigurinhaNoChat,
   enviarArquivoNoChat,
+  baixarMidia,
   lidParaNumero,
   listarAdminsDoGrupo,
   listarMembrosDoGrupo,
