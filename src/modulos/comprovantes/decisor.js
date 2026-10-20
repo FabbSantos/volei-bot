@@ -5,7 +5,7 @@
 //
 // O que interessa é PRA QUEM é o pagamento, não quem pagou. As pistas, da
 // mais forte pra mais fraca: a legenda ("eu e a Duda"), quem paga por quem
-// (aprendido), o valor (R$ 24 = duas pessoas) e quem mandou. Sem nada de
+// (aprendido), o valor (R$ 24 = duas pessoas) e quem enviou. Sem nada de
 // WhatsApp nem de API aqui dentro: dá pra testar caso a caso.
 const { normalizarTexto } = require('../../nucleo/texto');
 const { formatarReais } = require('../../nucleo/dinheiro');
@@ -111,11 +111,17 @@ function decidir({
     );
   }
 
-  // 2) Sem legenda: quem mandou + quem ele costuma pagar
-  const candidatos = unicos([...doRemetente, ...dosDependentes]);
+  // 2) Sem legenda: quem enviou + quem ele costuma pagar. A lista PRINCIPAL
+  // primeiro: quem está na espera não deve nada até subir (pelada de 16/10:
+  // o Thiago pagou o dele com a Duda na espera — era dele, óbvio). A espera
+  // só entra se o valor cobrir mais gente do que tem na principal (R$ 24 do
+  // Thiago com a Duda ainda esperando = os dois)
+  const todos = unicos([...doRemetente, ...dosDependentes]);
+  const naPrincipal = todos.filter((e) => e.tipo === 'principal');
+  const candidatos = naPrincipal.length >= pessoas ? naPrincipal : todos;
   if (candidatos.length === pessoas) return { acao: 'marcar', alvos: candidatos };
   if (candidatos.length === 0) {
-    return perguntar(`quem mandou não está devendo na lista e não tem ninguém ligado a ele — é pra quem?`);
+    return perguntar(`quem enviou não está devendo na lista e não tem ninguém ligado a ele — é pra quem?`);
   }
   if (candidatos.length > pessoas) {
     return perguntar(`${formatarReais(leitura.valor_centavos)} cobre ${pessoas}, mas pode ser de ${nomes(candidatos)}`, candidatos);

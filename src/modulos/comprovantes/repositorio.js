@@ -7,7 +7,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     chat_id TEXT NOT NULL,
     lista_id INTEGER,
-    remetente TEXT,               -- número de quem mandou no grupo
+    remetente TEXT,               -- número de quem enviou no grupo
     remetente_nome TEXT,
     chave TEXT,                   -- id da transação (ou valor+data+pagador, sem id)
     valor_centavos INTEGER,

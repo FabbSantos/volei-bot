@@ -75,7 +75,7 @@ function receber(msg, grupo, opcoes = {}) {
 
   fila = fila.then(() => processar(msg, grupo, ler, opcoes.agora || new Date())).catch(async (err) => {
     console.warn(`[comprovante] falhou: ${err.message}`);
-    await avisarAdmins(msg, `⚠️ Não consegui conferir o comprovante que ${msg.pushname || 'alguém'} mandou em *${grupo.nome || msg.chatId}* (${err.message}). Marca na mão.`);
+    await avisarAdmins(msg, `⚠️ Não consegui conferir o comprovante que ${msg.pushname || 'alguém'} enviou em *${grupo.nome || msg.chatId}* (${err.message}). Marca na mão.`);
   });
   return fila;
 }
@@ -127,7 +127,7 @@ async function processar(msg, grupo, ler, agora) {
   await msg.reply('👀 Recebi o comprovante. Um admin vai conferir e marcar.');
   const sugestao = decisao.candidatos.length ? ` (talvez: ${decisao.candidatos.map((e) => e.nome).join(', ')})` : '';
   await avisarAdmins(msg,
-    `❓ *Comprovante ${c.id}* — ${msg.pushname || 'alguém'} mandou em *${grupo.nome || msg.chatId}* (lista ${lista.data_jogo})\n` +
+    `❓ *Comprovante ${c.id}* — ${msg.pushname || 'alguém'} enviou em *${grupo.nome || msg.chatId}* (lista ${lista.data_jogo})\n` +
     `${resumoPix}\n` +
     `Não marquei: ${decisao.motivo}${sugestao}.\n\n` +
     `Marca com *#comprovante ${c.id} Nome, Nome* (ou posições: *#comprovante ${c.id} 3 5*), ou *#comprovante ${c.id} ignorar*.`);
@@ -190,7 +190,7 @@ async function resolverComprovante(msg, id, texto) {
     aprendidos.push(alvo.nome);
   }
   return msg.reply(`✅ Marquei ${juntarNomes(marcados)}.` +
-    (aprendidos.length ? ` Aprendi: ${c.remetente_nome || 'quem mandou'} paga por ${juntarNomes(aprendidos)} — da próxima vez marco sozinho.` : ''));
+    (aprendidos.length ? ` Aprendi: ${c.remetente_nome || 'quem enviou'} paga por ${juntarNomes(aprendidos)} — da próxima vez marco sozinho.` : ''));
 }
 
 module.exports = { receber, resolverComprovante, acharAlvos, ligado };

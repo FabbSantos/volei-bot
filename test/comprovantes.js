@@ -112,6 +112,18 @@ caso('na ordem inversa: "da Duda" primeiro, depois "é meu"', () => {
   const entradas = base.entradas.map((x) => (x.nome === 'Duda' ? { ...x, pago: 1 } : x));
   assert.strictEqual(alvos(dec({ entradas, leitura: leitura({ legenda_inclui_remetente: true }), remetente: THIAGO, dependentes: dep })), 'Thiago Rodrigues');
 });
+// Pelada de 16/10: Thiago na principal, Duda na ESPERA, nenhum dos dois com legenda
+{
+  const dep = [{ dependente_nome: 'Duda', dependente_numero: DUDA }];
+  const dudaNaEspera = base.entradas.map((x) => (x.nome === 'Duda' ? { ...x, tipo: 'espera' } : x));
+  caso('16/10: Thiago paga R$ 12 com a Duda na espera — é dele', () =>
+    assert.strictEqual(alvos(dec({ entradas: dudaNaEspera, leitura: leitura(), remetente: THIAGO, dependentes: dep })), 'Thiago Rodrigues'));
+  const dudaSubiu = base.entradas.map((x) => (x.nome === 'Thiago Rodrigues' ? { ...x, pago: 1 } : x));
+  caso('16/10: a Duda sobe, Thiago (já pago) paga mais R$ 12 — é dela', () =>
+    assert.strictEqual(alvos(dec({ entradas: dudaSubiu, leitura: leitura(), remetente: THIAGO, dependentes: dep })), 'Duda'));
+  caso('Thiago paga R$ 24 com a Duda ainda na espera — os dois', () =>
+    assert.strictEqual(alvos(dec({ entradas: dudaNaEspera, leitura: leitura({ valor_centavos: 2400 }), remetente: THIAGO, dependentes: dep })), 'Duda, Thiago Rodrigues'));
+}
 caso('legenda "eu e a Duda" com R$ 24: os dois', () =>
   assert.strictEqual(alvos(dec({ leitura: leitura({ valor_centavos: 2400, legenda_para: ['Duda'], legenda_inclui_remetente: true }), remetente: THIAGO })), 'Duda, Thiago Rodrigues'));
 caso('Pix pra outra pessoa: pergunta', () =>
