@@ -11,6 +11,9 @@ const pasta = fs.mkdtempSync(path.join(os.tmpdir(), 'volei-comprovante-'));
 process.env.DB_PATH = path.join(pasta, 'teste.db');
 process.env.PIX_RECEBEDOR = 'Marcel Garcia Von Rondon';
 delete process.env.COMPROVANTES;
+// Sem API aqui (o Claude de verdade fica no test/comprovante-real.js): na
+// VPS o teste roda com o .env, e a frase do anúncio viria do Claude
+delete process.env.ANTHROPIC_API_KEY;
 
 const grupos = require('../src/modulos/grupos/repositorio');
 const pelada = require('../src/modulos/pelada/repositorio');
