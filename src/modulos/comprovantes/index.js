@@ -272,28 +272,35 @@ async function responder(msg, c, texto, citou, entender) {
   }
   const marcados = marcar(lista, alvos);
   repo.resolver(c.id, 'resolvido', marcados);
-  const aprendidos = aprender(c, alvos);
+  const aprendizado = aprender(c, alvos);
   await anunciarNoGrupo(msg, c.chat_id, lista, marcados, '_(valeu por avisar!)_');
   await avisarAdmins(msg, `✅ ${c.remetente_nome || 'Quem enviou'} respondeu no grupo: comprovante ${c.id} → ${juntarNomes(marcados)}.` +
-    (aprendidos.length ? ` Aprendi que ele paga por ${juntarNomes(aprendidos)}.` : ''));
+    textoDoAprendizado(c.remetente_nome || 'ele', aprendizado));
   return true;
 }
 
-// Guarda quem paga por quem (menos o próprio remetente)
+// Conta mais uma vez "fulano pagou por ciclano" (menos o próprio remetente).
+// Vira regra só a partir da 2ª vez — ver VEZES_PRA_VALER em ./repositorio
 function aprender(c, alvos) {
-  const aprendidos = [];
+  const valendo = [];
+  const anotados = [];
   for (const alvo of alvos) {
     const ehOProprio = (alvo.numero && repo.usuario(alvo.numero) === repo.usuario(c.remetente))
       || (c.remetente_nome && nomeCasa(alvo.nome, c.remetente_nome))
       || (c.pagador_nome && nomeCasa(alvo.nome, c.pagador_nome));
     if (ehOProprio || !c.remetente) continue;
-    repo.vincular(c.chat_id, {
-      pagadorNumero: c.remetente, pagadorNome: c.remetente_nome,
+    const v = repo.vincular(c.chat_id, {
+      pagadorNumero: c.remetente, pagadorNome: c.remetente_nome, origem: 'aprendido',
       dependenteNome: alvo.nome, dependenteNumero: numeroSintetico(alvo.numero) ? null : alvo.numero,
     });
-    aprendidos.push(alvo.nome);
+    (v.valendo ? valendo : anotados).push(alvo.nome);
   }
-  return aprendidos;
+  return { valendo, anotados };
+}
+
+function textoDoAprendizado(quem, { valendo, anotados }) {
+  return (valendo.length ? ` Aprendi: ${quem} paga por ${juntarNomes(valendo)} — da próxima vez marco sozinho.` : '')
+    + (anotados.length ? ` Anotei que ${quem} pagou por ${juntarNomes(anotados)}; se acontecer de novo, passo a marcar sozinho.` : '');
 }
 
 // Pros comandos de admin: "Duda, Thiago" ou "3 5" → entradas da lista
@@ -345,9 +352,7 @@ async function resolverComprovante(msg, id, texto) {
   const marcados = marcar(lista, r.alvos);
   repo.resolver(id, 'resolvido', marcados);
   await anunciarNoGrupo(msg, c.chat_id, lista, marcados, '');
-  const aprendidos = aprender(c, r.alvos);
-  return msg.reply(`✅ Marquei ${juntarNomes(marcados)}.` +
-    (aprendidos.length ? ` Aprendi: ${c.remetente_nome || 'quem enviou'} paga por ${juntarNomes(aprendidos)} — da próxima vez marco sozinho.` : ''));
+  return msg.reply(`✅ Marquei ${juntarNomes(marcados)}.` + textoDoAprendizado(c.remetente_nome || 'quem enviou', aprender(c, r.alvos)));
 }
 
 module.exports = { receber, tentarResposta, interpretarResposta, resolverComprovante, acharAlvos, ligado };

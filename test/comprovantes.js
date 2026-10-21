@@ -274,8 +274,26 @@ async function fluxo() {
   const id1 = ultimoComprovante();
   const tratou = await fala('5521900000005@c.us', 'Ryan', 'é do Lucas');
   caso('"é do Lucas" (sem citar, curto) marca o Lucas', () => assert.ok(tratou && pago('Lucas (cvd Ryan)')));
-  caso('e aprende que o Ryan paga pelo Lucas', () =>
-    assert.deepStrictEqual(repo.dependentesDe(G, '5521900000005@c.us').map((d) => d.dependente_nome), ['Lucas (cvd Ryan)']));
+  // 21/10/2026: uma resposta avulsa ("Diego") virou regra e o bot passaria a
+  // marcar o DiegoB em todo Pix do Fabrício. Uma vez é só anotação
+  caso('uma vez só: anota que o Ryan pagou pelo Lucas, mas não vira regra', () => {
+    assert.deepStrictEqual(repo.dependentesDe(G, '5521900000005@c.us'), []);
+    assert.ok(enviados.some((m) => m.para === ADM && /Anotei que Ryan pagou por Lucas \(cvd Ryan\); se acontecer de novo/.test(m.t)));
+  });
+  {
+    const v2 = repo.vincular(G, { pagadorNumero: '5521900000005@c.us', pagadorNome: 'Ryan', dependenteNome: 'Lucas (cvd Ryan)', origem: 'aprendido' });
+    caso('na 2ª vez vira regra', () => {
+      assert.ok(v2.valendo && v2.vezes === 2);
+      assert.deepStrictEqual(repo.dependentesDe(G, '5521900000005@c.us').map((d) => d.dependente_nome), ['Lucas (cvd Ryan)']);
+    });
+    const porAdmin = repo.vincular(G, { pagadorNumero: '5521900000077@c.us', pagadorNome: 'Teste', dependenteNome: 'Alguém' });
+    caso('#pagapor (admin) vale na hora', () => assert.ok(porAdmin.valendo && porAdmin.origem === 'admin'));
+    repo.vincular(G, { pagadorNumero: '5521900000078@c.us', pagadorNome: 'Outro', dependenteNome: 'Fulano', origem: 'aprendido' });
+    const promovido = repo.vincular(G, { pagadorNumero: '5521900000078@c.us', pagadorNome: 'Outro', dependenteNome: 'Fulano' });
+    caso('anotado e depois ensinado pelo admin: vale', () => assert.ok(promovido.valendo && promovido.origem === 'admin'));
+    repo.desvincular(G, 'Teste', 'Alguém');
+    repo.desvincular(G, 'Outro', 'Fulano');
+  }
   caso('e conta pros admins que ele respondeu', () =>
     assert.ok(enviados.some((m) => m.para === ADM && /Ryan respondeu no grupo: comprovante \d+ → Lucas/.test(m.t))));
   await admin(`#comprovante ${id1} Lucas`);

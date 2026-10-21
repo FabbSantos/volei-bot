@@ -40,7 +40,8 @@ function listar(msg, grupo) {
   const vinculos = repo.listarVinculos(grupo.chat_id);
   if (!vinculos.length) return msg.reply(`Ninguém paga por ninguém em *${grupo.nome || grupo.chat_id}* ainda. Ensina com *#pagapor ${grupo.nome?.split(' ').pop() || 'grupo'} Fulano > Ciclano*.`);
   return msg.reply(`💸 *Quem paga por quem* em ${grupo.nome || grupo.chat_id}\n\n` +
-    vinculos.map((v) => `• ${v.pagador_nome || v.pagador_numero} → ${v.dependente_nome}`).join('\n'));
+    vinculos.map((v) => `• ${v.pagador_nome || v.pagador_numero} → ${v.dependente_nome}` +
+      (v.valendo ? '' : ` _(pagou 1 vez — ainda não marco sozinho)_`)).join('\n'));
 }
 
 const resolver = comando(REGEX_COMPROVANTE, (msg, m) => resolverComprovante(msg, parseInt(m[1], 10), m[2]));

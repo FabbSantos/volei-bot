@@ -104,19 +104,43 @@ function resolver(id, status, marcados = []) {
   db.prepare('UPDATE comprovantes SET status = ?, marcados = ? WHERE id = ?').run(status, JSON.stringify(marcados), id);
 }
 
+// Um pagamento avulso não vira regra. Em 21/10/2026, no teste, o Fabrício
+// respondeu "Diego" uma vez e o bot passou a achar que ele paga o DiegoB:
+// o próximo Pix dele já pago marcaria o DiegoB sozinho. Agora o vínculo
+// aprendido (resposta no grupo ou #comprovante) só vale a partir da 2ª vez;
+// o ensinado pelos admins (#pagapor) vale na hora.
+const VEZES_PRA_VALER = 2;
+migrarColunas('pagadores', {
+  origem: 'TEXT',                        // 'admin' | 'aprendido' (null = cadastrado na mão, vale)
+  vezes: 'INTEGER NOT NULL DEFAULT 1',   // quantas vezes ele pagou por essa pessoa
+});
+
+const valendo = (p) => p.origem !== 'aprendido' || p.vezes >= VEZES_PRA_VALER;
+
+// Só os vínculos que já valem pra marcar sozinho
 function dependentesDe(chatId, pagadorNumero) {
   return db.prepare('SELECT * FROM pagadores WHERE chat_id = ?').all(chatId)
-    .filter((p) => usuario(p.pagador_numero) === usuario(pagadorNumero));
+    .filter((p) => usuario(p.pagador_numero) === usuario(pagadorNumero) && valendo(p));
 }
 
-function vincular(chatId, { pagadorNumero, pagadorNome = null, dependenteNome, dependenteNumero = null }) {
+// origem 'admin' (#pagapor): vale na hora. 'aprendido': conta mais uma vez.
+// Devolve o vínculo como ficou (com .valendo)
+function vincular(chatId, { pagadorNumero, pagadorNome = null, dependenteNome, dependenteNumero = null, origem = 'admin' }) {
   db.prepare(`
-    INSERT INTO pagadores (chat_id, pagador_numero, pagador_nome, dependente_nome, dependente_numero, criado_em)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO pagadores (chat_id, pagador_numero, pagador_nome, dependente_nome, dependente_numero, criado_em, origem, vezes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 1)
     ON CONFLICT(chat_id, pagador_numero, dependente_nome) DO UPDATE SET
       pagador_nome = COALESCE(excluded.pagador_nome, pagador_nome),
-      dependente_numero = COALESCE(excluded.dependente_numero, dependente_numero)
-  `).run(chatId, pagadorNumero, pagadorNome, dependenteNome, dependenteNumero, new Date().toISOString());
+      dependente_numero = COALESCE(excluded.dependente_numero, dependente_numero),
+      vezes = vezes + CASE WHEN excluded.origem = 'aprendido' THEN 1 ELSE 0 END
+  `).run(chatId, pagadorNumero, pagadorNome, dependenteNome, dependenteNumero, new Date().toISOString(), origem);
+  if (origem === 'admin') {
+    db.prepare("UPDATE pagadores SET origem = 'admin' WHERE chat_id = ? AND pagador_numero = ? AND dependente_nome = ?")
+      .run(chatId, pagadorNumero, dependenteNome);
+  }
+  const p = db.prepare('SELECT * FROM pagadores WHERE chat_id = ? AND pagador_numero = ? AND dependente_nome = ?')
+    .get(chatId, pagadorNumero, dependenteNome);
+  return { ...p, valendo: valendo(p) };
 }
 
 function desvincular(chatId, pagadorNome, dependenteNome) {
@@ -129,7 +153,8 @@ function desvincular(chatId, pagadorNome, dependenteNome) {
 }
 
 function listarVinculos(chatId) {
-  return db.prepare('SELECT * FROM pagadores WHERE chat_id = ? ORDER BY pagador_nome COLLATE NOCASE, dependente_nome COLLATE NOCASE').all(chatId);
+  return db.prepare('SELECT * FROM pagadores WHERE chat_id = ? ORDER BY pagador_nome COLLATE NOCASE, dependente_nome COLLATE NOCASE')
+    .all(chatId).map((p) => ({ ...p, valendo: valendo(p) }));
 }
 
 module.exports = {

@@ -6937,7 +6937,7 @@ Bom jogo! 🔥
 === notas_do_dia (atualizado_em, id, jogador_id, lista_id, nota, observacao)
 {"atualizado_em":"2026-09-18T15:18:48.000Z","id":1,"jogador_id":3,"lista_id":2,"nota":4.5,"observacao":"bom"}
 
-=== pagadores (chat_id, criado_em, dependente_nome, dependente_numero, id, pagador_nome, pagador_numero)
+=== pagadores (chat_id, criado_em, dependente_nome, dependente_numero, id, origem, pagador_nome, pagador_numero, vezes)
 
 === replays (arquivo, autor, chat_id, criado_em, erro, id, momento, segundos, status, video_id)
 {"arquivo":null,"autor":"Fabricio","chat_id":"adm@g.us","criado_em":1789744712000,"erro":null,"id":1,"momento":1789744711000,"segundos":30,"status":"pendente","video_id":null}
