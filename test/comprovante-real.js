@@ -49,6 +49,28 @@ Instituicao: Banco Inter
 ID da transacao
 E18236120202610092331s0123abc45`;
 
+// Um agendamento de hoje mesmo (a data não denuncia: só a situação)
+const AGENDADO = `Pix agendado
+Agendamento realizado com sucesso
+
+Valor
+R$ 12,00
+
+Data agendada
+21/10/2026
+
+Destino
+Nome: Marcel Garcia Von Rondon
+Chave Pix: mgarciavr@gmail.com
+Instituicao: Mercado Pago
+
+Origem
+Nome: Thiago Rodrigues Souza
+Instituicao: Nubank
+
+Codigo do agendamento
+AGD8812736450091`;
+
 async function principal() {
   const fonte = FONTES.find((f) => fs.existsSync(f));
   if (!process.env.ANTHROPIC_API_KEY || !fonte || spawnSync(ffmpeg, ['-version']).status !== 0) {
@@ -66,6 +88,11 @@ async function principal() {
       '-vf', 'drawtext=textfile=recibo.txt:fontfile=fonte.ttf:fontsize=30:fontcolor=black:x=40:y=40:line_spacing=10',
       'recibo.png'], { cwd: pasta, encoding: 'utf8' });
     if (gerar.status !== 0) throw new Error(`não gerou a imagem: ${gerar.stderr}`);
+    fs.writeFileSync(path.join(pasta, 'agendado.txt'), AGENDADO);
+    spawnSync(ffmpeg, ['-hide_banner', '-loglevel', 'error', '-y',
+      '-f', 'lavfi', '-i', 'color=c=white:s=720x1000', '-frames:v', '1',
+      '-vf', 'drawtext=textfile=agendado.txt:fontfile=fonte.ttf:fontsize=30:fontcolor=black:x=40:y=40:line_spacing=10',
+      'agendado.png'], { cwd: pasta });
     spawnSync(ffmpeg, ['-hide_banner', '-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'testsrc=s=640x480',
       '-frames:v', '1', 'outra.png'], { cwd: pasta });
 
@@ -77,7 +104,16 @@ async function principal() {
       assert.strictEqual(lido.eh_comprovante_pix, true);
       assert.strictEqual(lido.situacao, 'concluido');
     });
+    caso(`e o título não fala em agendamento (${lido.titulo})`, () => assert.ok(!/agend|program|recorr/i.test(lido.titulo || '')));
     caso(`valor R$ 24,00 (${lido.valor_centavos})`, () => assert.strictEqual(lido.valor_centavos, 2400));
+
+    // Agendamento NÃO vale: tem que ser transferência que já saiu
+    const agendado = await lerComprovante({
+      arquivo: fs.readFileSync(path.join(pasta, 'agendado.png')), mimetype: 'image/png',
+      legenda: '', nomesDaLista: ['Thiago Rodrigues', 'Duda'],
+    });
+    caso(`Pix agendado é reconhecido (situação: ${agendado.situacao}, título: ${agendado.titulo})`, () =>
+      assert.ok(agendado.situacao === 'agendado' || /agend|program|recorr/i.test(agendado.titulo || '')));
     caso(`data e hora (${lido.data_hora})`, () => assert.match(lido.data_hora || '', /^2026-10-09T20:31/));
     caso(`recebedor confere (${lido.recebedor_nome})`, () => assert.ok(recebedorConfere(lido.recebedor_nome, 'Marcel Garcia Von Rondon')));
     caso(`id da transação (${lido.id_transacao})`, () => assert.match(lido.id_transacao || '', /E18236120202610092331s0123abc45/i));

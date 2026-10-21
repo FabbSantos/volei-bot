@@ -14,6 +14,7 @@ const TIPOS_DE_IMAGEM = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const Leitura = z.object({
   eh_comprovante_pix: z.boolean(),
   situacao: z.enum(['concluido', 'agendado', 'outro']),
+  titulo: z.string().nullable(),
   valor_centavos: z.number().int().nullable(),
   data_hora: z.string().nullable(),
   pagador_nome: z.string().nullable(),
@@ -29,7 +30,8 @@ Recebe a imagem ou o PDF que alguém enviou no grupo do WhatsApp, a legenda que 
 
 Extraia do comprovante:
 - eh_comprovante_pix: true só se for comprovante de Pix (ou transferência bancária) feita por um banco. Foto qualquer, print de conversa, figurinha, meme, QR code sem pagamento: false.
-- situacao: "concluido" se o pagamento foi efetivado; "agendado" se é agendamento; "outro" se não dá pra saber ou não foi concluído.
+- situacao: "concluido" só se o dinheiro já saiu (Pix ou transferência efetivada); "agendado" se é agendamento, Pix programado ou recorrente (mesmo que diga "agendado com sucesso"); "outro" se não dá pra saber, está em processamento ou não foi concluído.
+- titulo: o título/cabeçalho do comprovante e qualquer etiqueta de situação, copiados como aparecem (ex.: "Comprovante de transferência · Pix enviado", "Pix agendado · Agendamento realizado").
 - valor_centavos: o valor pago em centavos (R$ 12,00 → 1200).
 - data_hora: data e hora do pagamento como aparecem no comprovante, no formato AAAA-MM-DDTHH:MM (horário de Brasília). Sem hora visível, use T00:00.
 - pagador_nome, recebedor_nome: nomes como aparecem (podem vir abreviados ou mascarados).

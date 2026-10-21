@@ -130,6 +130,12 @@ caso('Pix pra outra pessoa: pergunta', () =>
   assert.match(dec({ leitura: leitura({ recebedor_nome: 'Diego Borges' }), remetente: THIAGO }).motivo, /não pro Marcel/));
 caso('Pix agendado: pergunta', () =>
   assert.match(dec({ leitura: leitura({ situacao: 'agendado' }), remetente: THIAGO }).motivo, /AGENDADO/));
+caso('Claude diz "concluído" mas o título é "Pix agendado": barra mesmo assim', () =>
+  assert.match(dec({ leitura: leitura({ situacao: 'concluido', titulo: 'Pix agendado · Agendamento realizado' }), remetente: THIAGO }).motivo, /AGENDADO/));
+caso('Pix programado/recorrente também não vale', () =>
+  assert.match(dec({ leitura: leitura({ titulo: 'Pix programado' }), remetente: THIAGO }).motivo, /AGENDADO/));
+caso('situação "outro" (em processamento): pergunta', () =>
+  assert.match(dec({ leitura: leitura({ situacao: 'outro' }), remetente: THIAGO }).motivo, /concluído/));
 caso('comprovante repetido: pergunta', () =>
   assert.match(dec({ leitura: leitura(), remetente: '5521900000005@c.us', usado: { criado_em: new Date().toISOString(), remetente_nome: 'Ryan' } }).motivo, /já foi usado/));
 caso('Pix da semana passada: pergunta', () =>

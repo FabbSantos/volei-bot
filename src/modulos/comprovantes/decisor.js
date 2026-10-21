@@ -61,9 +61,12 @@ function decidir({
   if (!leitura.eh_comprovante_pix) return { acao: 'ignorar' };
   const perguntar = (motivo, candidatos = []) => ({ acao: 'perguntar', tipo: 'problema', motivo, candidatos });
 
-  if (leitura.situacao !== 'concluido') {
-    return perguntar(leitura.situacao === 'agendado' ? 'é um Pix AGENDADO, não pago ainda' : 'não dá pra ver se o Pix foi concluído');
-  }
+  // Só transferência que já saiu. Agendado não vale: o dinheiro pode nunca
+  // sair. Duas travas: a classificação do Claude e, sem depender dele, a
+  // palavra no título que ele copiou ("Pix agendado", "programado")
+  const agendadoNoTitulo = /agend|program|recorr/i.test(leitura.titulo || '');
+  if (leitura.situacao === 'agendado' || agendadoNoTitulo) return perguntar('é um Pix AGENDADO, não pago ainda');
+  if (leitura.situacao !== 'concluido') return perguntar('não dá pra ver se o Pix foi concluído');
   if (!recebedorConfere(leitura.recebedor_nome, recebedorEsperado)) {
     return perguntar(leitura.recebedor_nome
       ? `o Pix foi pra "${leitura.recebedor_nome}", não pro ${recebedorEsperado}`
