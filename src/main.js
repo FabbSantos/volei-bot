@@ -14,6 +14,8 @@ const { escutar } = require('./whatsapp/mensagens');
 const { enviarFigurinhaNoChat, enviarArquivoNoChat } = require('./whatsapp/contatos');
 const { listarGruposAdmin } = require('./modulos/grupos/repositorio');
 const { iniciarVigiaDoDrive } = require('./modulos/video/vigiaDrive');
+const agenda = require('./modulos/pelada/agenda');
+const { processarComandoAdmin } = require('./roteador');
 const { criarServidor } = require('./http/servidor');
 const lembrete = require('./modulos/pelada/lembrete');
 
@@ -81,6 +83,35 @@ iniciarVigiaDoDrive({
   },
   gruposAdmin: () => listarGruposAdmin(),
 });
+
+// Agenda de abertura da lista ("toda quarta 13h, a da sexta"): quem abre é
+// o próprio #abrirlistade, como se um admin tivesse mandado — mesma lista,
+// mesmo anúncio. A resposta dele vai pro grupo de admins.
+async function abrirListaAgendada(agendaDoGrupo, { dataJogo, valor, nome }) {
+  const cliente = sessao.cliente();
+  if (!cliente) throw new Error('bot desconectado');
+  const avisarAdmins = async (texto) => {
+    for (const chatId of listarGruposAdmin()) {
+      try { await cliente.sendText(chatId, texto); } catch (err) { console.warn(`[agenda] aviso não saiu: ${err.message}`); }
+    }
+  };
+  const especial = valor != null ? ` ${(valor / 100).toString().replace('.', ',')}${nome ? ` ${nome}` : ''}` : '';
+  console.log(`[agenda] abrindo a lista de ${dataJogo} em ${agendaDoGrupo.chat_id}`);
+  await processarComandoAdmin({
+    body: `#abrirlistade ${agendaDoGrupo.chat_id} ${dataJogo}${especial}`,
+    origem: 'agenda',
+    chatId: null,
+    autor: 'agenda',
+    reply: (texto) => avisarAdmins(`🤖📅 (agenda) ${texto}`),
+    enviarPara: (chatId, texto, opcoes) => cliente.sendText(chatId, texto, opcoes),
+    enviarFigurinhaPara: (chatId, caminho) => enviarFigurinhaNoChat(cliente, chatId, caminho),
+  });
+}
+
+setInterval(() => {
+  if (!sessao.cliente()) return; // fora do ar: tenta de novo quando voltar
+  agenda.verificar(abrirListaAgendada).catch((err) => console.warn(`[agenda] erro: ${err.message}`));
+}, 60_000);
 
 setInterval(() => {
   const cliente = sessao.cliente();

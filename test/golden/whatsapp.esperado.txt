@@ -148,7 +148,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
 
 ✅ *Figurinhas:* agiota-pago: 10 · cade-meu-pix: 9
 
---- intervalos registrados: 180000, 1800000
+--- intervalos registrados: 180000, 60000, 1800000
 --> [g1@g.us] {"mentionedList":["5521900000001@c.us"]} ⏰ *Recado do agiota* 🏐
 
 Quem ainda não pagou a pelada da semana tem até *sábado, 12h* pra acertar — depois disso sai da lista e a espera assume a vaga.

@@ -51,6 +51,7 @@
 
 📡 *Consulta/gestão remota (<grupo> = pedaço do nome ou chat_id):*
 *#abrirlistade <grupo> 07/08 17 Sexta 3h* — abre a lista de lá (valor e nome opcionais) e anuncia no grupo
+*#agendalistade <grupo> quarta 13h sexta* — abre a lista sozinho toda semana (fim opcional: *ultima 17 Sexta 3h* pra última sexta do mês) · *... off* desliga · sem nada: mostra a agenda
 *#abrirextrade <grupo> 29/09 15* — pelada extra: só os fixos entram sozinhos, e pagam como todo mundo (a mensalidade não cobre)
 *#editarlistade <grupo> 07/08 Nome* — corrige data/nome da lista atual (nome opcional)
 *#encerrarlistade <grupo>* — encerra a lista (trava nomes) e anuncia; com *quieto* no fim, não anuncia
@@ -143,6 +144,7 @@ Repetir #ativargrupo num grupo já ativo só atualiza o tamanho.
 
 📡 *Consulta/gestão remota (<grupo> = pedaço do nome ou chat_id):*
 *#abrirlistade <grupo> 07/08 17 Sexta 3h* — abre a lista de lá (valor e nome opcionais) e anuncia no grupo
+*#agendalistade <grupo> quarta 13h sexta* — abre a lista sozinho toda semana (fim opcional: *ultima 17 Sexta 3h* pra última sexta do mês) · *... off* desliga · sem nada: mostra a agenda
 *#abrirextrade <grupo> 29/09 15* — pelada extra: só os fixos entram sozinhos, e pagam como todo mundo (a mensalidade não cobre)
 *#editarlistade <grupo> 07/08 Nome* — corrige data/nome da lista atual (nome opcional)
 *#encerrarlistade <grupo>* — encerra a lista (trava nomes) e anuncia; com *quieto* no fim, não anuncia
@@ -6768,6 +6770,8 @@ Montados com tecnologia da NASA 🚀
 • Aces
 
 Bom jogo! 🔥
+
+=== agenda_listas (ativo, atualizado_em, chat_id, dia_abertura, dia_jogo, hora, minuto, nome_ultima, ultima_data, valor_ultima)
 
 === apelidos (apelido, criado_em, id, jogador_id)
 {"apelido":"A6","criado_em":"2026-09-18T15:13:15.000Z","id":1,"jogador_id":17}
