@@ -11,7 +11,8 @@ const elenco = require('../elenco/repositorio');
 const { celebrarPagamentoEm } = require('../figurinhas');
 const { formatarReais } = require('../../nucleo/dinheiro');
 const { numeroSintetico } = require('../../nucleo/numeros');
-const { lerComprovante, entenderResposta, lerivel, temChave } = require('./leitor');
+const { lerComprovante, entenderResposta, escreverFrase, lerivel, temChave } = require('./leitor');
+const { fraseDePagamento } = require('./frases');
 const nomes = require('./nomes');
 const { decidir, lerDataHora, nomeCasa, tokens, falaDoRemetente } = require('./decisor');
 const { comMencoes } = require('../pelada/textos');
@@ -46,7 +47,9 @@ function marcar(lista, alvos) {
 // 20/10/2026 o envio de mídia do WhatsApp Web quebrou ("prepRawMedia") e
 // derrubava o resto — agora só fica no log
 async function anunciarNoGrupo(msg, chatId, lista, nomes, comoFoi) {
-  await msg.enviarPara(chatId, `💰 ${juntarNomes(nomes)} ${nomes.length > 1 ? 'pagaram' : 'pagou'}! ✅ ${comoFoi}`);
+  const quem = juntarNomes(nomes);
+  const frase = await fraseDePagamento(quem, { escrever: temChave() ? escreverFrase : null });
+  await msg.enviarPara(chatId, `💰 ${quem} ${nomes.length > 1 ? 'pagaram' : 'pagou'}! ✅ ${comoFoi}`.trim() + `\n${frase}`);
   try {
     await celebrarPagamentoEm(msg, chatId);
   } catch (err) {

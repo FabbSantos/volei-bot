@@ -195,6 +195,22 @@ caso('legenda cita quem já pagou: pergunta', () => {
     assert.ok(nomes.nomesParaOClaude(lista, apelidos).includes('Fontella ✠ (também chamado: Letícia Fontella)')));
 }
 
+// A frase do anúncio: do Claude quando dá, da reserva quando não
+async function frasesDoAnuncio() {
+  const f = require('../src/modulos/comprovantes/frases');
+  const ok = await f.fraseDePagamento('Kamila', { escrever: async ({ quem, tema }) => `${quem} pagou no tema ${tema} 😎` });
+  caso('frase do Claude vem com o nome e um tema sorteado', () => assert.match(ok, /^Kamila pagou no tema .+ 😎$/));
+  const falhou = await f.fraseDePagamento('Kamila', { escrever: async () => { throw new Error('API fora'); } });
+  caso('Claude fora do ar: frase da reserva', () => assert.ok(f.RESERVA.includes(falhou)));
+  const lento = await f.fraseDePagamento('Kamila', { escrever: () => new Promise(() => {}), prazoMs: 50 });
+  caso('Claude demorando: não espera, frase da reserva', () => assert.ok(f.RESERVA.includes(lento)));
+  for (const ruim of ['Diferente do Thiago, que ainda deve 😂', 'Valeu @Kamila!', 'linha 1\nlinha 2', 'x'.repeat(200), 'Não pagou ainda? brincadeira']) {
+    const r = await f.fraseDePagamento('Kamila', { escrever: async () => ruim });
+    caso(`frase fora do combinado vira reserva: ${JSON.stringify(ruim.slice(0, 30))}`, () => assert.ok(f.RESERVA.includes(r)));
+  }
+  caso('nenhuma frase da reserva cai no próprio filtro', () => assert.ok(f.RESERVA.every((x) => f.fraseValida(x))));
+}
+
 // ------------------------------------------------------------ fluxo inteiro
 async function fluxo() {
   console.log('\ncomprovante de ponta a ponta (Claude de mentira)');
@@ -244,6 +260,11 @@ async function fluxo() {
   caso('e comemorou no grupo com figurinha', () => {
     assert.ok(enviados.some((m) => m.para === G && /Ryan pagou! ✅/.test(m.t)));
     assert.ok(enviados.some((m) => m.para === G && m.t === '[figurinha]'));
+  });
+  caso('e o anúncio traz uma frase embaixo (aqui, da reserva: o teste não tem chave)', () => {
+    const { RESERVA } = require('../src/modulos/comprovantes/frases');
+    const anuncio = enviados.find((m) => m.para === G && /Ryan pagou! ✅/.test(m.t)).t;
+    assert.ok(RESERVA.includes(anuncio.split('\n')[1]), anuncio);
   });
   caso('e avisou os admins do automático', () => assert.ok(enviados.some((m) => m.para === ADM && /🤖✅ \*Ryan\*/.test(m.t))));
 
@@ -420,7 +441,7 @@ async function fluxo() {
   caso('sem PIX_RECEBEDOR, não faz nada', () => assert.strictEqual(enviados.length, 0));
 }
 
-fluxo()
+frasesDoAnuncio().then(fluxo)
   .catch((err) => {
     falhas++;
     console.log(`  FALHOU  ${err.stack}`);

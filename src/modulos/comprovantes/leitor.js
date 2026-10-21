@@ -110,9 +110,27 @@ async function entenderResposta({ texto, remetente, nomesDaLista, sugeridos }) {
   return resposta.parsed_output;
 }
 
+// Uma frase curta e diferente pro anúncio do pagamento (ver ./frases)
+async function escreverFrase({ quem, tema }) {
+  if (!temChave()) throw new Error('ANTHROPIC_API_KEY não configurada');
+  cliente = cliente || new Anthropic.Anthropic();
+  const resposta = await cliente.messages.create({
+    model: MODELO,
+    max_tokens: 1000,
+    output_config: { effort: 'low' },
+    system: 'Você é o "agiota" bem-humorado de uma pelada de vôlei entre amigos no Rio de Janeiro. ' +
+      'Quando alguém paga a pelada, você comemora com UMA frase curta (no máximo 15 palavras), em português do Brasil, ' +
+      'com no máximo um emoji. A graça é exagerar o alívio do agiota ou a moral de quem pagou, usando o tema sorteado ' +
+      'como referência. Nunca ofenda, nunca fale de quem não pagou, nunca cobre ninguém; não use as palavras calote, ' +
+      'dívida ou deve; não use @ nem links. Responda só com a frase, sem aspas.',
+    messages: [{ role: 'user', content: `Quem pagou: ${quem}. Tema da piada desta vez: ${tema}.` }],
+  });
+  return resposta.content.filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
+}
+
 // Só imagem e PDF viram leitura — vídeo, áudio, figurinha passam reto
 function lerivel(mimetype) {
   return TIPOS_DE_IMAGEM.includes(mimetype) || mimetype === 'application/pdf';
 }
 
-module.exports = { lerComprovante, entenderResposta, lerivel, temChave, MODELO };
+module.exports = { lerComprovante, entenderResposta, escreverFrase, lerivel, temChave, MODELO };

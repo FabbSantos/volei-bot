@@ -6,7 +6,8 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
-const { lerComprovante, entenderResposta, MODELO } = require('../src/modulos/comprovantes/leitor');
+const { lerComprovante, entenderResposta, escreverFrase, MODELO } = require('../src/modulos/comprovantes/leitor');
+const { fraseValida } = require('../src/modulos/comprovantes/frases');
 const { recebedorConfere, falaDoRemetente } = require('../src/modulos/comprovantes/decisor');
 
 const ffmpeg = process.env.FFMPEG_PATH || 'ffmpeg';
@@ -165,6 +166,12 @@ async function principal() {
     });
     observa(`conversa "bora jogar hoje" não aponta ninguém → ${JSON.stringify(conversa)}`,
       conversa.nomes.length === 0 && !conversa.inclui_quem_enviou);
+
+    // A frase do anúncio: aviso (é texto criativo), e mostra o que saiu
+    for (const [quem, tema] of [['Kamila', 'novela das nove'], ['Thiago e Duda', 'narração de jogo de vôlei'], ['Ryan', 'previsão do tempo'], ['DiegoB', 'agiota aliviado']]) {
+      const frase = await escreverFrase({ quem, tema });
+      observa(`frase pra ${quem} (${tema}): ${frase}`, Boolean(fraseValida(frase)));
+    }
 
     const outra = await lerComprovante({
       arquivo: fs.readFileSync(path.join(pasta, 'outra.png')), mimetype: 'image/png', legenda: 'kkkk', nomesDaLista: ['Ryan'],
