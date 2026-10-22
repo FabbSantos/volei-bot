@@ -449,6 +449,23 @@ async function fluxo() {
   const nada = await comprovantes.tentarResposta({ ...porta('5521900000013@c.us', 'Rui', 'pro meu primo', pRui?.id), midia: null, idCitado: pRui?.id }, grupo, null, { entender: inventado });
   caso('nome inventado pelo Claude não marca ninguém', () => assert.ok(nada === true && !pago('Rui')));
 
+  // 22/10: o Vini envia com a legenda só "thiago"; tem dois Thiagos devendo e
+  // o Claude (aqui de mentira) escolhe o errado — a conferência corrige
+  const VINI = '5521970470752@c.us';
+  elenco.upsertJogador(G, 'Vini', VINI);
+  pelada.adicionarEntrada(lista.id, 'Vinicius Pavani', VINI);
+  pelada.aplicarPago(pelada.listarCombinada(lista.id).find((x) => x.nome === 'Vinicius Pavani'), lista.id, true);
+  pelada.adicionarEntrada(lista.id, 'Thiago Alves', '5521900000021@c.us');
+  pelada.adicionarEntrada(lista.id, 'Thiago Prata (cvd Vini)', 'manual-555@bot');
+  enviados.length = 0;
+  let viuQuemEnviou = null;
+  await comprovantes.receber(porta(VINI, 'Vinicius Pavani', 'thiago'), grupo, {
+    ler: async ({ remetente }) => { viuQuemEnviou = remetente; return leitura({ id_transacao: 'E-VINI-1', legenda_para: ['Thiago Alves'] }); },
+  });
+  caso('o Claude fica sabendo quem enviou (com o apelido do elenco)', () => assert.match(viuQuemEnviou || '', /Vinicius Pavani.*Vini/));
+  caso('"thiago" do Vini: marca o Thiago Prata (cvd Vini), não o Thiago Alves que o Claude chutou', () =>
+    assert.ok(pago('Thiago Prata (cvd Vini)') && !pago('Thiago Alves'), JSON.stringify(enviados.map((m) => m.t.slice(0, 60)))));
+
   await admin('#pagapor riachuelo');
   caso('#pagapor lista quem paga por quem', () => assert.match(respostas.at(-1), /Ana → Bento[\s\S]*Ryan → Lucas[\s\S]*Thiago Rodrigues → Duda/));
   await admin('#naopagapor riachuelo thiago > duda');

@@ -14,7 +14,7 @@ const { numeroSintetico } = require('../../nucleo/numeros');
 const { lerComprovante, entenderResposta, escreverFrase, lerivel, temChave } = require('./leitor');
 const { fraseDePagamento } = require('./frases');
 const nomes = require('./nomes');
-const { decidir, lerDataHora, nomeCasa, tokens, falaDoRemetente } = require('./decisor');
+const { decidir, lerDataHora, nomeCasa, tokens, falaDoRemetente, ligadosAoRemetente } = require('./decisor');
 const { comMencoes } = require('../pelada/textos');
 const repo = require('./repositorio');
 
@@ -105,17 +105,41 @@ async function processar(msg, grupo, ler, agora) {
   // A lista vai com os outros nomes de cada um ("Fontella ✠ (também chamado:
   // Letícia Fontella)"): a legenda "da Letícia" tem que achar a Fontella
   const apelidos = nomes.apelidosDasEntradas(msg.chatId, entradas);
+  const legenda = msg.body || '';
+  const remetenteNomes = nomesDoRemetente(msg, entradas, apelidos);
+  const dependentes = repo.dependentesDe(msg.chatId, msg.numero);
+  const ehDoRemetente = criarEhDoRemetente(msg.chatId, msg.numero);
   const leitura = await ler({
-    arquivo, mimetype: msg.midia.mimetype, legenda: msg.body || '', nomesDaLista: nomes.nomesParaOClaude(entradas, apelidos),
+    arquivo, mimetype: msg.midia.mimetype, legenda, nomesDaLista: nomes.nomesParaOClaude(entradas, apelidos),
+    remetente: remetenteNomes.join(' / ') || null,
   });
   // O que o Claude citou volta pro nome da lista (ou some, se não existe)
   leitura.legenda_para = (leitura.legenda_para || [])
     .map((n) => nomes.entradaPeloNome(n, entradas, apelidos)?.nome)
     .filter(Boolean);
 
+  // Conferência da legenda SEM o Claude, e ela vence: "thiago" enviado pelo
+  // Vini, com dois Thiagos na lista, é o convidado dele — o Claude, sem saber
+  // disso, podia escolher o outro (22/10/2026). Nome repetido sem preferência
+  // = ninguém (decide por quem enviou, ou pergunta). O nome do recebedor não
+  // conta ("pix pro Marcel" não marca o Marcel).
+  if (legenda.trim()) {
+    const recebedor = tokens(process.env.PIX_RECEBEDOR || '');
+    const preferidos = ligadosAoRemetente(entradas, dependentes, remetenteNomes).map((e) => e.id);
+    const textoSemRecebedor = tokens(legenda).filter((p) => !recebedor.includes(p)).join(' ');
+    const conferida = nomes.nomeadosNoTexto(textoSemRecebedor, entradas, apelidos, preferidos);
+    const proprio = (e) => repo.usuario(e.numero) === repo.usuario(msg.numero) || ehDoRemetente(e);
+    if (conferida.ambiguo) {
+      leitura.legenda_para = [];
+    } else if (conferida.nomeados.length) {
+      // O próprio nome na legenda ("Vini e Thiago") é "inclui quem enviou"
+      if (conferida.nomeados.some(proprio)) leitura.legenda_inclui_remetente = true;
+      leitura.legenda_para = conferida.nomeados.filter((e) => !proprio(e)).map((e) => e.nome);
+    }
+  }
+
   // "é meu" na legenda não depende do humor do modelo: a regra fixa completa
   // (só liga, nunca desliga o que o Claude achou)
-  const legenda = msg.body || '';
   const citaNomeDaLista = leitura.legenda_para.length > 0
     || tokens(legenda).some((p) => entradas.some((e) => tokens(e.nome)[0] === p));
   if (legenda && falaDoRemetente(legenda, citaNomeDaLista)) leitura.legenda_inclui_remetente = true;
@@ -128,9 +152,9 @@ async function processar(msg, grupo, ler, agora) {
     remetente: msg.numero,
     recebedorEsperado: process.env.PIX_RECEBEDOR,
     usado: leitura.eh_comprovante_pix ? repo.jaUsado(chave) : null,
-    dependentes: repo.dependentesDe(msg.chatId, msg.numero),
-    ehDoRemetente: criarEhDoRemetente(msg.chatId, msg.numero),
-    nomesDoRemetente: nomesDoRemetente(msg, entradas, apelidos),
+    dependentes,
+    ehDoRemetente,
+    nomesDoRemetente: remetenteNomes,
     valorMes: grupo.valor_mes_centavos || 0,
     agora,
   });

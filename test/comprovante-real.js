@@ -154,6 +154,14 @@ async function principal() {
     });
     observa(`legenda "esse é da Letícia" com a lista mostrando "Fontella ✠ (também chamado: Letícia Fontella)" (${JSON.stringify(daLeticia.legenda_para)})`,
       daLeticia.legenda_para.length === 1 && /fontella/i.test(daLeticia.legenda_para[0]));
+    const doVini = await lerComprovante({
+      arquivo: fs.readFileSync(path.join(pasta, 'recibo.png')), mimetype: 'image/png', legenda: 'thiago',
+      nomesDaLista: ['Thiago Rodrigues', 'Thiago Prata (cvd Vini)', 'Vinicius Pavani (também chamado: Vini)'],
+      remetente: 'Vinicius Pavani / Vini',
+    });
+    observa(`legenda "thiago" enviada pelo Vini, com dois Thiagos (${JSON.stringify(doVini.legenda_para)})`,
+      // "Thiago Prata" sem o parêntese é a mesma pessoa (o bot compara sem ele)
+      JSON.stringify(doVini.legenda_para.map((n) => n.replace(/\s*\(.*\)\s*$/, ''))) === '["Thiago Prata"]' || doVini.legenda_para.length === 0);
     const filha = await entenderResposta({
       texto: 'minha filha', remetente: 'Thiago Rodrigues',
       nomesDaLista: ['Thiago Rodrigues', 'Duda', 'Ryan'], sugeridos: ['Thiago Rodrigues', 'Duda'],

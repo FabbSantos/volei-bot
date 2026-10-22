@@ -60,6 +60,16 @@ function convidadoDe(nomeDaLista, nomesDoRemetente) {
   });
 }
 
+// Quem da lista quem enviou costuma pagar: os convidados dele ("cvd Vini") e
+// os dependentes (Thiago → Duda, ensinado ou aprendido)
+function ligadosAoRemetente(entradas, dependentes, nomesDoRemetente) {
+  return entradas.filter((e) => convidadoDe(e.nome, nomesDoRemetente) || dependentes.some((d) =>
+    (d.dependente_numero && usuario(d.dependente_numero) === usuario(e.numero))
+    || normalizarTexto(d.dependente_nome) === normalizarTexto(e.nome)
+    // "Bento" ensinado com #pagapor casa com "Bento (cvd Ana)" da lista
+    || nomeCasa(d.dependente_nome, e.nome)));
+}
+
 // "2026-10-09T20:31" no horário de Brasília → Date
 function lerDataHora(texto) {
   const m = String(texto || '').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
@@ -122,12 +132,7 @@ function decidir({
   // Quem é o próprio remetente, pra entender "meu" na resposta dele
   const comRemetente = (d) => ({ ...d, doRemetente: doRemetente.map((e) => e.id) });
   // "Thiago Prata (cvd Vini)" é convidado de quem enviou, se o Vini é ele
-  const convidados = pendentes.filter((e) => convidadoDe(e.nome, nomesDoRemetente));
-  const dosDependentes = [...convidados, ...pendentes.filter((e) => dependentes.some((d) =>
-    (d.dependente_numero && usuario(d.dependente_numero) === usuario(e.numero))
-    || normalizarTexto(d.dependente_nome) === normalizarTexto(e.nome)
-    // "Bento" ensinado com #pagapor casa com "Bento (cvd Ana)" da lista
-    || nomeCasa(d.dependente_nome, e.nome)))];
+  const dosDependentes = ligadosAoRemetente(pendentes, dependentes, nomesDoRemetente);
 
   // 1) A legenda manda: "eu e a Duda", "da Kamila"
   if (leitura.legenda_para.length || leitura.legenda_inclui_remetente) {
@@ -181,4 +186,4 @@ function falaDoRemetente(texto, temNome) {
     || (!temNome && palavras.some((p) => PALAVRAS_PROPRIO_FRACAS.includes(p)));
 }
 
-module.exports = { decidir, recebedorConfere, nomeCasa, lerDataHora, tokens, falaDoRemetente, convidadoDe };
+module.exports = { decidir, recebedorConfere, nomeCasa, lerDataHora, tokens, falaDoRemetente, convidadoDe, ligadosAoRemetente };
