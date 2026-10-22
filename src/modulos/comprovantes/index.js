@@ -69,6 +69,18 @@ function criarEhDoRemetente(chatId, remetente) {
   };
 }
 
+// Todos os nomes de quem enviou — o do WhatsApp, o dele na lista, o do
+// jogador no elenco e os apelidos — pra reconhecer "(cvd Vini)" como dele
+function nomesDoRemetente(msg, entradas, apelidos) {
+  const nomesAchados = new Set([msg.pushname].filter(Boolean));
+  for (const e of entradas.filter((x) => repo.usuario(x.numero) === repo.usuario(msg.numero))) {
+    for (const n of apelidos.get(e.id) || [e.nome]) nomesAchados.add(n);
+  }
+  const jogador = elenco.listarJogadores(msg.chatId).find((j) => j.numero && repo.usuario(j.numero) === repo.usuario(msg.numero));
+  if (jogador) [jogador.nome, ...(jogador.apelidos || [])].forEach((n) => nomesAchados.add(n));
+  return [...nomesAchados];
+}
+
 // Um comprovante por vez: dois ao mesmo tempo poderiam marcar a mesma pessoa
 let fila = Promise.resolve();
 
@@ -118,6 +130,7 @@ async function processar(msg, grupo, ler, agora) {
     usado: leitura.eh_comprovante_pix ? repo.jaUsado(chave) : null,
     dependentes: repo.dependentesDe(msg.chatId, msg.numero),
     ehDoRemetente: criarEhDoRemetente(msg.chatId, msg.numero),
+    nomesDoRemetente: nomesDoRemetente(msg, entradas, apelidos),
     valorMes: grupo.valor_mes_centavos || 0,
     agora,
   });

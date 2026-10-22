@@ -43,6 +43,23 @@ function recebedorConfere(recebedorNome, esperado) {
     sobrenomes.includes(t) || (t.length === 1 && sobrenomes.some((s) => s[0] === t)));
 }
 
+// "Thiago Prata (cvd Vini)" é convidado do Vini? Todas as palavras depois
+// do "cvd" têm que estar num nome só de quem enviou (WhatsApp, lista, elenco,
+// apelido). Rígido de propósito: "cvd Marcel" NÃO é da Marcelle — foi esse o
+// erro de 25/09/2026 nos times.
+const PADRAO_CONVIDADO = /\(\s*(?:convidad[oa]|cvd|conv|c\/)\.?\s*(?:d[aoe]\s+)?([^)]+)\)/i;
+
+function convidadoDe(nomeDaLista, nomesDoRemetente) {
+  const m = String(nomeDaLista || '').match(PADRAO_CONVIDADO);
+  if (!m) return false;
+  const anfitriao = tokens(m[1]);
+  if (!anfitriao.length) return false;
+  return nomesDoRemetente.some((n) => {
+    const t = tokens(n);
+    return anfitriao.every((p) => t.includes(p));
+  });
+}
+
 // "2026-10-09T20:31" no horário de Brasília → Date
 function lerDataHora(texto) {
   const m = String(texto || '').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
@@ -56,7 +73,7 @@ const unicos = (entradas) => [...new Map(entradas.map((e) => [e.id, e])).values(
 
 function decidir({
   leitura, lista, entradas, remetente, recebedorEsperado, usado, dependentes = [],
-  ehDoRemetente = () => false, valorMes = 0, agora = new Date(),
+  ehDoRemetente = () => false, valorMes = 0, agora = new Date(), nomesDoRemetente = [],
 }) {
   if (!leitura.eh_comprovante_pix) return { acao: 'ignorar' };
   const perguntar = (motivo, candidatos = []) => ({ acao: 'perguntar', tipo: 'problema', motivo, candidatos });
@@ -104,11 +121,13 @@ function decidir({
     || (leitura.pagador_nome && nomeCasa(e.nome, leitura.pagador_nome)));
   // Quem é o próprio remetente, pra entender "meu" na resposta dele
   const comRemetente = (d) => ({ ...d, doRemetente: doRemetente.map((e) => e.id) });
-  const dosDependentes = pendentes.filter((e) => dependentes.some((d) =>
+  // "Thiago Prata (cvd Vini)" é convidado de quem enviou, se o Vini é ele
+  const convidados = pendentes.filter((e) => convidadoDe(e.nome, nomesDoRemetente));
+  const dosDependentes = [...convidados, ...pendentes.filter((e) => dependentes.some((d) =>
     (d.dependente_numero && usuario(d.dependente_numero) === usuario(e.numero))
     || normalizarTexto(d.dependente_nome) === normalizarTexto(e.nome)
     // "Bento" ensinado com #pagapor casa com "Bento (cvd Ana)" da lista
-    || nomeCasa(d.dependente_nome, e.nome)));
+    || nomeCasa(d.dependente_nome, e.nome)))];
 
   // 1) A legenda manda: "eu e a Duda", "da Kamila"
   if (leitura.legenda_para.length || leitura.legenda_inclui_remetente) {
@@ -162,4 +181,4 @@ function falaDoRemetente(texto, temNome) {
     || (!temNome && palavras.some((p) => PALAVRAS_PROPRIO_FRACAS.includes(p)));
 }
 
-module.exports = { decidir, recebedorConfere, nomeCasa, lerDataHora, tokens, falaDoRemetente };
+module.exports = { decidir, recebedorConfere, nomeCasa, lerDataHora, tokens, falaDoRemetente, convidadoDe };

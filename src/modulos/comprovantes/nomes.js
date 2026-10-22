@@ -43,14 +43,15 @@ function quemEh(palavra, entradas, apelidos, preferidosIds = []) {
 
 // Todas as pessoas citadas num texto. { nomeados, ambiguo }: ambiguo quando
 // uma palavra serve pra mais de uma pessoa (dois Diego devendo) — aí não chuta
+// Palavra que serve pra dois só é ambígua se nenhuma outra palavra decidir:
+// em "do Thiago Prata", "thiago" é o Rodrigues ou o Prata, mas "prata" fecha
 function nomeadosNoTexto(texto, entradas, apelidos, preferidosIds = []) {
-  const nomeados = [];
-  for (const palavra of tokens(texto)) {
-    const achados = quemEh(palavra, entradas, apelidos, preferidosIds);
-    if (achados.length > 1) return { nomeados: [], ambiguo: true };
-    nomeados.push(...achados);
+  const porPalavra = tokens(texto).map((p) => quemEh(p, entradas, apelidos, preferidosIds)).filter((a) => a.length);
+  const certos = porPalavra.filter((a) => a.length === 1).map((a) => a[0]);
+  for (const duvida of porPalavra.filter((a) => a.length > 1)) {
+    if (!duvida.some((e) => certos.includes(e))) return { nomeados: [], ambiguo: true };
   }
-  return { nomeados: [...new Map(nomeados.map((e) => [e.id, e])).values()], ambiguo: false };
+  return { nomeados: [...new Map(certos.map((e) => [e.id, e])).values()], ambiguo: false };
 }
 
 // O nome que o Claude devolveu (da lista ou um apelido) → a entrada

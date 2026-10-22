@@ -115,6 +115,40 @@ caso('na ordem inversa: "da Duda" primeiro, depois "é meu"', () => {
   const entradas = base.entradas.map((x) => (x.nome === 'Duda' ? { ...x, pago: 1 } : x));
   assert.strictEqual(alvos(dec({ entradas, leitura: leitura({ legenda_inclui_remetente: true }), remetente: THIAGO, dependentes: dep })), 'Thiago Rodrigues');
 });
+// 22/10: dois Thiagos na lista; o Vini envia o Pix do convidado dele
+{
+  const { convidadoDe } = require('../src/modulos/comprovantes/decisor');
+  caso('"Thiago Prata (cvd Vini)" é convidado de quem se chama Vini', () =>
+    assert.ok(convidadoDe('Thiago Prata (cvd Vini)', ['Vinicius Pavani', 'Vini'])));
+  caso('"(cvd Marcel)" NÃO é da Marcelle (o erro dos times de 25/09)', () =>
+    assert.ok(!convidadoDe('Paulo Ribeiro (cvd Marcel)', ['Marcelle'])));
+  caso('"(cvd Marcel)" é do Marcel Garcia', () => assert.ok(convidadoDe('Paulo (cvd Marcel)', ['Marcel Garcia'])));
+  caso('"(convidado Kamila)" também vale', () => assert.ok(convidadoDe('Rodrigo (convidado Kamila)', ['Kamila Vianna'])));
+  caso('nome sem "cvd" não é convidado de ninguém', () => assert.ok(!convidadoDe('Thiago Rodrigues', ['Thiago Rodrigues'])));
+
+  const VINI = '5521970470752@c.us';
+  const entradas = [
+    e(31, 'Vinicius Pavani', VINI, { pago: 1 }),
+    e(32, 'Thiago Rodrigues', THIAGO),
+    e(33, 'Thiago Prata (cvd Vini)', 'manual-1@bot'),
+  ];
+  caso('Vini (já pago) envia R$ 12 sem legenda: marca o convidado dele, não o outro Thiago', () =>
+    assert.strictEqual(alvos(dec({ entradas, leitura: leitura({ pagador_nome: 'Vinicius Pavani' }), remetente: VINI, nomesDoRemetente: ['Vinicius Pavani', 'Vini'] })), 'Thiago Prata (cvd Vini)'));
+  caso('Vini encaminha o Pix que o próprio Thiago Prata fez: também marca o Prata', () =>
+    assert.strictEqual(alvos(dec({ entradas, leitura: leitura({ pagador_nome: 'THIAGO PRATA SOUZA' }), remetente: VINI, nomesDoRemetente: ['Vinicius Pavani'] })), 'Thiago Prata (cvd Vini)'));
+
+  const nomes = require('../src/modulos/comprovantes/nomes');
+  const semApelido = new Map();
+  const quem = (texto) => {
+    const r = nomes.nomeadosNoTexto(texto, entradas.slice(1), semApelido);
+    return r.ambiguo ? 'ambíguo' : r.nomeados.map((x) => x.nome).join(', ');
+  };
+  caso('"do Thiago Prata": o "Prata" desempata', () => assert.strictEqual(quem('do Thiago Prata'), 'Thiago Prata (cvd Vini)'));
+  caso('"do Thiago" sozinho: ambíguo, não chuta', () => assert.strictEqual(quem('do Thiago'), 'ambíguo'));
+  caso('"Rodrigues" acha o outro Thiago', () => assert.strictEqual(quem('Rodrigues'), 'Thiago Rodrigues'));
+  caso('"Vini" não acha o convidado (o que está no parêntese não é nome dele)', () => assert.strictEqual(quem('Vini'), ''));
+}
+
 // Pelada de 16/10: Thiago na principal, Duda na ESPERA, nenhum dos dois com legenda
 {
   const dep = [{ dependente_nome: 'Duda', dependente_numero: DUDA }];
@@ -289,7 +323,7 @@ async function fluxo() {
 
   // O Ryan (já pago) envia mais R$ 12 — é do convidado dele. O bot pergunta
   // pra ELE no grupo, e a resposta resolve sem admin
-  pelada.adicionarEntrada(lista.id, 'Lucas (cvd Ryan)', 'manual-123@bot');
+  pelada.adicionarEntrada(lista.id, 'Lucas Primo', 'manual-123@bot');
   enviados.length = 0;
   await comprovantes.receber(porta('5521900000005@c.us', 'Ryan'), grupo, comLeitura(leitura({ id_transacao: 'E-RYAN-2' })));
   const p1 = perguntaNoGrupo();
@@ -300,21 +334,21 @@ async function fluxo() {
   });
   caso('e os admins só recebem um aviso de que ele foi perguntado', () =>
     assert.ok(enviados.some((m) => m.para === ADM && /Perguntei pro Ryan no grupo/.test(m.t))));
-  caso('ninguém marcado ainda', () => assert.ok(!pago('Lucas (cvd Ryan)')));
+  caso('ninguém marcado ainda', () => assert.ok(!pago('Lucas Primo')));
   const id1 = ultimoComprovante();
   const tratou = await fala('5521900000005@c.us', 'Ryan', 'é do Lucas');
-  caso('"é do Lucas" (sem citar, curto) marca o Lucas', () => assert.ok(tratou && pago('Lucas (cvd Ryan)')));
+  caso('"é do Lucas" (sem citar, curto) marca o Lucas', () => assert.ok(tratou && pago('Lucas Primo')));
   // 21/10/2026: uma resposta avulsa ("Diego") virou regra e o bot passaria a
   // marcar o DiegoB em todo Pix do Fabrício. Uma vez é só anotação
   caso('uma vez só: anota que o Ryan pagou pelo Lucas, mas não vira regra', () => {
     assert.deepStrictEqual(repo.dependentesDe(G, '5521900000005@c.us'), []);
-    assert.ok(enviados.some((m) => m.para === ADM && /Anotei que Ryan pagou por Lucas \(cvd Ryan\); se acontecer de novo/.test(m.t)));
+    assert.ok(enviados.some((m) => m.para === ADM && /Anotei que Ryan pagou por Lucas Primo; se acontecer de novo/.test(m.t)));
   });
   {
-    const v2 = repo.vincular(G, { pagadorNumero: '5521900000005@c.us', pagadorNome: 'Ryan', dependenteNome: 'Lucas (cvd Ryan)', origem: 'aprendido' });
+    const v2 = repo.vincular(G, { pagadorNumero: '5521900000005@c.us', pagadorNome: 'Ryan', dependenteNome: 'Lucas Primo', origem: 'aprendido' });
     caso('na 2ª vez vira regra', () => {
       assert.ok(v2.valendo && v2.vezes === 2);
-      assert.deepStrictEqual(repo.dependentesDe(G, '5521900000005@c.us').map((d) => d.dependente_nome), ['Lucas (cvd Ryan)']);
+      assert.deepStrictEqual(repo.dependentesDe(G, '5521900000005@c.us').map((d) => d.dependente_nome), ['Lucas Primo']);
     });
     const porAdmin = repo.vincular(G, { pagadorNumero: '5521900000077@c.us', pagadorNome: 'Teste', dependenteNome: 'Alguém' });
     caso('#pagapor (admin) vale na hora', () => assert.ok(porAdmin.valendo && porAdmin.origem === 'admin'));
