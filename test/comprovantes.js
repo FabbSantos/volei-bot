@@ -149,6 +149,12 @@ caso('na ordem inversa: "da Duda" primeiro, depois "é meu"', () => {
   caso('"Vini" não acha o convidado (o que está no parêntese não é nome dele)', () => assert.strictEqual(quem('Vini'), ''));
 }
 
+// 23/10: "Thiago e Maria" com R$ 24 — a "Maria" (a Duda) o bot não conhecia
+caso('23/10: legenda cita só o Thiago, R$ 24: completa com quem ele paga (Duda)', () =>
+  assert.strictEqual(alvos(dec({ leitura: leitura({ valor_centavos: 2400, legenda_inclui_remetente: true }), remetente: THIAGO, dependentes: [{ dependente_nome: 'Duda', dependente_numero: DUDA }] })), 'Duda, Thiago Rodrigues'));
+caso('...mas se completar não fecha a conta exata, pergunta', () =>
+  assert.strictEqual(dec({ leitura: leitura({ valor_centavos: 3600, legenda_inclui_remetente: true }), remetente: THIAGO, dependentes: [{ dependente_nome: 'Duda', dependente_numero: DUDA }] }).acao, 'perguntar'));
+
 // Pelada de 16/10: Thiago na principal, Duda na ESPERA, nenhum dos dois com legenda
 {
   const dep = [{ dependente_nome: 'Duda', dependente_numero: DUDA }];
@@ -448,6 +454,19 @@ async function fluxo() {
   const pRui = perguntaNoGrupo();
   const nada = await comprovantes.tentarResposta({ ...porta('5521900000013@c.us', 'Rui', 'pro meu primo', pRui?.id), midia: null, idCitado: pRui?.id }, grupo, null, { entender: inventado });
   caso('nome inventado pelo Claude não marca ninguém', () => assert.ok(nada === true && !pago('Rui')));
+
+  // 23/10: o bot pergunta "quem mais, além de X?" e a resposta "da Nina"
+  // soma com o X que ele já tinha achado (o Thiago respondeu "da Duda" várias
+  // vezes e o bot insistia que tinha entendido só a Duda)
+  const BIA = '5521900000030@c.us';
+  pelada.adicionarEntrada(lista.id, 'Bia', BIA);
+  pelada.adicionarEntrada(lista.id, 'Nina', '5521900000031@c.us');
+  enviados.length = 0;
+  await comprovantes.receber(porta(BIA, 'Bia', 'Bia e a Fulana'), grupo, comLeitura(leitura({ id_transacao: 'E-BIA-1', valor_centavos: 2400 })));
+  caso('R$ 24, legenda "Bia e a Fulana" (Fulana desconhecida): "quem mais, além de Bia?"', () =>
+    assert.match(perguntaNoGrupo()?.t || '', /quem mais, além de Bia\?/));
+  const daNina = await fala(BIA, 'Bia', 'da Nina');
+  caso('a resposta "da Nina" soma com a Bia: marca as duas', () => assert.ok(daNina && pago('Bia') && pago('Nina'), JSON.stringify(enviados.map((m) => m.t.slice(0, 70)))));
 
   // 22/10: o Vini envia com a legenda só "thiago"; tem dois Thiagos devendo e
   // o Claude (aqui de mentira) escolhe o errado — a conferência corrige

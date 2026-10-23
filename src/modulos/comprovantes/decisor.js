@@ -143,6 +143,13 @@ function decidir({
     if (jaPagos.length) return perguntar(`a legenda cita ${nomes(jaPagos)}, que já está pago`);
     const alvos = unicos([...(leitura.legenda_inclui_remetente ? doRemetente : []), ...citados]);
     if (alvos.length === pessoas) return { acao: 'marcar', alvos };
+    // A legenda cita menos gente do que o valor cobre ("Thiago e Maria", com a
+    // "Maria" desconhecida): se quem ele costuma pagar fecha a conta exata,
+    // são eles (23/10/2026: Thiago + Duda = R$ 24)
+    if (alvos.length < pessoas) {
+      const completando = unicos([...alvos, ...dosDependentes]);
+      if (completando.length === pessoas) return { acao: 'marcar', alvos: completando };
+    }
     return comRemetente(paraQuem(
       `${formatarReais(leitura.valor_centavos)} é pra ${pessoas} pessoa(s), mas pela legenda achei ${alvos.length ? nomes(alvos) : 'ninguém devendo'}`,
       alvos,

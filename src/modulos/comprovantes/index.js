@@ -305,6 +305,14 @@ async function responder(msg, c, texto, citou, entender) {
     if (citou) await msg.reply('Não entendi 😅 Responde com *meu* ou o nome da pessoa.');
     return citou;
   }
+  // Pergunta "quem mais, além do Thiago?": a resposta ("da Duda") SOMA com
+  // quem o bot já tinha achado. Em 23/10/2026 o Thiago respondeu "da Duda"
+  // várias vezes e o bot insistia que tinha entendido só a Duda
+  const jaAchados = pendentes.filter((e) => candidatosIds.includes(e.id));
+  if (alvos.length < c.pessoas && jaAchados.length < c.pessoas) {
+    const somados = [...new Map([...jaAchados, ...alvos].map((e) => [e.id, e])).values()];
+    if (somados.length === c.pessoas) alvos = somados;
+  }
   if (alvos.length !== c.pessoas) {
     await msg.reply(`O Pix de ${formatarReais(c.valor_centavos)} dá pra ${c.pessoas} pessoa(s), e eu entendi ${juntarNomes(alvos.map((e) => e.nome))}. ` +
       `Me responde com ${c.pessoas === 1 ? 'um nome só' : `${c.pessoas} nomes`}.`);
