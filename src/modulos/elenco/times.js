@@ -124,6 +124,7 @@ function salvarTimes(listaId, times) {
     jogadores: (t.jogadores || []).map((j) => ({
       nome: j.nome,
       nota: typeof j.nota === 'number' ? j.nota : 3,
+      categoria: j.categoria ?? null,
       altura: j.altura ?? null,
       conhecido: Boolean(j.conhecido),
     })),

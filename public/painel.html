@@ -145,7 +145,7 @@
         <button class="primario" id="btnAddJogador">Adicionar ao elenco</button>
       </div>
       <div class="linhaform" id="caixaPreLista"></div>
-      <p class="aviso">A "Nota p/ times" é o que o montador usa (avaliação + como a pessoa vem jogando). <strong>Altura é opcional</strong>: quem estiver marcado como alto/baixo é espalhado pelos times, pra não juntar os bloqueadores num só — quem ficar em "—" não é considerado. Quer detalhar ataque/defesa/levantamento/saque? Abre o jogador e usa o "ajuste fino".</p>
+      <p class="aviso">O nível é a categoria que a galera dá (🔥 desequilibra · 👍 joga bem · 🙂 de boa · 😬 puts, tá no meu time) — voto em si mesmo não conta. O montador espalha os 🔥 e os 😬 um por time. <strong>Altura é opcional</strong>: quem estiver marcado como alto/baixo também é espalhado — quem ficar em "—" não é considerado.</p>
     </div>
   </section>
 
@@ -179,7 +179,7 @@
         <select id="selTimeDestino"></select>
         <button id="btnEntrarNoTime">+ Colocar no time</button>
       </div>
-      <p class="aviso">Já abre com <strong>a lista da semana</strong> marcada (a mesma que o <code>#timesde</code> usa — só a principal, sem a espera). Monta, ajusta trocando gente de time pelo seletor (as médias recalculam) e, quando estiver bom, <strong>📣 Enviar pro grupo</strong> — sai no WhatsApp exatamente como está na tela, sem revelar as notas (cortesia da tecnologia da NASA 🚀).</p>
+      <p class="aviso">Já abre com <strong>a lista da semana</strong> marcada (a mesma que o <code>#timesde</code> usa — só a principal, sem a espera). Monta, ajusta trocando gente de time pelo seletor (o equilíbrio recalcula) e, quando estiver bom, <strong>📣 Enviar pro grupo</strong> — sai no WhatsApp exatamente como está na tela, sem revelar as notas (cortesia da tecnologia da NASA 🚀).</p>
     </div>
   </section>
 
@@ -189,7 +189,8 @@
       <div class="selecao-jogadores" id="selEvolucao"></div>
       <div class="grafico-caixa"><canvas id="grafNotas"></canvas></div>
     </div>
-    <div class="cartao">
+    <!-- Nível em número saiu do painel (28/10/2026: só categoria) — o canvas fica escondido pro script não quebrar -->
+    <div class="cartao" style="display:none">
       <strong>Nível (média das avaliações)</strong>
       <span class="mut">— sobe quando alguém reavalia o jogador</span>
       <div class="grafico-caixa"><canvas id="grafNivel"></canvas></div>
@@ -295,6 +296,11 @@ $('#btnFiltroTodos').addEventListener('click', () => { filtroSemana = false; des
 // Nível legível, como na planilha (âncoras: Iniciante=2, Inter=3, Avançado=4)
 // Categoria de impacto no time (1 puts · 2 de boa · 3 joga bem · 4 desequilibra)
 const rotuloDaCategoria = (c) => (elenco.categorias || []).find((x) => x.valor === c)?.rotulo || null;
+const emojiDaCategoria = (c) => (rotuloDaCategoria(c) || '').split(' ')[0];
+// No cartão do time: quantos de cada categoria, sem número de nota
+const resumoDoTime = (t) => [4, 3, 2, 1]
+  .map((c) => [emojiDaCategoria(c), t.jogadores.filter((j) => j.categoria === c).length])
+  .filter(([, n]) => n).map(([e, n]) => `${e}×${n}`).join(' ') || 'sem avaliação';
 // A categoria que um votante deu: a escolhida, ou a tirada das notas antigas dele
 function categoriaDoVotante(j, votante) {
   const alvo = votante.toLowerCase();
@@ -375,14 +381,14 @@ function desenharElenco() {
   $('#btnFiltroTodos').classList.toggle('primario', !filtroSemana || !temSemana);
   $('#btnFiltroSemana').textContent = `⭐ Elenco da semana${temSemana ? ` (${naSemana.size})` : ''}`;
 
-  const linhas = ['<tr><th>Jogador</th><th>Nível</th><th>Altura</th><th class="num">Nota p/ times</th><th class="num">Presenças</th><th></th></tr>'];
+  const linhas = ['<tr><th>Jogador</th><th>Nível</th><th>Altura</th><th class="num">Presenças</th><th></th></tr>'];
   const visiveis = (filtroSemana && temSemana)
     ? elenco.jogadores.filter((j) => naSemana.has(j.id))
     : elenco.jogadores;
   const ordenado = [...visiveis].sort((a, b) => (b.notaTime ?? -1) - (a.notaTime ?? -1));
 
   if (ordenado.length === 0) {
-    linhas.push('<tr><td colspan="6" class="mut">Ninguém aqui ainda.</td></tr>');
+    linhas.push('<tr><td colspan="5" class="mut">Ninguém aqui ainda.</td></tr>');
   }
 
   for (const j of ordenado) {
@@ -390,12 +396,11 @@ function desenharElenco() {
     linhas.push(`<tr data-id="${j.id}" style="cursor:pointer">
       <td>${naSemana.has(j.id) && !filtroSemana ? '⭐ ' : ''}<strong>${j.nome}</strong>${
         (j.apelidos || []).length ? ` <span class="mut" title="apelidos no WhatsApp">(${j.apelidos.join(', ')})</span>` : ''}</td>
-      <td>${nivel ? `<span class="chip">${nivel}</span> <span class="mut">${fmt(j.nivel)}</span>` : '<span class="chip" style="background:#eda100;color:#0b0b0b">sem avaliação</span>'}</td>
+      <td>${nivel ? `<span class="chip">${nivel}</span>` : '<span class="chip" style="background:#eda100;color:#0b0b0b">sem avaliação</span>'}</td>
       <td><select data-altura="${j.id}">
         <option value="">—</option>
         ${(elenco.alturas || []).map((a) => `<option value="${a}" ${j.altura === a ? 'selected' : ''}>${a === 'medio' ? 'médio' : a}</option>`).join('')}
       </select></td>
-      <td class="num"><strong>${fmt(j.notaTime)}</strong></td>
       <td class="num">${j.presencas}</td>
       <td><button data-ren="${j.id}" title="renomear (mantém votos, notas e presença)">✏️</button> <button data-del="${j.id}" title="remover do elenco">✕</button></td>
     </tr>`);
@@ -403,7 +408,7 @@ function desenharElenco() {
     if (jogadorAberto === j.id) {
       const votante = votanteAtual();
       const minha = votante ? categoriaDoVotante(j, votante) : null;
-      linhas.push(`<tr class="votos-linha"><td colspan="6">
+      linhas.push(`<tr class="votos-linha"><td colspan="5">
         ${votante
           ? `<div style="margin-bottom:0.5rem"><strong>No teu time, ${j.nome} é… (${votante})</strong></div>
              <div class="linhaform" style="margin-top:0">
@@ -526,7 +531,7 @@ function desenharSelecaoTimes() {
   caixa.innerHTML = '';
   for (const j of [...elenco.jogadores].sort((a, b) => (b.notaTime ?? -1) - (a.notaTime ?? -1))) {
     const b = document.createElement('button');
-    b.textContent = `${j.nome} (${fmt(j.notaTime)})`;
+    b.textContent = `${j.nome} ${emojiDaCategoria(j.categoria)}`.trim();
     const pinta = () => {
       b.classList.toggle('sel', selecionadosTimes.has(j.nome));
       b.style.background = selecionadosTimes.has(j.nome) ? 'var(--acento)' : '';
@@ -630,9 +635,9 @@ function desenharTimes() {
   caixa.innerHTML = timesAtuais.map((t, ti) => `
     <div class="time-cartao">
       <h3>Time ${t.numero}</h3>
-      <div class="media">média ${fmt(t.media)}${t.altos ? ` · ${t.altos} alto(s) 📏` : ''} · ${t.jogadores.length} jogador(es)</div>
+      <div class="media">${resumoDoTime(t)}${t.altos ? ` · ${t.altos} alto(s) 📏` : ''} · ${t.jogadores.length} jogador(es)</div>
       <ul>${t.jogadores.map((j, ji) => `<li>
-        <span>${j.nome}${j.altura === 'alto' ? ' 📏' : ''} <span class="mut">${fmt(j.nota)}</span></span>
+        <span>${j.nome}${j.altura === 'alto' ? ' 📏' : ''} ${emojiDaCategoria(j.categoria)}</span>
         <span style="display:flex;gap:0.25rem;align-items:center">
           <select data-mover="${ti}:${ji}" title="mudar de time">${timesAtuais.map((x) => `<option ${x.numero === t.numero ? 'selected' : ''}>${x.numero}</option>`).join('')}</select>
           <button data-sai="${ti}:${ji}" title="saiu / não foi">✕</button>
@@ -674,7 +679,7 @@ function desenharSubstituicao() {
   const nomesEscalados = new Set(timesAtuais.flatMap((t) => t.jogadores.map((j) => j.nome)));
   const disponiveis = elenco.jogadores.filter((j) => !idsEscalados.has(j.id) && !nomesEscalados.has(j.nome));
   $('#selEntra').innerHTML = disponiveis.length
-    ? disponiveis.map((j) => `<option value="${j.id}">${j.nome}${j.altura === 'alto' ? ' 📏' : ''} (${fmt(j.notaTime)})</option>`).join('')
+    ? disponiveis.map((j) => `<option value="${j.id}">${j.nome}${j.altura === 'alto' ? ' 📏' : ''} ${emojiDaCategoria(j.categoria)}</option>`).join('')
     : '<option value="">— todos já estão escalados —</option>';
   $('#selTimeDestino').innerHTML = timesAtuais.map((t) => `<option value="${t.numero}">Time ${t.numero}</option>`).join('');
 }
@@ -687,6 +692,7 @@ $('#btnEntrarNoTime').addEventListener('click', async () => {
   timesAtuais[destino].jogadores.push({
     nome: jogador.nome,
     nota: jogador.notaTime ?? 3,
+    categoria: jogador.categoria ?? null,
     altura: jogador.altura ?? null,
     conhecido: jogador.notaTime != null,
   });

@@ -58,14 +58,19 @@ const timesDe = comando(REGEX_TIMES_DE, async (msg, m) => {
 
   const anuncioGrupo = times.anuncioDosTimes(lista.data_jogo, montados.map((t) => t.jogadores.map((j) => j.nome)));
 
-  // O que só o ADMIN vê: médias e quem entrou sem nota
-  let mediasTexto = `📊 Médias (só pra vocês): ${montados.map((t) => t.media.toFixed(2)).join(' / ')}`;
+  // O que só o ADMIN vê: quantos de cada categoria por time (sem número de
+  // nota — 28/10/2026) e quem entrou sem avaliação
+  const EMOJI = { 4: '🔥', 3: '👍', 2: '🙂', 1: '😬' };
+  const resumo = (t) => [4, 3, 2, 1]
+    .map((c) => [EMOJI[c], t.jogadores.filter((j) => j.categoria === c).length])
+    .filter(([, n]) => n).map(([e, n]) => `${e}${n}`).join(' ') || '—';
+  let mediasTexto = `📊 Por time (só pra vocês): ${montados.map((t, i) => `T${i + 1} ${resumo(t)}`).join(' · ')}`;
   if (montados.some((t) => t.altos > 0)) {
     mediasTexto += `\n📏 Altos por time: ${montados.map((t) => t.altos).join(' / ')}`;
   }
   const desconhecidos = montados.flatMap((t) => t.jogadores).filter((j) => !j.conhecido).map((j) => j.nome);
   const avisoDesconhecidos = desconhecidos.length > 0
-    ? `\n⚠️ ${desconhecidos.length} sem nota no elenco (entraram como medianos): ${desconhecidos.slice(0, 6).join(', ')}${desconhecidos.length > 6 ? ` e mais ${desconhecidos.length - 6}` : ''}. Cadastra/vota no painel.`
+    ? `\n⚠️ ${desconhecidos.length} sem avaliação no elenco (entraram como 🙂 de boa): ${desconhecidos.slice(0, 6).join(', ')}${desconhecidos.length > 6 ? ` e mais ${desconhecidos.length - 6}` : ''}. Cadastra/vota no painel.`
     : '';
 
   if (!enviar) {

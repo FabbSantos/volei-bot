@@ -4616,6 +4616,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
     {
      "nome": "Aces",
      "nota": 4.5,
+     "categoria": 4,
      "altura": null,
      "conhecido": true,
      "jogador_id": 17
@@ -4623,6 +4624,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
     {
      "nome": "Diego",
      "nota": 2.166666666666667,
+     "categoria": 2,
      "altura": null,
      "conhecido": true,
      "jogador_id": 4
@@ -4630,6 +4632,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
     {
      "nome": "Marcel Garcia",
      "nota": 2.5,
+     "categoria": 2,
      "altura": null,
      "conhecido": true,
      "jogador_id": 1
@@ -4644,6 +4647,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
     {
      "nome": "Vini",
      "nota": 3.5,
+     "categoria": 3,
      "altura": null,
      "conhecido": true,
      "jogador_id": 16
@@ -4651,6 +4655,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
     {
      "nome": "Kamila Vianna",
      "nota": 3.0999999999999996,
+     "categoria": 2,
      "altura": "alto",
      "conhecido": true,
      "jogador_id": 3
@@ -4658,6 +4663,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
     {
      "nome": "Desconhecido",
      "nota": 3,
+     "categoria": null,
      "altura": null,
      "conhecido": false,
      "jogador_id": null
@@ -4680,6 +4686,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
     {
      "nome": "Diego",
      "nota": 4,
+     "categoria": null,
      "altura": null,
      "conhecido": false,
      "jogador_id": 4
@@ -4694,6 +4701,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
     {
      "nome": "Aces",
      "nota": 3,
+     "categoria": null,
      "altura": null,
      "conhecido": false,
      "jogador_id": 17
