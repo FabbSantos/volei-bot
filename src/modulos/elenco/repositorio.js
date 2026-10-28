@@ -200,11 +200,102 @@ function removerJogador(jogadorId) {
   return info.changes > 0;
 }
 
+// ---- nível por categoria (28/10/2026) ---------------------------------------
+// Nota de 1 a 5 por fundamento virou briga ("o Marcel se deu nota alta e
+// pula igual tartaruga"). Agora cada votante escolhe UMA categoria de impacto
+// no time, e ninguém vota em si mesmo. Quem ainda não escolheu categoria tem a
+// dele tirada das notas antigas, pra ninguém começar do zero.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS votos_impacto (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    jogador_id INTEGER NOT NULL,
+    votante TEXT NOT NULL,
+    categoria INTEGER NOT NULL,     -- 1 puts · 2 de boa · 3 joga bem · 4 desequilibra
+    atualizado_em TEXT NOT NULL,
+    UNIQUE(jogador_id, votante),
+    FOREIGN KEY (jogador_id) REFERENCES jogadores(id)
+  );
+`);
+
+const CATEGORIAS = [
+  { valor: 1, rotulo: '😬 Puts, tá no meu time' },
+  { valor: 2, rotulo: '🙂 De boa' },
+  { valor: 3, rotulo: '👍 Joga bem' },
+  { valor: 4, rotulo: '🔥 Desequilibra' },
+];
+
+// Média das notas antigas (1 a 5) → categoria. Iniciante (2) = puts,
+// Intermediário (3) = de boa, 3,5 = joga bem, Avançado (4) = desequilibra
+function categoriaDasNotas(media) {
+  if (media == null) return null;
+  if (media <= 2.25) return 1;
+  if (media <= 3) return 2;
+  if (media < 3.75) return 3;
+  return 4;
+}
+
+// Categoria (média dos votantes, 1 a 4) na escala de nota que o montador e o
+// painel já usam: 1 → 1,5 · 2 → 2,5 · 3 → 3,5 · 4 → 4,5
+const notaDaCategoria = (c) => (c == null ? null : 0.5 + c);
+
+const palavras = (t) => normalizarTexto(t).replace(/\([^)]*\)/g, ' ').replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+
+// O votante é o próprio jogador? "Fabrício" vota no "Fabrício Bahiense",
+// "Marcel" no "Marcel Garcia": mesmo primeiro nome e tudo contido num nome
+// dele (o do elenco ou um apelido)
+function votaEmSiMesmo(votante, jogador, apelidos) {
+  const v = palavras(votante);
+  if (!v.length) return false;
+  return [jogador.nome, ...apelidos].some((n) => {
+    const t = palavras(n);
+    return t[0] === v[0] && v.every((p) => t.includes(p));
+  });
+}
+
+function votarImpacto(jogadorId, votante, categoria) {
+  if (!votante?.trim()) return { erro: 'votante_vazio' };
+  if (categoria == null) {
+    db.prepare('DELETE FROM votos_impacto WHERE jogador_id = ? AND votante = ?').run(jogadorId, votante.trim());
+  } else {
+    if (!CATEGORIAS.some((c) => c.valor === categoria)) return { erro: 'categoria_invalida' };
+    db.prepare(`
+      INSERT INTO votos_impacto (jogador_id, votante, categoria, atualizado_em) VALUES (?, ?, ?, ?)
+      ON CONFLICT(jogador_id, votante) DO UPDATE SET categoria = excluded.categoria, atualizado_em = excluded.atualizado_em
+    `).run(jogadorId, votante.trim(), categoria, new Date().toISOString());
+  }
+  registrarSnapshotHabilidade(jogadorId);
+  return {};
+}
+
+// O nível do jogador: a categoria de cada votante (escolhida, ou tirada das
+// notas antigas dele), sem o voto do próprio jogador e sem os votantes
+// desligados pelo #votos — e a média disso
+function calcularNivel(jogador, conta) {
+  const apelidos = apelidosDe(jogador.id);
+  const valeVoto = (votante) => conta({ votante }) && !votaEmSiMesmo(votante, jogador, apelidos);
+  const notas = db.prepare('SELECT votante, fundamento, nota FROM votos_habilidade WHERE jogador_id = ?').all(jogador.id);
+  const impactos = db.prepare('SELECT votante, categoria FROM votos_impacto WHERE jogador_id = ?').all(jogador.id);
+
+  const porVotante = new Map();
+  for (const votante of new Set([...notas.map((n) => n.votante), ...impactos.map((i) => i.votante)])) {
+    if (!valeVoto(votante)) continue;
+    const escolhida = impactos.find((i) => i.votante === votante);
+    if (escolhida) {
+      porVotante.set(votante, escolhida.categoria);
+    } else {
+      const dele = notas.filter((n) => n.votante === votante);
+      porVotante.set(votante, categoriaDasNotas(dele.reduce((s, n) => s + n.nota, 0) / dele.length));
+    }
+  }
+  const categorias = [...porVotante.values()];
+  const nivel = categorias.length ? categorias.reduce((s, c) => s + c, 0) / categorias.length : null;
+  return { nivel, habilidade: notaDaCategoria(nivel), impactos, notas, valeVoto };
+}
+
 function mediaHabilidade(jogadorId) {
-  const j = db.prepare('SELECT chat_id FROM jogadores WHERE id = ?').get(jogadorId);
-  const conta = filtroDeVotos(j?.chat_id);
-  const votos = db.prepare('SELECT votante, nota FROM votos_habilidade WHERE jogador_id = ?').all(jogadorId).filter(conta);
-  return votos.length ? votos.reduce((s, v) => s + v.nota, 0) / votos.length : null;
+  const j = db.prepare('SELECT * FROM jogadores WHERE id = ?').get(jogadorId);
+  if (!j) return null;
+  return calcularNivel(j, filtroDeVotos(j.chat_id)).habilidade;
 }
 
 // Guarda um ponto só quando a média MUDA — a linha do tempo fica com as
@@ -258,10 +349,8 @@ function enriquecerJogadores(chatId) {
 
   const conta = filtroDeVotos(chatId);
   return jogadores.map((j) => {
-    const votos = db.prepare(
-      'SELECT votante, fundamento, nota FROM votos_habilidade WHERE jogador_id = ?'
-    ).all(j.id);
-    const considerados = votos.filter(conta);
+    const { nivel, habilidade, impactos, notas: votos, valeVoto } = calcularNivel(j, conta);
+    const considerados = votos.filter((v) => valeVoto(v.votante));
     const porFundamento = {};
     for (const f of FUNDAMENTOS) {
       const doFundamento = considerados.filter((v) => v.fundamento === f);
@@ -269,9 +358,6 @@ function enriquecerJogadores(chatId) {
         ? doFundamento.reduce((s, v) => s + v.nota, 0) / doFundamento.length
         : null;
     }
-    const habilidade = considerados.length
-      ? considerados.reduce((s, v) => s + v.nota, 0) / considerados.length
-      : null;
 
     const ultimasNotas = db.prepare(`
       SELECT nd.nota FROM notas_do_dia nd
@@ -287,7 +373,12 @@ function enriquecerJogadores(chatId) {
       ? null
       : (mediaDia == null ? habilidade : 0.7 * habilidade + 0.3 * mediaDia);
 
-    return { ...j, apelidos: apelidosDe(j.id), votos, porFundamento, habilidade, mediaDia, notaTime, presencas: 0 };
+    return {
+      ...j, apelidos: apelidosDe(j.id), votos, impactos, porFundamento, habilidade, mediaDia, notaTime, presencas: 0,
+      // nível 1-4 (média das categorias) e a categoria arredondada, que o
+      // montador usa pra espalhar os 🔥 e os 😬 pelos times
+      nivel, categoria: nivel == null ? null : Math.round(nivel),
+    };
   });
 }
 
@@ -533,6 +624,10 @@ module.exports = {
   resumoDosVotantes,
   definirAltura,
   votarHabilidade,
+  votarImpacto,
+  CATEGORIAS,
+  categoriaDasNotas,
+  votaEmSiMesmo,
   darNotaDoDia,
   listarJogadores,
   acharJogadorDaEntrada,

@@ -19,6 +19,7 @@ function rotasPainel(api, deps = {}) {
       .sort((a, b) => a.localeCompare(b, 'pt-BR'));
     res.json({
       fundamentos: elenco.FUNDAMENTOS,
+      categorias: elenco.CATEGORIAS,
       alturas: elenco.ALTURAS,
       votantes,
       jogadores: elenco.listarJogadores(grupo),
@@ -78,6 +79,20 @@ function rotasPainel(api, deps = {}) {
     const { jogador_id, altura } = req.body || {};
     if (!jogador_id) return res.status(400).json({ erro: 'jogador_id é obrigatório' });
     res.json(elenco.definirAltura(jogador_id, altura || null));
+  });
+
+  // Categoria de impacto (1 puts · 2 de boa · 3 joga bem · 4 desequilibra);
+  // categoria null apaga o voto
+  api.post('/impacto', (req, res) => {
+    const { jogador_id, votante, categoria } = req.body || {};
+    if (!jogador_id || !votante?.trim()) {
+      return res.status(400).json({ erro: 'jogador_id e votante são obrigatórios' });
+    }
+    const r = elenco.votarImpacto(jogador_id, votante, categoria == null ? null : parseInt(categoria, 10));
+    if (r.erro) return res.status(400).json(r);
+    const jogador = elenco.listarJogadores(req.body.grupo || '').find((j) => j.id === jogador_id)
+      || { nome: '', apelidos: [] };
+    res.json({ ok: true, emSiMesmo: elenco.votaEmSiMesmo(votante, jogador, jogador.apelidos || []) });
   });
 
   api.post('/voto', (req, res) => {

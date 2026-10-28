@@ -26,7 +26,13 @@ pelada.quandoApagarLista((listaId) => {
 // acontece se o desequilíbrio for maior que 1 e a diferença de nota for
 // pequena: o equilíbrio de habilidade continua mandando.
 function equilibrarAltura(times, alturaAlvo, tolerancia = 1) {
-  const conta = (t) => t.filter((j) => j.altura === alturaAlvo).length;
+  return espalhar(times, (j) => j.altura === alturaAlvo, tolerancia);
+}
+
+// O mesmo pra qualquer grupo: os altos, os 🔥 "desequilibra", os 😬 "puts".
+// Um por time antes de repetir — é o que impede dois craques no mesmo time.
+function espalhar(times, ehDoGrupo, tolerancia = 1) {
+  const conta = (t) => t.filter(ehDoGrupo).length;
   for (let volta = 0; volta < 20; volta++) {
     const ordenados = [...times].sort((a, b) => conta(b) - conta(a));
     const cheio = ordenados[0];
@@ -34,8 +40,8 @@ function equilibrarAltura(times, alturaAlvo, tolerancia = 1) {
     if (conta(cheio) - conta(vazio) <= 1) return;
 
     let melhor = null;
-    for (const a of cheio.filter((j) => j.altura === alturaAlvo)) {
-      for (const b of vazio.filter((j) => j.altura !== alturaAlvo)) {
+    for (const a of cheio.filter(ehDoGrupo)) {
+      for (const b of vazio.filter((j) => !ehDoGrupo(j))) {
         const dif = Math.abs(a.nota - b.nota);
         if (!melhor || dif < melhor.dif) melhor = { a, b, dif };
       }
@@ -61,10 +67,13 @@ function equilibrarMedias(times, maxVoltas = 60) {
     const medias = times.map(media);
     return Math.max(...medias) - Math.min(...medias);
   };
+  // Altura E categoria: os 🔥 e os 😬 também ficam espalhados, nenhuma troca
+  // de média pode juntar dois deles de novo
+  const grupos = [(j) => j.altura === 'alto', (j) => j.altura === 'baixo', (j) => j.categoria === 4, (j) => j.categoria === 1];
   const desequilibrioAltura = () => {
     let pior = 0;
-    for (const alvo of ['alto', 'baixo']) {
-      const contagens = times.map((t) => t.filter((j) => j.altura === alvo).length);
+    for (const ehDoGrupo of grupos) {
+      const contagens = times.map((t) => t.filter(ehDoGrupo).length);
       pior = Math.max(pior, Math.max(...contagens) - Math.min(...contagens));
     }
     return pior;
@@ -166,6 +175,7 @@ function montarTimes(chatId, quantidadeTimes, participantes) {
       nota: jogador?.notaTime ?? 3, // desconhecido entra como mediano
       conhecido: Boolean(jogador?.notaTime != null),
       altura: jogador?.altura ?? null,
+      categoria: jogador?.categoria ?? null,
     };
   });
 
@@ -183,6 +193,12 @@ function montarTimes(chatId, quantidadeTimes, participantes) {
     equilibrarAltura(times, 'alto');
     equilibrarAltura(times, 'baixo');
   }
+
+  // Os craques (🔥) um por time antes de repetir; os 😬 idem. A tolerância é
+  // maior que a da altura: separar dois "desequilibra" vale mais que a média
+  // perfeita ("contar mais", pedido de 28/10/2026)
+  espalhar(times, (j) => j.categoria === 4, 1.5);
+  espalhar(times, (j) => j.categoria === 1, 1.5);
 
   // Conserta as médias que o ajuste de altura (e o próprio zigue-zague)
   // deixaram tortas, sem devolver os altos todos pro mesmo time

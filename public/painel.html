@@ -293,8 +293,18 @@ $('#btnFiltroSemana').addEventListener('click', () => { filtroSemana = true; des
 $('#btnFiltroTodos').addEventListener('click', () => { filtroSemana = false; desenharElenco(); });
 
 // Nível legível, como na planilha (âncoras: Iniciante=2, Inter=3, Avançado=4)
-const nivelDe = (h) => (h == null ? null : h < 2.5 ? 'Iniciante' : h < 3.5 ? 'Intermediário' : 'Avançado');
-const NIVEL_NOTA = { Iniciante: 2, 'Intermediário': 3, 'Avançado': 4 };
+// Categoria de impacto no time (1 puts · 2 de boa · 3 joga bem · 4 desequilibra)
+const rotuloDaCategoria = (c) => (elenco.categorias || []).find((x) => x.valor === c)?.rotulo || null;
+// A categoria que um votante deu: a escolhida, ou a tirada das notas antigas dele
+function categoriaDoVotante(j, votante) {
+  const alvo = votante.toLowerCase();
+  const escolhida = (j.impactos || []).find((i) => i.votante.toLowerCase() === alvo);
+  if (escolhida) return escolhida.categoria;
+  const notas = j.votos.filter((v) => v.votante.toLowerCase() === alvo).map((v) => v.nota);
+  if (!notas.length) return null;
+  const m = notas.reduce((s, n) => s + n, 0) / notas.length;
+  return m <= 2.25 ? 1 : m <= 3 ? 2 : m < 3.75 ? 3 : 4;
+}
 
 function desenharCaixaSemana() {
   const caixa = $('#caixaSemana');
@@ -376,11 +386,11 @@ function desenharElenco() {
   }
 
   for (const j of ordenado) {
-    const nivel = nivelDe(j.habilidade);
+    const nivel = rotuloDaCategoria(j.categoria);
     linhas.push(`<tr data-id="${j.id}" style="cursor:pointer">
       <td>${naSemana.has(j.id) && !filtroSemana ? '⭐ ' : ''}<strong>${j.nome}</strong>${
         (j.apelidos || []).length ? ` <span class="mut" title="apelidos no WhatsApp">(${j.apelidos.join(', ')})</span>` : ''}</td>
-      <td>${nivel ? `<span class="chip">${nivel}</span> <span class="mut">${fmt(j.habilidade)}</span>` : '<span class="chip" style="background:#eda100;color:#0b0b0b">sem avaliação</span>'}</td>
+      <td>${nivel ? `<span class="chip">${nivel}</span> <span class="mut">${fmt(j.nivel)}</span>` : '<span class="chip" style="background:#eda100;color:#0b0b0b">sem avaliação</span>'}</td>
       <td><select data-altura="${j.id}">
         <option value="">—</option>
         ${(elenco.alturas || []).map((a) => `<option value="${a}" ${j.altura === a ? 'selected' : ''}>${a === 'medio' ? 'médio' : a}</option>`).join('')}
@@ -392,30 +402,18 @@ function desenharElenco() {
 
     if (jogadorAberto === j.id) {
       const votante = votanteAtual();
-      const meus = {};
-      for (const v of j.votos.filter((v) => v.votante.toLowerCase() === votante.toLowerCase())) meus[v.fundamento] = v.nota;
-      const meuNivel = Object.keys(meus).length
-        ? nivelDe(Object.values(meus).reduce((s, n) => s + n, 0) / Object.values(meus).length)
-        : null;
+      const minha = votante ? categoriaDoVotante(j, votante) : null;
       linhas.push(`<tr class="votos-linha"><td colspan="6">
         ${votante
-          ? `<div style="margin-bottom:0.5rem"><strong>Tua avaliação (${votante}):</strong>
-              ${['Iniciante', 'Intermediário', 'Avançado'].map((n) =>
-                `<button data-nivel="${n}" class="${meuNivel === n ? 'primario' : ''}" style="margin-left:0.4rem">${n}</button>`
+          ? `<div style="margin-bottom:0.5rem"><strong>No teu time, ${j.nome} é… (${votante})</strong></div>
+             <div class="linhaform" style="margin-top:0">
+              ${(elenco.categorias || []).slice().reverse().map((c) =>
+                `<button data-categoria="${c.valor}" class="${minha === c.valor ? 'primario' : ''}">${c.rotulo}</button>`
               ).join('')}
-              <span class="mut" style="margin-left:0.6rem">um clique e pronto — igual à planilha</span></div>`
+             </div>
+             <div class="mut" style="margin-top:0.3rem">Voto em si mesmo não conta. Os 🔥 e os 😬 são espalhados um por time.</div>`
           : '⚠️ Preenche "Você é" lá em cima pra avaliar.<br>'}
-        <details data-ajuste ${ajusteFinoAberto ? 'open' : ''} ${votante ? '' : 'style="display:none"'}>
-          <summary class="mut" style="cursor:pointer">Ajuste fino por fundamento (opcional, 1–5, aceita 0,5)</summary>
-          <div style="margin-top:0.4rem">
-          ${f.map((x) => `<label style="margin-right:0.8rem">${x}
-            <select data-voto="${x}">
-              <option value="">–</option>
-              ${[1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5].map((n) => `<option value="${n}" ${meus[x] === n ? 'selected' : ''}>${String(n).replace('.', ',')}</option>`).join('')}
-            </select> <span class="mut">média ${fmt(j.porFundamento[x])}</span></label>`).join('')}
-          </div>
-        </details>
-        <div class="mut" style="margin-top:0.4rem">já avaliaram: ${[...new Set(j.votos.map((v) => v.votante))].join(', ') || 'ninguém ainda'}</div>
+        <div class="mut" style="margin-top:0.4rem">já avaliaram: ${[...new Set([...j.votos.map((v) => v.votante), ...(j.impactos || []).map((i) => i.votante)])].join(', ') || 'ninguém ainda'}</div>
       </td></tr>`);
     }
   }
@@ -436,24 +434,10 @@ function desenharElenco() {
       await carregarElenco();
     });
   });
-  document.querySelector('#tabElenco [data-ajuste]')?.addEventListener('toggle', (e) => {
-    ajusteFinoAberto = e.target.open;
-  });
-  document.querySelectorAll('#tabElenco [data-nivel]').forEach((btn) => {
+  document.querySelectorAll('#tabElenco [data-categoria]').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      const nota = NIVEL_NOTA[btn.dataset.nivel];
-      for (const x of elenco.fundamentos) {
-        await api('/voto', { method: 'POST', body: { jogador_id: jogadorAberto, votante: votanteAtual(), fundamento: x, nota } });
-      }
-      toast(`${btn.dataset.nivel} salvo ✔`);
-      await carregarElenco();
-    });
-  });
-  document.querySelectorAll('#tabElenco [data-voto]').forEach((sel) => {
-    sel.addEventListener('change', async () => {
-      if (!sel.value) return;
-      await api('/voto', { method: 'POST', body: { jogador_id: jogadorAberto, votante: votanteAtual(), fundamento: sel.dataset.voto, nota: parseFloat(sel.value) } });
-      toast('Voto salvo ✔');
+      const r = await api('/impacto', { method: 'POST', body: { grupo: grupoAtual(), jogador_id: jogadorAberto, votante: votanteAtual(), categoria: parseInt(btn.dataset.categoria, 10) } });
+      toast(r.emSiMesmo ? 'Salvo — mas voto em si mesmo não conta 😉' : `${btn.textContent} ✔`);
       await carregarElenco();
     });
   });
