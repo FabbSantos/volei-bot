@@ -127,12 +127,16 @@ function registrarPainel(app, deps = {}) {
       gravarCookie(res);
       return res.redirect('/painel');
     }
+    // Sem cache: o navegador guardava a página velha e mudança no painel
+    // não aparecia (28/10/2026, a coluna "Nota p/ times" que já tinha saído)
+    res.set('Cache-Control', 'no-store');
     res.sendFile(path.join(__dirname, '..', '..', 'public', 'painel.html'));
   });
 
   // Página de subir o vídeo do jogo (ver modulos/video/rotasPainel.js)
   app.get('/painel/video', (req, res) => {
     if (!autenticado(req)) return res.redirect('/painel');
+    res.set('Cache-Control', 'no-store');
     res.sendFile(path.join(__dirname, '..', '..', 'public', 'video.html'));
   });
 
