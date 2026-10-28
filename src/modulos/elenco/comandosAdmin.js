@@ -64,10 +64,10 @@ const timesDe = comando(REGEX_TIMES_DE, async (msg, m) => {
   const resumo = (t) => [4, 3, 2, 1]
     .map((c) => [EMOJI[c], t.jogadores.filter((j) => j.categoria === c).length])
     .filter(([, n]) => n).map(([e, n]) => `${e}${n}`).join(' ') || '—';
-  let mediasTexto = `📊 Por time (só pra vocês): ${montados.map((t, i) => `T${i + 1} ${resumo(t)}`).join(' · ')}`;
-  if (montados.some((t) => t.altos > 0)) {
-    mediasTexto += `\n📏 Altos por time: ${montados.map((t) => t.altos).join(' / ')}`;
-  }
+  // Um time por linha: tudo numa linha ficava ilegível no celular
+  const comAltos = montados.some((t) => t.altos > 0);
+  const mediasTexto = `📊 *Por time (só pra vocês):*\n${montados.map((t, i) =>
+    `Time ${i + 1}: ${resumo(t)}${comAltos ? ` · 📏${t.altos}` : ''}`).join('\n')}`;
   const desconhecidos = montados.flatMap((t) => t.jogadores).filter((j) => !j.conhecido).map((j) => j.nome);
   const avisoDesconhecidos = desconhecidos.length > 0
     ? `\n⚠️ ${desconhecidos.length} sem avaliação no elenco (entraram como 🙂 de boa): ${desconhecidos.slice(0, 6).join(', ')}${desconhecidos.length > 6 ? ` e mais ${desconhecidos.length - 6}` : ''}. Cadastra/vota no painel.`
