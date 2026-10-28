@@ -220,7 +220,7 @@ function anuncioDosTimes(dataJogo, times) {
   const linhas = times.map((t, i) =>
     `⚔️ *Time ${i + 1}*\n${t.map((nome) => `• ${nome}`).join('\n')}`
   );
-  return `🏐 *Times da pelada${dataJogo ? ` — ${dataJogo}` : ''}*\nMontados com tecnologia da NASA 🚀\n\n${linhas.join('\n\n')}\n\nBom jogo! 🔥`;
+  return `🏐 *Times da pelada${dataJogo ? ` — ${dataJogo}` : ''}*\nMontados com a NOVA TECNOLOGIA DA NASA 2 🚀\n\n${linhas.join('\n\n')}\n\nBom jogo! 🔥`;
 }
 
 module.exports = { montarTimes, salvarTimes, getTimesSalvos, apagarTimesSalvos, equilibrarMedias, anuncioDosTimes };
