@@ -90,8 +90,10 @@ function canalFalso(votosPorTitulo = {}) {
       { numero: '5521900000003@c.us', nome: 'Caio', opcoes: [1] },
     ],
     'Time 2': [
+      { numero: '5521900000008@c.us', nome: 'Zé', opcoes: [] }, // desmarcou: não é votante
+      { numero: '5521900000003@c.us', nome: 'Caio', opcoes: [0], timestamp: 1 }, // trocou depois: vale o último
       { numero: '5521900000002@c.us', nome: 'Bia', opcoes: [1] }, // em si mesma
-      { numero: '5521900000003@c.us', nome: 'Caio', opcoes: [1] },
+      { numero: '5521900000003@c.us', nome: 'Caio', opcoes: [1], timestamp: 2 },
     ],
     equilibrados: [
       { numero: '5521900000002@c.us', nome: 'Bia', opcoes: [0] },
@@ -130,6 +132,7 @@ function canalFalso(votosPorTitulo = {}) {
     // Time 1: Ramon 2 votos (Fabrício e Bia); Ana só 1 (o dela não conta); Marcel 0
     assert.ok(grupo.texto.includes('Time 1: *Ramon (cvd Fabricio)* (2 votos)'), grupo.texto);
     assert.ok(grupo.texto.includes('Time 2: *Bia* (1 voto)'), grupo.texto);
+    assert.ok(admins.texto.includes('Time 2 (2 votantes): Bia 1'), admins.texto); // sem o Zé que desmarcou, Caio contado uma vez
     assert.ok(!grupo.texto.includes('Equilíbrio'), 'equilíbrio é só pros admins');
     assert.ok(admins.texto.includes('🚫 2 em si mesmo'), admins.texto);
     assert.ok(admins.texto.includes('⚖️ Bem equilibrados: 2'), admins.texto);

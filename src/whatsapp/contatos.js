@@ -90,12 +90,12 @@ async function lerVotosDaEnquete(client, msgId) {
       } catch { /* sem nome: segue só com o número */ }
       const opcoes = [];
       (v.selectedOptions || []).forEach((o, i) => { if (o) opcoes.push(typeof o.localId === 'number' ? o.localId : i); });
-      return { sender, nome, opcoes };
+      return { sender, nome, opcoes, timestamp: v.timestamp || 0 };
     });
   }, msgId);
   const votos = [];
   for (const v of brutos) { // um por vez: rajada de consultas já travou a página
-    votos.push({ numero: await lidParaNumero(client, v.sender), nome: v.nome, opcoes: v.opcoes });
+    votos.push({ numero: await lidParaNumero(client, v.sender), nome: v.nome, opcoes: v.opcoes, timestamp: v.timestamp });
   }
   return votos;
 }

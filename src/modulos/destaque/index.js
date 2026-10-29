@@ -168,7 +168,16 @@ async function apurar(canal, rodada) {
   };
   const resultado = { lista, times: [], equilibrio: null };
   for (const e of enquetesDa(rodada.id)) {
-    const votos = await canal.lerVotos(e.msg_id);
+    // Quem desmarcou fica no WhatsApp como voto vazio (29/10/2026: "3
+    // votantes" com 2 votos): não conta. E uma pessoa é um voto só — vale o
+    // último registro dela.
+    const porPessoa = new Map();
+    for (const v of await canal.lerVotos(e.msg_id)) {
+      const chave = String(v.numero || v.nome || Math.random()).split('@')[0];
+      const anterior = porPessoa.get(chave);
+      if (!anterior || (v.timestamp || 0) >= (anterior.timestamp || 0)) porPessoa.set(chave, v);
+    }
+    const votos = [...porPessoa.values()].filter((v) => (v.opcoes || []).length > 0);
     const contagem = e.opcoes.map((opcao) => ({ opcao, votos: 0 }));
     let emSi = 0;
     for (const v of votos) {
