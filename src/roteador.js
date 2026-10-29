@@ -15,6 +15,7 @@ const videoAdmin = require('./modulos/video/comandosAdmin');
 const comprovantes = require('./modulos/comprovantes');
 const comprovantesAdmin = require('./modulos/comprovantes/comandosAdmin');
 const agenda = require('./modulos/pelada/agenda');
+const destaque = require('./modulos/destaque');
 const ajuda = require('./modulos/ajuda');
 
 // Dentro do grupo da pelada
@@ -37,6 +38,7 @@ const COMANDOS_DE_ADMIN = [
   ...videoAdmin.comandos,
   ...comprovantesAdmin.comandos,
   ...agenda.comandos,
+  ...destaque.comandos,
   ...ajuda.comandosAdmin,
 ];
 

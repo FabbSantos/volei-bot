@@ -11,7 +11,8 @@ require('dotenv').config();
 const { fecharBanco } = require('./nucleo/banco');
 const sessao = require('./whatsapp/sessao');
 const { escutar } = require('./whatsapp/mensagens');
-const { enviarFigurinhaNoChat, enviarArquivoNoChat } = require('./whatsapp/contatos');
+const { enviarFigurinhaNoChat, enviarArquivoNoChat, enviarEnqueteNoChat, lerVotosDaEnquete } = require('./whatsapp/contatos');
+const destaque = require('./modulos/destaque');
 const { listarGruposAdmin } = require('./modulos/grupos/repositorio');
 const { iniciarVigiaDoDrive } = require('./modulos/video/vigiaDrive');
 const agenda = require('./modulos/pelada/agenda');
@@ -109,8 +110,16 @@ async function abrirListaAgendada(agendaDoGrupo, { dataJogo, valor, nome }) {
 }
 
 setInterval(() => {
-  if (!sessao.cliente()) return; // fora do ar: tenta de novo quando voltar
+  const cliente = sessao.cliente();
+  if (!cliente) return; // fora do ar: tenta de novo quando voltar
   agenda.verificar(abrirListaAgendada).catch((err) => console.warn(`[agenda] erro: ${err.message}`));
+  // Destaque da noite: enquetes 30min depois do jogo, resultado no dia seguinte
+  destaque.verificar({
+    enviarTexto: (chatId, texto) => cliente.sendText(chatId, texto),
+    enviarEnquete: (chatId, titulo, opcoes) => enviarEnqueteNoChat(cliente, chatId, titulo, opcoes),
+    lerVotos: (msgId) => lerVotosDaEnquete(cliente, msgId),
+    gruposAdmin: () => listarGruposAdmin(),
+  }).catch((err) => console.warn(`[destaque] erro: ${err.message}`));
 }, 60_000);
 
 setInterval(() => {

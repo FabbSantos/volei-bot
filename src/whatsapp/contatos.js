@@ -65,6 +65,41 @@ async function baixarMidia(client, message) {
   return dataUrlParaBuffer(dados);
 }
 
+// Enquete de escolha única (destaque da noite). Devolve o id da mensagem, que
+// é por onde os votos são lidos depois.
+async function enviarEnqueteNoChat(client, chatId, titulo, opcoes) {
+  const m = await client.sendPollMessage(chatId, titulo, opcoes, { selectableCount: 1 });
+  const id = typeof m?.id === 'string' ? m.id : m?.id?._serialized;
+  if (!id) throw new Error('enquete enviada, mas sem id pra ler os votos');
+  return id;
+}
+
+// Todos os votos da enquete, relidos do WhatsApp (não depende de o bot estar
+// ligado na hora do voto). Opção = índice na ordem em que foi criada. O nome
+// do WhatsApp vai junto: os fixos estão na lista com número fictício, e é
+// pelo nome que dá pra saber se votaram em si mesmos.
+async function lerVotosDaEnquete(client, msgId) {
+  const brutos = await client.page.evaluate(async (id) => {
+    const r = await WPP.chat.getVotes(id);
+    return r.votes.map((v) => {
+      const sender = v.sender?._serialized || String(v.sender);
+      let nome = null;
+      try {
+        const c = WPP.whatsapp.ContactStore.get(sender);
+        nome = c?.pushname || c?.name || c?.verifiedName || null;
+      } catch { /* sem nome: segue só com o número */ }
+      const opcoes = [];
+      (v.selectedOptions || []).forEach((o, i) => { if (o) opcoes.push(typeof o.localId === 'number' ? o.localId : i); });
+      return { sender, nome, opcoes };
+    });
+  }, msgId);
+  const votos = [];
+  for (const v of brutos) { // um por vez: rajada de consultas já travou a página
+    votos.push({ numero: await lidParaNumero(client, v.sender), nome: v.nome, opcoes: v.opcoes });
+  }
+  return votos;
+}
+
 // Cache da lista de admins por grupo — evita consultar o WhatsApp a cada #pago.
 // 5min de TTL: promover/rebaixar admin no grupo demora até isso pra valer no bot.
 const CACHE_ADMINS_TTL_MS = 5 * 60_000;
@@ -175,6 +210,8 @@ module.exports = {
   enviarFigurinhaNoChat,
   enviarArquivoNoChat,
   baixarMidia,
+  enviarEnqueteNoChat,
+  lerVotosDaEnquete,
   lidParaNumero,
   listarAdminsDoGrupo,
   listarMembrosDoGrupo,

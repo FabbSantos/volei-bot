@@ -90,6 +90,7 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 *#cobrarsubiude <grupo>* — cobra só quem subiu da espera (prazo: dia do jogo, 17h)
 *#timesde <grupo> 3* — PRÉVIA dos times (só você vê); mostra os salvos se já existirem
 *#timesde <grupo> 3 enviar* — posta no grupo · *... refazer* — remonta do zero
+*#destaquede <grupo>* — enquetes do 🌟 destaque de cada time + equilíbrio (sai sozinho 30min depois do jogo; resultado no dia seguinte 12h) · *... teste* posta aqui no grupo de admins · *... resultado* mostra a apuração · *... anunciar* anuncia já
 *#importarelencode <grupo>* — importa o elenco/notas da planilha antiga (uma vez)
 *#fixode <grupo> 3* — liga/desliga a vaga cativa (📌)
 *#mensalistade <grupo> Nome* — cadastra candidato (melhor a pessoa mandar #mensalista no grupo: aí o WhatsApp dela fica vinculado)
@@ -137,7 +138,7 @@ async function responderMalformadoNoGrupo(msg, texto) {
 // Qualquer variação dos comandos de admin que não casou é sintaxe errada
 // (ex: "18 -6", "#listade" sem grupo, "#listargrupos x") — responde com o
 // uso em vez de ficar mudo e deixar o admin achando que funcionou
-const MALFORMADO_NO_ADMIN = /^#(ativargrupo|desativargrupo|abrirlistade|editarlistade|encerrarlistade|reabrirlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|adicionarde|renomearde|cobrarde|cobrarsubiude|timesde|importarelencode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin|replays?|comprovante|pagapor|naopagapor|agendalistade)\b/i;
+const MALFORMADO_NO_ADMIN = /^#(ativargrupo|desativargrupo|abrirlistade|editarlistade|encerrarlistade|reabrirlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|adicionarde|renomearde|cobrarde|cobrarsubiude|timesde|importarelencode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin|replays?|comprovante|pagapor|naopagapor|agendalistade|destaquede)\b/i;
 // Comando do grupo de pelada digitado no contexto admin (ex: responder um
 // comprovante encaminhado com #pago) — aponta o equivalente remoto
 const DE_GRUPO_NO_ADMIN = /^#(pago|naopago|valor|valorpadr[aã]o|valormes|mostralista|remover|encerrarlista|lista|mensalistas?|pagomes|naopagomes|fixo|removermensalista|vagasmensalistas|inadimplente|quitado)\b/i;

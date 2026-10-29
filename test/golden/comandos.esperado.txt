@@ -80,6 +80,7 @@
 *#cobrarsubiude <grupo>* — cobra só quem subiu da espera (prazo: dia do jogo, 17h)
 *#timesde <grupo> 3* — PRÉVIA dos times (só você vê); mostra os salvos se já existirem
 *#timesde <grupo> 3 enviar* — posta no grupo · *... refazer* — remonta do zero
+*#destaquede <grupo>* — enquetes do 🌟 destaque de cada time + equilíbrio (sai sozinho 30min depois do jogo; resultado no dia seguinte 12h) · *... teste* posta aqui no grupo de admins · *... resultado* mostra a apuração · *... anunciar* anuncia já
 *#importarelencode <grupo>* — importa o elenco/notas da planilha antiga (uma vez)
 *#fixode <grupo> 3* — liga/desliga a vaga cativa (📌)
 *#mensalistade <grupo> Nome* — cadastra candidato (melhor a pessoa mandar #mensalista no grupo: aí o WhatsApp dela fica vinculado)
@@ -173,6 +174,7 @@ Repetir #ativargrupo num grupo já ativo só atualiza o tamanho.
 *#cobrarsubiude <grupo>* — cobra só quem subiu da espera (prazo: dia do jogo, 17h)
 *#timesde <grupo> 3* — PRÉVIA dos times (só você vê); mostra os salvos se já existirem
 *#timesde <grupo> 3 enviar* — posta no grupo · *... refazer* — remonta do zero
+*#destaquede <grupo>* — enquetes do 🌟 destaque de cada time + equilíbrio (sai sozinho 30min depois do jogo; resultado no dia seguinte 12h) · *... teste* posta aqui no grupo de admins · *... resultado* mostra a apuração · *... anunciar* anuncia já
 *#importarelencode <grupo>* — importa o elenco/notas da planilha antiga (uma vez)
 *#fixode <grupo> 3* — liga/desliga a vaga cativa (📌)
 *#mensalistade <grupo> Nome* — cadastra candidato (melhor a pessoa mandar #mensalista no grupo: aí o WhatsApp dela fica vinculado)
@@ -6712,6 +6714,10 @@ Bom jogo! 🔥
 {"apelido":"Marcel Garcia","criado_em":"2026-09-18T15:17:47.000Z","id":5,"jogador_id":1}
 
 === comprovantes (candidatos, chat_id, chave, criado_em, data_hora, do_remetente, id, lista_id, marcados, motivo, pagador_nome, pergunta_em, pergunta_msg_id, pessoas, recebedor_nome, remetente, remetente_nome, status, valor_centavos)
+
+=== destaque_enquetes (id, msg_id, opcoes, rodada_id, time_numero, tipo)
+
+=== destaque_rodadas (anunciada_em, chat_id, criada_em, id, lista_id, teste)
 
 === entradas (id, lista_id, mensalista, nome, numero, pago, promovido, timestamp, tipo, valor_pago_centavos)
 {"id":9,"lista_id":2,"mensalista":1,"nome":"Marcel Garcia","numero":"5521900000002@c.us","pago":0,"promovido":0,"timestamp":"2026-09-18T15:03:13.000Z","tipo":"principal","valor_pago_centavos":0}
