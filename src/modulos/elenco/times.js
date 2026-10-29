@@ -142,24 +142,39 @@ function getTimesSalvos(listaId) {
   if (!row) return null;
   const lista = pelada.getLista(listaId);
   const jogadores = lista ? elenco.listarJogadores(lista.chat_id) : [];
-  const resolver = (nome) => {
-    const j = lista ? elenco.acharJogadorDaEntrada(lista.chat_id, { nome, numero: null }, jogadores) : null;
-    return j ? j.id : null;
-  };
+  const resolver = (nome) => (lista ? elenco.acharJogadorDaEntrada(lista.chat_id, { nome, numero: null }, jogadores) : null);
   let times;
   try {
     times = JSON.parse(row.dados);
   } catch {
     return null;
   }
+  // Quem está no elenco vem com categoria/nota/altura de AGORA: o que foi
+  // guardado é foto da hora da montagem e envelhece quando a galera vota de
+  // novo (29/10/2026: David 🙂 no painel e 👍 no time salvo)
+  const atualizar = (j) => {
+    const atual = resolver(j.nome);
+    if (!atual) return { ...j, jogador_id: null };
+    return {
+      ...j,
+      jogador_id: atual.id,
+      nota: atual.notaTime ?? j.nota,
+      categoria: atual.categoria ?? null,
+      altura: atual.altura ?? null,
+      conhecido: atual.notaTime != null,
+    };
+  };
   return {
     atualizadoEm: row.atualizado_em,
-    times: times.map((t, i) => ({
-      numero: i + 1,
-      jogadores: (t.jogadores || []).map((j) => ({ ...j, jogador_id: resolver(j.nome) })),
-      media: t.jogadores?.length ? t.jogadores.reduce((s, j) => s + (j.nota ?? 3), 0) / t.jogadores.length : 0,
-      altos: (t.jogadores || []).filter((j) => j.altura === 'alto').length,
-    })),
+    times: times.map((t, i) => {
+      const js = (t.jogadores || []).map(atualizar);
+      return {
+        numero: i + 1,
+        jogadores: js,
+        media: js.length ? js.reduce((s, j) => s + (j.nota ?? 3), 0) / js.length : 0,
+        altos: js.filter((j) => j.altura === 'alto').length,
+      };
+    }),
   };
 }
 

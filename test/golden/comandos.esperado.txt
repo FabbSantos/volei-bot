@@ -4685,14 +4685,14 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "jogadores": [
     {
      "nome": "Diego",
-     "nota": 4,
-     "categoria": null,
+     "nota": 2.166666666666667,
+     "categoria": 2,
      "altura": null,
-     "conhecido": false,
+     "conhecido": true,
      "jogador_id": 4
     }
    ],
-   "media": 4,
+   "media": 2.166666666666667,
    "altos": 0
   },
   {
@@ -4700,14 +4700,14 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
    "jogadores": [
     {
      "nome": "Aces",
-     "nota": 3,
-     "categoria": null,
+     "nota": 4.5,
+     "categoria": 4,
      "altura": null,
-     "conhecido": false,
+     "conhecido": true,
      "jogador_id": 17
     }
    ],
-   "media": 3,
+   "media": 4.5,
    "altos": 0
   }
  ]
