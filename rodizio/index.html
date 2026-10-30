@@ -207,6 +207,10 @@ h1 span{color:var(--gold)}
     <p>Na recepção todo mundo precisa estar em ordem: o da frente mais perto da rede que o de trás, e esquerda, meio e direita respeitados em cada fila. Pela regra FIVB 2025-2028 o time que saca pode começar trocado.</p>
   </div>
   <div class="note">
+    <h4>Líbero defende sempre na 5</h4>
+    <p>Na recepção o Líb passa onde estiver, na 1 ou na 6. Bola em jogo, ele defende na 5. Quando o central saca, é o central que corre pra 5 até a bola morrer.</p>
+  </div>
+  <div class="note">
     <h4>Lev no fundo depois do saque</h4>
     <p>Quando o Lev saca ou está no fundo, ele defende na zona 1 (fundo direito). Só sobe pro alvo depois que a bola for defendida.</p>
   </div>
@@ -234,65 +238,65 @@ h1 span{color:var(--gold)}
 
   const R={
     P1:{zones:{4:'Op',3:'C1',2:'PR',5:'PF',6:'Lib',1:'Lev'},out:'C2',server:'Lev',recOut:'C2',
-      saque:{PR:F.L,C1:F.M,Op:F.R,PF:F.BL,Lib:F.BM,Lev:SRV,C2:OUT},
-      possaque:{PR:D.L,C1:D.M,Op:D.R,PF:D.BL,Lib:D.BM,Lev:D.BR,C2:OUT},
+      saque:{PR:F.L,C1:F.M,Op:F.R,Lib:F.BL,PF:F.BM,Lev:SRV,C2:OUT},
+      possaque:{PR:D.L,C1:D.M,Op:D.R,Lib:D.BL,PF:D.BM,Lev:D.BR,C2:OUT},
       recepcao:{Op:[13,14],C1:[46,14],PR:[71,51],PF:[22,58],Lib:[49,70],Lev:[88,64],C2:OUT},
-      pospasse:{PR:A.L,C1:A.M,Op:A.R,Lev:A.T,PF:A.BL,Lib:A.BM,C2:OUT},
+      pospasse:{PR:A.L,C1:A.M,Op:A.R,Lev:A.T,Lib:A.BL,PF:A.BM,C2:OUT},
       t:{
-        saque:['<b>Lev</b> saca.','<b>Líb</b> joga no lugar do <b>C2</b>, no fundo meio.','Já começam trocados: <b>PR</b> esquerda, <b>C1</b> meio, <b>Op</b> direita.'],
-        possaque:['Na rede, prontos pro bloqueio: <b>PR</b>, <b>C1</b> e <b>Op</b>.','<b>Lev</b> entra no fundo direito e defende.','Só sobe pro alvo quando a bola for defendida.'],
+        saque:['<b>Lev</b> saca.','<b>Líb</b> no lugar do <b>C2</b>, já começa na 5. <b>PF</b> no meio do fundo.','Já trocados na rede: <b>PR</b> esquerda, <b>C1</b> meio, <b>Op</b> direita.'],
+        possaque:['Na rede, prontos pro bloqueio: <b>PR</b>, <b>C1</b> e <b>Op</b>.','Fundo: <b>Líb</b> na 5, <b>PF</b> na 6, <b>Lev</b> na 1.','<b>Lev</b> só sobe pro alvo quando a bola for defendida.'],
         recepcao:['<b>PF</b>, <b>Líb</b> e <b>PR</b> passam. O <b>PR</b> desce da rede.','<b>Op</b> se esconde na rede, lado esquerdo.','<b>Lev</b> se esconde atrás do <b>PR</b>.'],
-        pospasse:['<b>Lev</b> corre pro alvo.','<b>Op</b> e <b>PR</b> trocam de lado: <b>PR</b> esquerda, <b>Op</b> direita.','<b>C1</b> no meio pra bola rápida.']}},
+        pospasse:['<b>Lev</b> corre pro alvo.','<b>PR</b> esquerda, <b>C1</b> meio, <b>Op</b> direita.','Fundo: <b>Líb</b> vai pra 5, <b>PF</b> na 6.']}},
     P6:{zones:{4:'PF',3:'Op',2:'C1',5:'Lib',6:'Lev',1:'PR'},out:'C2',server:'PR',recOut:'C2',
       saque:{PF:F.L,C1:F.M,Op:F.R,Lib:F.BL,Lev:F.BM,PR:SRV,C2:OUT},
-      possaque:{PF:D.L,C1:D.M,Op:D.R,PR:D.BL,Lib:D.BM,Lev:D.BR,C2:OUT},
+      possaque:{PF:D.L,C1:D.M,Op:D.R,Lib:D.BL,PR:D.BM,Lev:D.BR,C2:OUT},
       recepcao:{Op:[51,14],C1:[86,14],Lev:[62,29],PF:[20,49],Lib:[43,69],PR:[75,64],C2:OUT},
-      pospasse:{PF:A.L,C1:A.M,Op:A.R,Lev:A.T,PR:A.BL,Lib:A.BM,C2:OUT},
+      pospasse:{PF:A.L,C1:A.M,Op:A.R,Lev:A.T,Lib:A.BL,PR:A.BM,C2:OUT},
       t:{
         saque:['<b>PR</b> saca.','<b>Líb</b> no lugar do <b>C2</b>, fundo esquerda. <b>Lev</b> no fundo meio.','Já trocados: <b>PF</b> esquerda, <b>C1</b> meio, <b>Op</b> direita.'],
-        possaque:['Na rede: <b>PF</b>, <b>C1</b> e <b>Op</b>.','<b>Lev</b> vai pro fundo direito defender. <b>PR</b> volta pra esquerda.','<b>Lev</b> só sobe pro alvo depois da defesa.'],
+        possaque:['Na rede: <b>PF</b>, <b>C1</b> e <b>Op</b>.','Fundo: <b>Líb</b> na 5, <b>PR</b> na 6, <b>Lev</b> vai pra 1.','<b>Lev</b> só sobe pro alvo depois da defesa.'],
         recepcao:['<b>PF</b>, <b>Líb</b> e <b>PR</b> passam. O <b>PF</b> desce da rede.','<b>Lev</b> se esconde atrás do <b>Op</b>, colado na rede.','<b>C1</b> fica no canto direito da rede.'],
-        pospasse:['<b>Lev</b> sobe pro alvo.','<b>Op</b> vai pra direita, <b>C1</b> pro meio.','<b>PF</b> ataca pela esquerda.']}},
+        pospasse:['<b>Lev</b> sobe pro alvo.','<b>Op</b> vai pra direita, <b>C1</b> pro meio, <b>PF</b> esquerda.','Fundo: <b>Líb</b> vai pra 5, <b>PR</b> na 6.']}},
     P5:{zones:{4:'C2',3:'PF',2:'Op',5:'Lev',6:'PR',1:'C1'},out:'Lib',server:'C1',recOut:'C1',
       saque:{PF:F.L,C2:F.M,Op:F.R,Lev:F.BL,PR:F.BM,C1:SRV,Lib:OUT},
-      possaque:{PF:D.L,C2:D.M,Op:D.R,PR:D.BL,C1:D.BM,Lev:D.BR,Lib:OUT},
+      possaque:{PF:D.L,C2:D.M,Op:D.R,C1:D.BL,PR:D.BM,Lev:D.BR,Lib:OUT},
       recepcao:{C2:[13,14],Lev:[40,21],Op:[91,14],PF:[29,51],PR:[53,69],Lib:[77,62],C1:OUT},
-      pospasse:{PF:A.L,C2:A.M,Op:A.R,Lev:A.T,PR:A.BL,Lib:A.BM,C1:OUT},
+      pospasse:{PF:A.L,C2:A.M,Op:A.R,Lev:A.T,Lib:A.BL,PR:A.BM,C1:OUT},
       t:{
         saque:['<b>C1</b> saca. Os dois centrais estão em quadra.','<b>Líb</b> espera fora e entra no lugar do <b>C1</b> quando o rally acabar.','Já trocados: <b>PF</b> esquerda, <b>C2</b> meio, <b>Op</b> direita.'],
-        possaque:['Na rede: <b>PF</b>, <b>C2</b> e <b>Op</b>.','<b>C1</b> defende no fundo meio até a bola morrer.','<b>Lev</b> atravessa pro fundo direito. Caminho longo, sai rápido.'],
+        possaque:['Na rede: <b>PF</b>, <b>C2</b> e <b>Op</b>.','<b>C1</b> saca e corre pra 5, no lugar do <b>Líb</b>, até a bola morrer.','<b>PR</b> na 6. <b>Lev</b> atravessa pra 1, sai rápido.'],
         recepcao:['<b>Líb</b> entra no lugar do <b>C1</b>. Passam <b>PF</b>, <b>PR</b> e <b>Líb</b>.','<b>Lev</b> se esconde atrás do <b>C2</b>.','<b>Op</b> se esconde no canto direito da rede.'],
-        pospasse:['<b>Lev</b> cruza a quadra até o alvo.','<b>C2</b> vai pro meio, <b>PF</b> pra esquerda.','<b>Op</b> já está na direita.']}},
+        pospasse:['<b>Lev</b> cruza a quadra até o alvo.','<b>C2</b> vai pro meio, <b>PF</b> pra esquerda.','Fundo: <b>Líb</b> vai pra 5, <b>PR</b> na 6.']}},
     P4:{zones:{4:'Lev',3:'C2',2:'PF',5:'PR',6:'Lib',1:'Op'},out:'C1',server:'Op',recOut:'C1',
-      saque:{PF:F.L,C2:F.M,Lev:F.R,PR:F.BL,Lib:F.BM,Op:SRV,C1:OUT},
-      possaque:{PF:D.L,C2:D.M,Lev:D.R,PR:D.BL,Lib:D.BM,Op:D.BR,C1:OUT},
+      saque:{PF:F.L,C2:F.M,Lev:F.R,Lib:F.BL,PR:F.BM,Op:SRV,C1:OUT},
+      possaque:{PF:D.L,C2:D.M,Lev:D.R,Lib:D.BL,PR:D.BM,Op:D.BR,C1:OUT},
       recepcao:{Lev:[40,14],C2:[60,14],PF:[75,53],Op:[92,77],PR:[18,55],Lib:[47,70],C1:OUT},
-      pospasse:{PF:A.L,C2:A.M,Lev:A.T,PR:A.BL,Lib:A.BM,Op:A.BR,C1:OUT},
+      pospasse:{PF:A.L,C2:A.M,Lev:A.T,Lib:A.BL,PR:A.BM,Op:A.BR,C1:OUT},
       t:{
-        saque:['<b>Op</b> saca.','<b>Líb</b> no lugar do <b>C1</b>, fundo meio.','Já trocados: <b>PF</b> esquerda, <b>C2</b> meio, <b>Lev</b> direita, perto do alvo.'],
-        possaque:['<b>Lev</b> bloqueia pela direita.','<b>Op</b> defende no fundo direito, de onde ataca de fundo.','<b>PR</b> esquerda e <b>Líb</b> meio no fundo.'],
+        saque:['<b>Op</b> saca.','<b>Líb</b> no lugar do <b>C1</b>, já começa na 5. <b>PR</b> no meio do fundo.','Já trocados: <b>PF</b> esquerda, <b>C2</b> meio, <b>Lev</b> direita, perto do alvo.'],
+        possaque:['<b>Lev</b> bloqueia pela direita.','<b>Op</b> defende no fundo direito, de onde ataca de fundo.','Fundo: <b>Líb</b> na 5, <b>PR</b> na 6.'],
         recepcao:['<b>PR</b>, <b>Líb</b> e <b>PF</b> passam. O <b>PF</b> desce da rede.','<b>Op</b> se esconde no canto do fundo, à direita.','<b>Lev</b> passa por trás do <b>C2</b> até o alvo.'],
-        pospasse:['<b>PF</b> cruza pra esquerda.','<b>Lev</b> fica no alvo, à direita.','<b>Op</b> ataca de fundo pela direita.']}},
+        pospasse:['<b>PF</b> cruza pra esquerda.','<b>Lev</b> no alvo. <b>Op</b> ataca de fundo pela direita.','Fundo: <b>Líb</b> vai pra 5, <b>PR</b> na 6.']}},
     P3:{zones:{4:'PR',3:'Lev',2:'C2',5:'Lib',6:'Op',1:'PF'},out:'C1',server:'PF',recOut:'C1',
       saque:{PR:F.L,C2:F.M,Lev:F.R,Lib:F.BL,Op:F.BM,PF:SRV,C1:OUT},
-      possaque:{PR:D.L,C2:D.M,Lev:D.R,PF:D.BL,Lib:D.BM,Op:D.BR,C1:OUT},
+      possaque:{PR:D.L,C2:D.M,Lev:D.R,Lib:D.BL,PF:D.BM,Op:D.BR,C1:OUT},
       recepcao:{Lev:[55,13],C2:[88,13],Op:[56,30],PR:[18,49],Lib:[44,70],PF:[77,62],C1:OUT},
-      pospasse:{PR:A.L,C2:A.M,Lev:A.T,PF:A.BL,Lib:A.BM,Op:A.BR,C1:OUT},
+      pospasse:{PR:A.L,C2:A.M,Lev:A.T,Lib:A.BL,PF:A.BM,Op:A.BR,C1:OUT},
       t:{
         saque:['<b>PF</b> saca.','<b>Op</b> no fundo meio. <b>Líb</b> no lugar do <b>C1</b>, fundo esquerda.','Já trocados: <b>PR</b> esquerda, <b>C2</b> meio, <b>Lev</b> direita.'],
-        possaque:['<b>Lev</b> bloqueia pela direita.','<b>Op</b> vai pro fundo direito.','<b>PF</b> esquerda e <b>Líb</b> meio no fundo.'],
+        possaque:['<b>Lev</b> bloqueia pela direita.','<b>Op</b> vai pra 1.','Fundo: <b>Líb</b> na 5, <b>PF</b> na 6.'],
         recepcao:['<b>PR</b>, <b>Líb</b> e <b>PF</b> passam.','<b>Op</b> se esconde atrás do <b>Lev</b>, perto da rede.','<b>C2</b> fica no canto direito da rede.'],
-        pospasse:['<b>C2</b> vai pro meio.','<b>Lev</b> pro alvo, na direita.','<b>Op</b> recua pro fundo direito.']}},
+        pospasse:['<b>C2</b> vai pro meio.','<b>Lev</b> pro alvo. <b>Op</b> recua pra 1.','Fundo: <b>Líb</b> vai pra 5, <b>PF</b> na 6.']}},
     P2:{zones:{4:'C1',3:'PR',2:'Lev',5:'Op',6:'PF',1:'C2'},out:'Lib',server:'C2',recOut:'C2',
       saque:{PR:F.L,C1:F.M,Lev:F.R,Op:F.BL,PF:F.BM,C2:SRV,Lib:OUT},
-      possaque:{PR:D.L,C1:D.M,Lev:D.R,PF:D.BL,C2:D.BM,Op:D.BR,Lib:OUT},
+      possaque:{PR:D.L,C1:D.M,Lev:D.R,C2:D.BL,PF:D.BM,Op:D.BR,Lib:OUT},
       recepcao:{C1:[13,14],Lev:[88,14],PR:[31,51],PF:[53,69],Lib:[77,62],Op:[10,76],C2:OUT},
-      pospasse:{PR:A.L,C1:A.M,Lev:A.T,PF:A.BL,Lib:A.BM,Op:A.BR,C2:OUT},
+      pospasse:{PR:A.L,C1:A.M,Lev:A.T,Lib:A.BL,PF:A.BM,Op:A.BR,C2:OUT},
       t:{
         saque:['<b>C2</b> saca. <b>Líb</b> espera fora e entra depois.','Fundo: <b>Op</b> esquerda, <b>PF</b> meio.','Já trocados: <b>PR</b> esquerda, <b>C1</b> meio, <b>Lev</b> direita.'],
-        possaque:['<b>Lev</b> bloqueia pela direita.','<b>C2</b> defende no fundo meio até a bola morrer.','<b>Op</b> atravessa pro fundo direito.'],
+        possaque:['<b>Lev</b> bloqueia pela direita.','<b>C2</b> saca e corre pra 5, no lugar do <b>Líb</b>, até a bola morrer.','<b>PF</b> na 6. <b>Op</b> atravessa pra 1.'],
         recepcao:['<b>Líb</b> entra no lugar do <b>C2</b>. Passam <b>PR</b>, <b>PF</b> e <b>Líb</b>.','<b>Op</b> se esconde no canto do fundo, à esquerda.','<b>Lev</b> (direita) e <b>C1</b> (esquerda) ficam na rede.'],
-        pospasse:['<b>C1</b> vai pro meio, <b>PR</b> pra esquerda.','<b>Lev</b> já está no alvo.','<b>Op</b> atravessa pro fundo direito.']}}
+        pospasse:['<b>C1</b> vai pro meio, <b>PR</b> pra esquerda.','<b>Lev</b> já está no alvo. <b>Op</b> atravessa pra 1.','Fundo: <b>Líb</b> vai pra 5, <b>PF</b> na 6.']}}
   };
 
   const SEQ=['rodizio','saque','possaque','recepcao','pospasse'];
