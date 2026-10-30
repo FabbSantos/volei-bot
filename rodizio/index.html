@@ -68,7 +68,9 @@ h1 span{color:var(--gold)}
 .star{position:absolute;width:7cqi;height:7cqi;transform:translate(-50%,-50%);transition:opacity .4s;color:var(--gold);filter:drop-shadow(0 0 6px rgba(216,177,74,.6))}
 .star svg{width:100%;height:100%;display:block}
 .star.off{opacity:0}
-.p{position:absolute;width:11.5cqi;height:11.5cqi;max-width:58px;max-height:58px;border-radius:50%;transform:translate(-50%,-50%);display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:min(4.4cqi,22px);color:#fff;border:2.5px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.5);transition:left .9s cubic-bezier(.45,.05,.25,1),top .9s cubic-bezier(.45,.05,.25,1),opacity .5s;z-index:2}
+/* jogadores: posição só por transform (roda na GPU, sem recalcular layout a cada quadro) */
+.p{position:absolute;left:0;top:0;--s:min(11.5cqi,58px);width:var(--s);height:var(--s);margin:calc(var(--s) / -2) 0 0 calc(var(--s) / -2);border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:min(4.4cqi,22px);color:#fff;border:2.5px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.5);transition:transform .9s cubic-bezier(.45,.05,.25,1),opacity .5s;will-change:transform;backface-visibility:hidden;z-index:2}
+.field.noanim .p{transition:none}
 .p::before{content:"";position:absolute;inset:-30%;border-radius:50%;background:var(--gold-soft);border:1px solid rgba(216,177,74,.4);opacity:0;transition:opacity .4s;z-index:-1}
 .p.passer::before{opacity:1}
 .p.dim{opacity:.38}
@@ -121,7 +123,8 @@ h1 span{color:var(--gold)}
   .legend{display:none}
   .explain{padding:8px 12px}
   .explain h2,.explain .meta{display:none}
-  .explain ul{font-size:13.5px;gap:1px;min-height:4.4em}
+  /* altura fixa: o texto trocar não pode mudar o tamanho da quadra */
+  .explain ul{font-size:13.5px;gap:1px;height:5.9em;overflow-y:auto}
   .btn{min-height:46px}
   .btn .long{display:none}
 }
@@ -299,6 +302,13 @@ h1 span{color:var(--gold)}
   const field=document.getElementById('field');
   const el={};
   function place(node,xy){node.style.left=(7+xy[0]*.86)+'%';node.style.top=((6+xy[1]*.86)/H*100)+'%';}
+  // jogadores: converte a coordenada da quadra em pixels e move com translate3d
+  let fw=0,fh=0;
+  function measure(){const r=field.getBoundingClientRect();fw=r.width;fh=r.height;}
+  function placeP(node,xy){
+    const x=(7+xy[0]*.86)/100*fw, y=(6+xy[1]*.86)/H*fh;
+    node.style.transform='translate3d('+x.toFixed(1)+'px,'+y.toFixed(1)+'px,0)';
+  }
 
   for(const k in Z){const z=document.createElement('div');z.className='zone';z.textContent=k;place(z,Z[k]);field.appendChild(z);}
   const star=document.createElement('div');star.className='star off';
@@ -322,7 +332,7 @@ h1 span{color:var(--gold)}
   function render(){
     const r=R[cur], m=coords(cur,phase);
     PLAYERS.forEach(p=>{
-      const n=el[p];place(n,m[p]);
+      const n=el[p];placeP(n,m[p]);
       n.classList.toggle('dim',m[p]===OUT);
       n.classList.toggle('passer',phase==='recepcao'&&PASSERS.includes(p));
       n.classList.toggle('hid',phase==='recepcao'&&p==='Op');
@@ -416,11 +426,20 @@ h1 span{color:var(--gold)}
   tourBtn.onclick=()=>toggle('tour',buildTour);
   document.getElementById('girar').onclick=()=>{
     stop();
-    if(phase!=='rodizio'){phase='rodizio';render();setTimeout(()=>{cur=ORDER[(ORDER.indexOf(cur)+1)%6];render();},950);}
+    if(phase!=='rodizio'){phase='rodizio';render();setTimeout(()=>{cur=ORDER[(ORDER.indexOf(cur)+1)%6];render();},700);}
     else{cur=ORDER[(ORDER.indexOf(cur)+1)%6];render();}
   };
 
-  render();
+  // quando a tela muda de tamanho (girar o celular), reposiciona sem animar
+  let rz=null;
+  new ResizeObserver(()=>{
+    measure();field.classList.add('noanim');
+    PLAYERS.forEach(p=>placeP(el[p],coords(cur,phase)[p]));
+    clearTimeout(rz);rz=setTimeout(()=>field.classList.remove('noanim'),60);
+  }).observe(field);
+
+  measure();field.classList.add('noanim');render();
+  requestAnimationFrame(()=>requestAnimationFrame(()=>field.classList.remove('noanim')));
 })();
 </script>
 
