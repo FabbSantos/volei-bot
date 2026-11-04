@@ -4,6 +4,7 @@ const { db, migrarColunas } = require('../../nucleo/banco');
 const { formatarReais } = require('../../nucleo/dinheiro');
 const { normalizarTexto } = require('../../nucleo/texto');
 const { numeroSintetico } = require('../../nucleo/numeros');
+const { mesAtual } = require('../../nucleo/tempo');
 const grupos = require('../grupos/repositorio');
 const mensalistas = require('../mensalistas/repositorio');
 const inadimplentes = require('../inadimplentes/repositorio');
@@ -292,6 +293,32 @@ function registrarPresencaHistorica(listaId, nome, numero) {
   return {};
 }
 
+// O mensalista desta lista está com o mês pago? Vale o quadro do mês
+// corrente. Lista de um mês que JÁ VIROU (ex: a de 30/10 ainda aberta em
+// novembro): a virada apaga o histórico dos não-fixos, então o bot não tem
+// mais como conferir — e o mensalista só entrou nela por estar com o mês
+// pago. Conta como em dia (04/11/2026: "7/18 em dia" com todo mundo pago).
+function mensalistaComMesPago(lista) {
+  const mesDaLista = mesDoJogo(lista);
+  if (mesDaLista && mesDaLista < mesAtual()) return () => true;
+  const numeros = new Set(
+    mensalistas.listarMensalistas(lista?.chat_id).filter((m) => m.pago_mes).map((m) => m.numero)
+  );
+  return (e) => numeros.has(e.numero);
+}
+
+// 'AAAA-MM' do jogo. A lista não guarda o ano: vale o mais perto da criação.
+function mesDoJogo(lista) {
+  const m = String(lista?.data_jogo || '').match(/^(\d{1,2})\/(\d{1,2})$/);
+  if (!m || !lista.criada_em) return null;
+  const base = new Date(lista.criada_em).getTime();
+  const ano = new Date(base).getUTCFullYear();
+  const data = [ano - 1, ano, ano + 1]
+    .map((a) => new Date(Date.UTC(a, Number(m[2]) - 1, Number(m[1]))))
+    .reduce((a, b) => (Math.abs(b - base) < Math.abs(a - base) ? b : a));
+  return `${data.getUTCFullYear()}-${String(data.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
 function montarListaFormatada(listaId, dataJogo) {
   const lista = getLista(listaId);
   const limites = getLimitesDaLista(listaId);
@@ -299,12 +326,10 @@ function montarListaFormatada(listaId, dataJogo) {
   // Mensalista mostra o ✅ do MÊS ao lado do rótulo "Mensal"; a marca semanal
   // dele (#pago — ex: diferença da sexta de 3h) aparece como ➕.
   // Avulso mostra o ✅ da semana, como sempre.
-  const numerosMesPago = new Set(
-    mensalistas.listarMensalistas(lista?.chat_id).filter((m) => m.pago_mes).map((m) => m.numero)
-  );
+  const mesPago = mensalistaComMesPago(lista);
   const rotulo = (p) => {
     if (p.mensalista) {
-      return `${p.nome} — Mensal${numerosMesPago.has(p.numero) ? ' ✅' : ''}${p.pago ? ' ➕' : ''}`;
+      return `${p.nome} — Mensal${mesPago(p) ? ' ✅' : ''}${p.pago ? ' ➕' : ''}`;
     }
     return `${p.nome}${p.pago ? ' ✅' : ''}`;
   };
@@ -392,10 +417,8 @@ function resumoPagamentos(listaId) {
   // "Em dia" é o que importa na cobrança: avulso conta pelo ✅ da semana,
   // mensalista conta pelo MÊS pago (a semana dele já está na mensalidade;
   // o ➕ é só extra). Mensalista devendo o mês aparece como "(mês)".
-  const numerosMesPago = new Set(
-    mensalistas.listarMensalistas(lista?.chat_id).filter((m) => m.pago_mes).map((m) => m.numero)
-  );
-  const estaEmDia = (e) => (e.mensalista ? numerosMesPago.has(e.numero) : Boolean(e.pago));
+  const mesPago = mensalistaComMesPago(lista);
+  const estaEmDia = (e) => (e.mensalista ? mesPago(e) : Boolean(e.pago));
 
   return {
     totalPessoas: entradas.length,
