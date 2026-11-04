@@ -31,4 +31,23 @@ function isLoggedAtrasado(status, jaChegouEmInChat) {
   return status === 'isLogged' && jaChegouEmInChat;
 }
 
-module.exports = { avaliarSincronizacao, isLoggedAtrasado, ESTADOS_ESCUTANDO, LIMITE_ISLOGGED_MS };
+// O teste de vida não pode só ver se a página responde: em 02/11/2026 o
+// WhatsApp ficou em OPENING (reconectando com o servidor) e não saiu mais —
+// a página respondia "OPENING" a cada ping, o /status dizia inChat, e o bot
+// passou quase 2 dias surdo (mensagem com um tracinho só). Fora de CONNECTED
+// por mais que o limite = reconecta. Sem pareamento (UNPAIRED) reconectar não
+// adianta: precisa do QR, quem avisa é o fluxo normal da sessão.
+const LIMITE_FORA_DO_AR_MS = 10 * 60_000;
+const ESTADOS_SEM_PAREAMENTO = ['UNPAIRED', 'UNPAIRED_IDLE'];
+
+function avaliarEstadoDaConexao(estado, desde, agora, limite = LIMITE_FORA_DO_AR_MS) {
+  const e = String(estado || '').toUpperCase();
+  if (e === 'CONNECTED' || ESTADOS_SEM_PAREAMENTO.includes(e)) return { desde: null, reconectar: false };
+  if (desde == null) return { desde: agora, reconectar: false };
+  if (agora - desde < limite) return { desde, reconectar: false };
+  return { desde: null, reconectar: true, paradoMs: agora - desde };
+}
+
+module.exports = {
+  avaliarSincronizacao, isLoggedAtrasado, avaliarEstadoDaConexao, ESTADOS_ESCUTANDO, LIMITE_ISLOGGED_MS, LIMITE_FORA_DO_AR_MS,
+};

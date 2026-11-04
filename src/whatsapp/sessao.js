@@ -5,7 +5,7 @@ const os = require('os');
 const path = require('path');
 const wppconnect = require('@wppconnect-team/wppconnect');
 const { notificarFalha } = require('../nucleo/alertas');
-const { avaliarSincronizacao, isLoggedAtrasado } = require('./saude');
+const { avaliarSincronizacao, isLoggedAtrasado, avaliarEstadoDaConexao } = require('./saude');
 
 // browserClose = o Chrome morreu com o processo vivo; autocloseCalled = o
 // wppconnect desistiu de esperar o QR — nos dois casos, sem reconectar aqui
@@ -345,6 +345,7 @@ function reconectarPorTravamento(motivo) {
 const SAUDE_INTERVALO_MS = 3 * 60_000;
 const SAUDE_TIMEOUT_MS = 25_000;
 let falhasSaude = 0;
+let foraDoArDesde = null; // desde quando o WhatsApp responde algo diferente de CONNECTED
 
 // Vigia a SEGUNDA metade da reconexão: chegar em isLogged não basta, tem que
 // terminar em inChat. A regra mora em ./saude pra poder ser testada.
@@ -367,11 +368,17 @@ async function verificarSaude() {
   const client = clienteAtual;
   if (!client) return;
   try {
-    await Promise.race([
+    const estado = await Promise.race([
       client.getConnectionState(),
       new Promise((_, rej) => setTimeout(() => rej(new Error('ping timed out')), SAUDE_TIMEOUT_MS)),
     ]);
     falhasSaude = 0;
+    const r = avaliarEstadoDaConexao(estado, foraDoArDesde, Date.now());
+    if (r.desde != null && foraDoArDesde == null) console.warn(`[saude] WhatsApp em ${estado}, não CONNECTED — vigiando`);
+    foraDoArDesde = r.desde;
+    if (r.reconectar) {
+      reconectarPorTravamento(`WhatsApp parado em ${estado} há ${Math.round(r.paradoMs / 60_000)}min (surdo)`);
+    }
   } catch (err) {
     falhasSaude++;
     console.warn(`[saude] página não respondeu (${falhasSaude}/2): ${err.message}`);
