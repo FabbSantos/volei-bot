@@ -415,10 +415,11 @@ function resumoPagamentos(listaId) {
   const valorCentavos = lista?.valor_centavos || 0;
 
   // "Em dia" é o que importa na cobrança: avulso conta pelo ✅ da semana,
-  // mensalista conta pelo MÊS pago (a semana dele já está na mensalidade;
-  // o ➕ é só extra). Mensalista devendo o mês aparece como "(mês)".
+  // mensalista conta pelo MÊS pago OU pelo ➕ da semana (mensalidade ainda não
+  // paga, mas ele já pagou esta pelada — 05/11/2026 o agiota cobrava os fixos
+  // que estavam com ➕). Mensalista devendo tudo aparece como "(mês)".
   const mesPago = mensalistaComMesPago(lista);
-  const estaEmDia = (e) => (e.mensalista ? mesPago(e) : Boolean(e.pago));
+  const estaEmDia = (e) => Boolean(e.pago) || (e.mensalista && mesPago(e));
 
   return {
     totalPessoas: entradas.length,
