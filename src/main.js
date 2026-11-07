@@ -16,6 +16,7 @@ const destaque = require('./modulos/destaque');
 const { listarGruposAdmin } = require('./modulos/grupos/repositorio');
 const { iniciarVigiaDoDrive } = require('./modulos/video/vigiaDrive');
 const agenda = require('./modulos/pelada/agenda');
+const prazoMensalistas = require('./modulos/mensalistas/prazo');
 const { processarComandoAdmin } = require('./roteador');
 const { criarServidor } = require('./http/servidor');
 const lembrete = require('./modulos/pelada/lembrete');
@@ -113,6 +114,10 @@ setInterval(() => {
   const cliente = sessao.cliente();
   if (!cliente) return; // fora do ar: tenta de novo quando voltar
   agenda.verificar(abrirListaAgendada).catch((err) => console.warn(`[agenda] erro: ${err.message}`));
+  prazoMensalistas.verificar({
+    enviarTexto: (chatId, texto) => cliente.sendText(chatId, texto),
+    gruposAdmin: () => listarGruposAdmin(),
+  }).catch((err) => console.warn(`[mensalistas] erro no prazo: ${err.message}`));
   // Destaque da noite: enquetes 30min depois do jogo, resultado no dia seguinte
   destaque.verificar({
     enviarTexto: (chatId, texto) => cliente.sendText(chatId, texto),

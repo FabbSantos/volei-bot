@@ -7,6 +7,7 @@ const peladaGrupo = require('./modulos/pelada/comandosGrupo');
 const peladaAdmin = require('./modulos/pelada/comandosAdmin');
 const mensalistasGrupo = require('./modulos/mensalistas/comandosGrupo');
 const mensalistasAdmin = require('./modulos/mensalistas/comandosAdmin');
+const prazoMensalistas = require('./modulos/mensalistas/prazo');
 const inadimplentesGrupo = require('./modulos/inadimplentes/comandosGrupo');
 const gruposAdmin = require('./modulos/grupos/comandosAdmin');
 const elencoAdmin = require('./modulos/elenco/comandosAdmin');
@@ -33,6 +34,7 @@ const COMANDOS_DE_ADMIN = [
   ...peladaAdmin.comandos,
   ...elencoAdmin.comandos,
   ...mensalistasAdmin.comandos,
+  ...prazoMensalistas.comandos,
   ...gruposAdmin.comandos,
   ...diagnostico.comandos,
   ...videoAdmin.comandos,

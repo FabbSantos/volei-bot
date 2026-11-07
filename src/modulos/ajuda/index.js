@@ -78,6 +78,7 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 
 🗓 *Gestão de mensalistas daqui mesmo:*
 *#abrirmensalistasde <grupo>* / *#fecharmensalistasde <grupo>* — abre/fecha as inscrições do mês (anuncia no grupo; com *quieto* no fim, não anuncia)
+*#prazomensalistasde <grupo> quarta 12h* — na hora marcada, os mensalistas não-fixos sem o mês pago saem e a espera sobe (fixos ficam) · *... off* cancela · sem nada: mostra
 *#reiniciarmensalistasde <grupo>* — zera os não-fixos e fecha as inscrições
 *#pagomesde <grupo> 1-5* — marca o mês (aceita 3, 1-5 ou 1,3,7; valor opcional no fim); anuncia no grupo
 *#naopagomesde <grupo> 3* — desmarca o mês (aceita faixa também)

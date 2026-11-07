@@ -68,6 +68,7 @@
 
 🗓 *Gestão de mensalistas daqui mesmo:*
 *#abrirmensalistasde <grupo>* / *#fecharmensalistasde <grupo>* — abre/fecha as inscrições do mês (anuncia no grupo; com *quieto* no fim, não anuncia)
+*#prazomensalistasde <grupo> quarta 12h* — na hora marcada, os mensalistas não-fixos sem o mês pago saem e a espera sobe (fixos ficam) · *... off* cancela · sem nada: mostra
 *#reiniciarmensalistasde <grupo>* — zera os não-fixos e fecha as inscrições
 *#pagomesde <grupo> 1-5* — marca o mês (aceita 3, 1-5 ou 1,3,7; valor opcional no fim); anuncia no grupo
 *#naopagomesde <grupo> 3* — desmarca o mês (aceita faixa também)
@@ -162,6 +163,7 @@ Repetir #ativargrupo num grupo já ativo só atualiza o tamanho.
 
 🗓 *Gestão de mensalistas daqui mesmo:*
 *#abrirmensalistasde <grupo>* / *#fecharmensalistasde <grupo>* — abre/fecha as inscrições do mês (anuncia no grupo; com *quieto* no fim, não anuncia)
+*#prazomensalistasde <grupo> quarta 12h* — na hora marcada, os mensalistas não-fixos sem o mês pago saem e a espera sobe (fixos ficam) · *... off* cancela · sem nada: mostra
 *#reiniciarmensalistasde <grupo>* — zera os não-fixos e fecha as inscrições
 *#pagomesde <grupo> 1-5* — marca o mês (aceita 3, 1-5 ou 1,3,7; valor opcional no fim); anuncia no grupo
 *#naopagomesde <grupo> 3* — desmarca o mês (aceita faixa também)
@@ -6819,6 +6821,8 @@ Bom jogo! 🔥
 
 === mensalistas (chat_id, criado_em, espera, fixo, id, nome, numero)
 {"chat_id":"g1@g.us","criado_em":"2026-09-18T15:02:06.000Z","espera":0,"fixo":1,"id":3,"nome":"Aces","numero":"5521900000008@c.us"}
+
+=== mensalistas_prazo (chat_id, prazo_ms)
 
 === notas_do_dia (atualizado_em, id, jogador_id, lista_id, nota, observacao)
 {"atualizado_em":"2026-09-18T15:18:59.000Z","id":1,"jogador_id":3,"lista_id":2,"nota":4.5,"observacao":"bom"}

@@ -144,6 +144,28 @@ function removerMensalistaPorPosicao(chatId, posicao) {
   return { nome: alvo.nome, promovido };
 }
 
+// Fim do prazo da mensalidade: os titulares NÃO-fixos sem o mês pago saem e a
+// espera sobe, na ordem. Fixo fica (vaga cativa) e só é devolvido na lista de
+// pendentes. Quem sobe da espera não é cortado na mesma varredura.
+function removerNaoPagosDoMes(chatId) {
+  const titulares = listarMensalistas(chatId).filter((m) => !m.espera);
+  const removidos = [];
+  const promovidos = [];
+  for (const m of titulares.filter((x) => !x.fixo && !x.pago_mes)) {
+    db.prepare('DELETE FROM mensalidades WHERE mensalista_id = ?').run(m.id);
+    db.prepare('DELETE FROM mensalistas WHERE id = ?').run(m.id);
+    removidos.push(m.nome);
+    const proximo = db.prepare(
+      'SELECT * FROM mensalistas WHERE chat_id = ? AND espera = 1 ORDER BY criado_em ASC, id ASC LIMIT 1'
+    ).get(chatId);
+    if (proximo) {
+      db.prepare('UPDATE mensalistas SET espera = 0 WHERE id = ?').run(proximo.id);
+      promovidos.push(proximo.nome);
+    }
+  }
+  return { removidos, promovidos, fixosPendentes: titulares.filter((m) => m.fixo && !m.pago_mes).map((m) => m.nome) };
+}
+
 function alternarFixoPorPosicao(chatId, posicao) {
   const alvo = listarMensalistas(chatId)[posicao - 1];
   if (!alvo) return { erro: 'posicao_invalida' };
@@ -232,6 +254,7 @@ module.exports = {
   listarMensalistas,
   adicionarMensalista,
   removerMensalistaPorPosicao,
+  removerNaoPagosDoMes,
   abrirPreLista,
   reiniciarMensalistas,
   alternarFixoPorPosicao,
