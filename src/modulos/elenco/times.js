@@ -356,8 +356,17 @@ function montarPorMetodo(metodo, chatId, quantidadeTimes, participantes) {
 // notas ou método. Tecnologia da NASA e ponto. 🚀
 // Mesmo formato no #timesde e no botão "anunciar" do painel. A única pista do
 // montador é a "versão": notas = NASA 2, perfil = NASA 3.0 (pedido de 13/11/2026).
-const VERSAO_NASA = { notas: 'NOVA TECNOLOGIA DA NASA 2', perfil: 'NOVA TECNOLOGIA DA NASA 3.0', sorteio: 'TECNOLOGIA DA NASA 1.0' };
-const versaoNasa = (metodo) => VERSAO_NASA[metodo] || VERSAO_NASA.notas;
+// Sorteio = versão "bugada", estilo MissingNo: símbolos aleatórios a cada
+// anúncio. Sem * _ ~ ` (viram formatação no WhatsApp).
+const VERSAO_NASA = { notas: 'NOVA TECNOLOGIA DA NASA 2', perfil: 'NOVA TECNOLOGIA DA NASA 3.0' };
+const SIMBOLOS_BUG = '?#$@(!%&¿§¤¥▒░▓█¡ÆØ}{][)+=¦¶';
+function versaoBugada(aleatorio = Math.random) {
+  const n = 5 + Math.floor(aleatorio() * 3);
+  return Array.from({ length: n }, () => SIMBOLOS_BUG[Math.floor(aleatorio() * SIMBOLOS_BUG.length)]).join('');
+}
+const versaoNasa = (metodo) => (metodo === 'sorteio'
+  ? `TECNOLOGIA DA NASA ${versaoBugada()}`
+  : VERSAO_NASA[metodo] || VERSAO_NASA.notas);
 
 function anuncioDosTimes(dataJogo, times, metodo = 'notas') {
   const linhas = times.map((t, i) =>

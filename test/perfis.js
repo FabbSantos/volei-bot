@@ -157,11 +157,14 @@ const PLANILHA = [
     const b = times.montarSorteio(G, 3, participantes, semente).map((t) => t.jogadores.map((x) => x.nome).join());
     assert.notDeepStrictEqual(a, b);
   });
-  await caso('"#timesde ... aleatorio enviar": sorteia, salva e anuncia como NASA 1.0', async () => {
+  await caso('"#timesde ... aleatorio enviar": sorteia, salva e anuncia a NASA bugada', async () => {
     const enviados = [];
     await processarComandoAdmin({ ...porta('#timesde riachuelo 3 aleatorio enviar'), enviarPara: async (_c, t) => { enviados.push(t); } });
     assert.strictEqual(times.getTimesSalvos(lista.id).metodo, 'sorteio');
-    assert.ok(enviados.pop().includes('TECNOLOGIA DA NASA 1.0 🚀'));
+    const texto = enviados.pop();
+    const bug = texto.match(/Montados com a TECNOLOGIA DA NASA (\S{5,7}) 🚀/);
+    assert.ok(bug, texto);
+    assert.ok(!/[*_~`a-z0-9]/i.test(bug[1]), `sem letra, número nem formatação do WhatsApp: ${bug[1]}`);
   });
   await caso('comparar continua só notas x perfil', async () => {
     await processarComandoAdmin(porta('#timesde riachuelo 3 comparar'));

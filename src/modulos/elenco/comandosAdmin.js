@@ -40,7 +40,7 @@ function resumoDoTime(t) {
 
 // "Print" dos times (13/11/2026: o texto do comparar ficava ilegível). Devolve
 // false se não deu — quem chamou cai no texto de sempre.
-const TITULO_FOTO = { notas: '⭐ Pelas notas (NASA 2)', perfil: '🧩 Pelo perfil (NASA 3.0)', sorteio: '🎲 Sorteio puro (NASA 1.0)' };
+const TITULO_FOTO = { notas: '⭐ Pelas notas (NASA 2)', perfil: '🧩 Pelo perfil (NASA 3.0)', sorteio: '🎲 Sorteio puro (NASA ?#$@()' };
 async function enviarFoto(msg, dados, legenda) {
   if (!msg.enviarImagemHtml) return false;
   try {
