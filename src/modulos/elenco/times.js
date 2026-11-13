@@ -1,8 +1,9 @@
 // Montagem de times equilibrados a partir do elenco, e os times salvos por
 // lista (sobrevivem a recarregar o painel e aceitam edição de última hora).
-const { db } = require('../../nucleo/banco');
+const { db, migrarColunas } = require('../../nucleo/banco');
 const pelada = require('../pelada/repositorio');
 const elenco = require('./repositorio');
+const perfis = require('./perfis');
 
 // A montagem de times fica salva por lista: sobrevive a recarregar a página,
 // aceita edição (troca de última hora) e é a mesma que o bot mostra/envia
@@ -14,6 +15,9 @@ db.exec(`
     FOREIGN KEY (lista_id) REFERENCES listas(id)
   );
 `);
+// Qual montador gerou os times salvos: 'notas' (o de sempre) ou 'perfil'
+migrarColunas('times_montados', { metodo: "TEXT NOT NULL DEFAULT 'notas'" });
+const METODOS = ['notas', 'perfil'];
 
 pelada.quandoApagarLista((listaId) => {
   db.prepare('DELETE FROM times_montados WHERE lista_id = ?').run(listaId);
@@ -118,7 +122,7 @@ function equilibrarMedias(times, maxVoltas = 60) {
 
 // ---- times salvos por lista -------------------------------------------------
 
-function salvarTimes(listaId, times) {
+function salvarTimes(listaId, times, metodo = 'notas') {
   const limpos = times.map((t, i) => ({
     numero: i + 1,
     jogadores: (t.jogadores || []).map((j) => ({
@@ -130,18 +134,19 @@ function salvarTimes(listaId, times) {
     })),
   }));
   db.prepare(`
-    INSERT INTO times_montados (lista_id, dados, atualizado_em) VALUES (?, ?, ?)
-    ON CONFLICT(lista_id) DO UPDATE SET dados = excluded.dados, atualizado_em = excluded.atualizado_em
-  `).run(listaId, JSON.stringify(limpos), new Date().toISOString());
+    INSERT INTO times_montados (lista_id, dados, atualizado_em, metodo) VALUES (?, ?, ?, ?)
+    ON CONFLICT(lista_id) DO UPDATE SET dados = excluded.dados, atualizado_em = excluded.atualizado_em, metodo = excluded.metodo
+  `).run(listaId, JSON.stringify(limpos), new Date().toISOString(), METODOS.includes(metodo) ? metodo : 'notas');
   return getTimesSalvos(listaId);
 }
 
 // Recalcula média/altos na leitura — nunca confia em número guardado
 function getTimesSalvos(listaId) {
-  const row = db.prepare('SELECT dados, atualizado_em FROM times_montados WHERE lista_id = ?').get(listaId);
+  const row = db.prepare('SELECT dados, atualizado_em, metodo FROM times_montados WHERE lista_id = ?').get(listaId);
   if (!row) return null;
   const lista = pelada.getLista(listaId);
   const jogadores = lista ? elenco.listarJogadores(lista.chat_id) : [];
+  const perfisDoGrupo = lista ? perfis.perfisDoGrupo(lista.chat_id) : new Map();
   const resolver = (nome) => (lista ? elenco.acharJogadorDaEntrada(lista.chat_id, { nome, numero: null }, jogadores) : null);
   let times;
   try {
@@ -154,7 +159,8 @@ function getTimesSalvos(listaId) {
   // novo (29/10/2026: David 🙂 no painel e 👍 no time salvo)
   const atualizar = (j) => {
     const atual = resolver(j.nome);
-    if (!atual) return { ...j, jogador_id: null };
+    if (!atual) return { ...j, ...perfis.PADRAO, temPerfil: false, jogador_id: null };
+    const perfil = perfisDoGrupo.get(atual.id);
     return {
       ...j,
       jogador_id: atual.id,
@@ -162,19 +168,29 @@ function getTimesSalvos(listaId) {
       categoria: atual.categoria ?? null,
       altura: atual.altura ?? null,
       conhecido: atual.notaTime != null,
+      ...(perfil || perfis.PADRAO),
+      temPerfil: Boolean(perfil),
     };
   };
   return {
     atualizadoEm: row.atualizado_em,
-    times: times.map((t, i) => {
-      const js = (t.jogadores || []).map(atualizar);
-      return {
-        numero: i + 1,
-        jogadores: js,
-        media: js.length ? js.reduce((s, j) => s + (j.nota ?? 3), 0) / js.length : 0,
-        altos: js.filter((j) => j.altura === 'alto').length,
-      };
-    }),
+    metodo: row.metodo || 'notas',
+    times: times.map((t, i) => comResumo((t.jogadores || []).map(atualizar), i)),
+  };
+}
+
+// O que cada time tem, nos dois olhares: média/altos (notas) e funções,
+// meninas e saque (perfil) — é o que deixa comparar um montador com o outro
+function comResumo(jogadores, i) {
+  const n = jogadores.length;
+  return {
+    numero: i + 1,
+    jogadores,
+    media: n ? jogadores.reduce((s, j) => s + (j.nota ?? 3), 0) / n : 0,
+    altos: jogadores.filter((j) => j.altura === 'alto').length,
+    funcoes: perfis.funcoesDoTime(jogadores),
+    meninas: jogadores.filter((j) => j.menina).length,
+    saque: n ? jogadores.reduce((s, j) => s + (perfis.PESO_SAQUE[j.saque] ?? 2), 0) / n : 0,
   };
 }
 
@@ -182,27 +198,116 @@ function apagarTimesSalvos(listaId) {
   db.prepare('DELETE FROM times_montados WHERE lista_id = ?').run(listaId);
 }
 
-function montarTimes(chatId, quantidadeTimes, participantes) {
+// Cada participante com o que os dois montadores olham: nota/categoria/altura
+// do elenco e o perfil de jogo (quem não tem perfil entra como Normal)
+function avaliar(chatId, participantes) {
   const jogadores = elenco.listarJogadores(chatId);
-  const avaliados = participantes.map((p) => {
+  const perfisDoGrupo = perfis.perfisDoGrupo(chatId);
+  return participantes.map((p) => {
     const jogador = elenco.acharJogadorDaEntrada(chatId, p, jogadores);
+    const perfil = jogador ? perfisDoGrupo.get(jogador.id) : null;
     return {
       nome: p.nome,
       nota: jogador?.notaTime ?? 3, // desconhecido entra como mediano
       conhecido: Boolean(jogador?.notaTime != null),
       altura: jogador?.altura ?? null,
       categoria: jogador?.categoria ?? null,
+      ...(perfil || perfis.PADRAO),
+      temPerfil: Boolean(perfil),
     };
   });
+}
 
-  avaliados.sort((a, b) => b.nota - a.nota);
+// Zigue-zague: 1..n, n..1, 1..n — times do mesmo tamanho (no máximo 1 de diferença)
+function serpentina(ordenados, quantidadeTimes) {
   const times = Array.from({ length: quantidadeTimes }, () => []);
-  avaliados.forEach((j, i) => {
+  ordenados.forEach((j, i) => {
     const rodada = Math.floor(i / quantidadeTimes);
     const dentroDaRodada = i % quantidadeTimes;
-    const indice = rodada % 2 === 0 ? dentroDaRodada : quantidadeTimes - 1 - dentroDaRodada;
-    times[indice].push(j);
+    times[rodada % 2 === 0 ? dentroDaRodada : quantidadeTimes - 1 - dentroDaRodada].push(j);
   });
+  return times;
+}
+
+// ---- montador por perfil (a planilha do Diego, 13/11/2026) -------------------
+// Não olha nota nenhuma: espalha as funções que se destacam (pela regra
+// Role1 → Role2), quem se destaca em geral, as meninas, os altos e o saque.
+// O peso diz o que manda quando os critérios brigam: meninas primeiro (são
+// poucas e todas baixas — duas no mesmo time pesa no ataque), depois funções.
+const FUNCOES = perfis.ROLES.filter((r) => r !== 'Normal');
+const PESOS_PERFIL = { meninas: 30, funcao: 10, saque: 8, destaques: 6, altos: 3 };
+
+function custoPorPerfil(times) {
+  const espalhamento = (valores) => Math.max(...valores) - Math.min(...valores);
+  const contar = (ehDoGrupo) => espalhamento(times.map((t) => t.filter(ehDoGrupo).length));
+  const funcoes = times.map(perfis.funcoesDoTime);
+  const mediaSaque = (t) => (t.length ? t.reduce((s, j) => s + (perfis.PESO_SAQUE[j.saque] ?? 2), 0) / t.length : 0);
+  let custo = 0;
+  for (const f of FUNCOES) custo += PESOS_PERFIL.funcao * espalhamento(funcoes.map((c) => c[f] || 0));
+  custo += PESOS_PERFIL.destaques * contar((j) => j.role1 !== 'Normal');
+  custo += PESOS_PERFIL.meninas * contar((j) => j.menina);
+  custo += PESOS_PERFIL.altos * contar((j) => j.altura === 'alto');
+  custo += PESOS_PERFIL.saque * espalhamento(times.map(mediaSaque));
+  return custo;
+}
+
+// Testa toda troca entre dois times e aplica a que mais baixa o custo, até
+// nenhuma baixar. Só troca (nunca move): o tamanho dos times não muda.
+function melhorarPorTrocas(times, custo, maxVoltas = 200) {
+  let atual = custo(times);
+  for (let volta = 0; volta < maxVoltas; volta++) {
+    let melhor = null;
+    for (let a = 0; a < times.length; a++) {
+      for (let b = a + 1; b < times.length; b++) {
+        for (let i = 0; i < times[a].length; i++) {
+          for (let j = 0; j < times[b].length; j++) {
+            const ja = times[a][i];
+            const jb = times[b][j];
+            times[a][i] = jb;
+            times[b][j] = ja;
+            const c = custo(times);
+            times[a][i] = ja;
+            times[b][j] = jb;
+            if (c < atual - 1e-9 && (!melhor || c < melhor.c - 1e-9)) melhor = { a, b, i, j, c };
+          }
+        }
+      }
+    }
+    if (!melhor) break;
+    const { a, b, i, j } = melhor;
+    [times[a][i], times[b][j]] = [times[b][j], times[a][i]];
+    atual = melhor.c;
+  }
+  return atual;
+}
+
+// Determinístico como o das notas: a prévia do #timesde bate com o envio.
+// Parte de alguns zigue-zagues diferentes e fica com o de menor custo — a
+// busca por trocas sozinha às vezes empaca num arranjo "quase bom".
+function montarTimesPorPerfil(chatId, quantidadeTimes, participantes) {
+  const avaliados = avaliar(chatId, participantes);
+  const porNome = (a, b) => a.nome.localeCompare(b.nome, 'pt-BR');
+  const forca = (j) => (j.role1 !== 'Normal' ? 2 : 0) + (j.role2 !== 'Normal' ? 1 : 0) + (perfis.PESO_SAQUE[j.saque] ?? 2) / 4;
+  const ordens = [
+    (a, b) => forca(b) - forca(a) || porNome(a, b),
+    (a, b) => (b.menina - a.menina) || forca(b) - forca(a) || porNome(a, b),
+    (a, b) => (perfis.PESO_SAQUE[b.saque] ?? 2) - (perfis.PESO_SAQUE[a.saque] ?? 2) || porNome(a, b),
+    porNome,
+  ];
+  let escolhido = null;
+  for (const ordem of ordens) {
+    const times = serpentina([...avaliados].sort(ordem), quantidadeTimes);
+    const custo = melhorarPorTrocas(times, custoPorPerfil);
+    if (!escolhido || custo < escolhido.custo - 1e-9) escolhido = { times, custo };
+  }
+  return escolhido.times.map((time, i) => comResumo(time, i));
+}
+
+function montarTimes(chatId, quantidadeTimes, participantes) {
+  const avaliados = avaliar(chatId, participantes);
+
+  avaliados.sort((a, b) => b.nota - a.nota);
+  const times = serpentina(avaliados, quantidadeTimes);
 
   // Só mexe se alguém tiver altura marcada — sem isso, nada muda
   if (avaliados.some((j) => j.altura)) {
@@ -220,12 +325,14 @@ function montarTimes(chatId, quantidadeTimes, participantes) {
   // deixaram tortas, sem devolver os altos todos pro mesmo time
   equilibrarMedias(times);
 
-  return times.map((time, i) => ({
-    numero: i + 1,
-    jogadores: time,
-    media: time.length ? time.reduce((s, j) => s + j.nota, 0) / time.length : 0,
-    altos: time.filter((j) => j.altura === 'alto').length,
-  }));
+  return times.map((time, i) => comResumo(time, i));
+}
+
+// Um ponto de entrada pros dois montadores
+function montarPorMetodo(metodo, chatId, quantidadeTimes, participantes) {
+  return metodo === 'perfil'
+    ? montarTimesPorPerfil(chatId, quantidadeTimes, participantes)
+    : montarTimes(chatId, quantidadeTimes, participantes);
 }
 
 // O texto que o GRUPO vê: zero pista de como foi montado — nada de médias,
@@ -238,4 +345,6 @@ function anuncioDosTimes(dataJogo, times) {
   return `🏐 *Times da pelada${dataJogo ? ` — ${dataJogo}` : ''}*\nMontados com a NOVA TECNOLOGIA DA NASA 2 🚀\n\n${linhas.join('\n\n')}\n\nBom jogo! 🔥`;
 }
 
-module.exports = { montarTimes, salvarTimes, getTimesSalvos, apagarTimesSalvos, equilibrarMedias, anuncioDosTimes };
+module.exports = {
+  METODOS, montarTimes, montarTimesPorPerfil, montarPorMetodo, custoPorPerfil, salvarTimes, getTimesSalvos, apagarTimesSalvos, equilibrarMedias, anuncioDosTimes,
+};

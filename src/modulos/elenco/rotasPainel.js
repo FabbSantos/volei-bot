@@ -4,6 +4,7 @@ const mensalistas = require('../mensalistas/repositorio');
 const pelada = require('../pelada/repositorio');
 const elenco = require('./repositorio');
 const times = require('./times');
+const perfis = require('./perfis');
 const { VOTANTES } = require('./seed');
 
 // Quem avalia além dos 4 da planilha (o seed fica como está: a ordem dele é
@@ -33,7 +34,20 @@ function rotasPainel(api, deps = {}) {
       naEspera: semana.naEspera,
       // O que a aba Times pré-seleciona (a semana já é só principal)
       nomesPrincipal: semana.naLista.map((j) => j.nome),
+      // Aba Perfis (a planilha do Diego): opções e o perfil de cada um
+      roles: perfis.ROLES,
+      saques: perfis.SAQUES,
+      perfis: Object.fromEntries(perfis.perfisDoGrupo(grupo)),
     });
+  });
+
+  // Uma célula da aba Perfis por vez: role1, role2, saque ou menina
+  api.post('/perfil', (req, res) => {
+    const { jogador_id, ...campos } = req.body || {};
+    if (!jogador_id) return res.status(400).json({ erro: 'jogador_id é obrigatório' });
+    const r = perfis.salvarPerfil(parseInt(jogador_id, 10), campos);
+    if (r.erro) return res.status(400).json({ erro: 'Valor inválido pro perfil.' });
+    res.json(r);
   });
 
   api.post('/jogador', (req, res) => {
@@ -125,16 +139,27 @@ function rotasPainel(api, deps = {}) {
 
   // Monta E salva na lista atual — a montagem tem que sobreviver a F5
   api.post('/times', (req, res) => {
+    const { grupo, quantidade, nomes, metodo } = req.body || {};
+    if (!grupo || !Array.isArray(nomes) || nomes.length === 0) {
+      return res.status(400).json({ erro: 'grupo e nomes são obrigatórios' });
+    }
+    const n = Math.min(6, Math.max(2, parseInt(quantidade, 10) || 3));
+    const participantes = nomes.map((nome) => ({ nome, numero: null }));
+    const montados = times.montarPorMetodo(metodo, grupo, n, participantes);
+    const lista = pelada.getListaMaisRecente(grupo);
+    if (lista) times.salvarTimes(lista.id, montados, metodo);
+    res.json(montados);
+  });
+
+  // Os dois montadores com a mesma gente, lado a lado — não salva nada
+  api.post('/times/comparar', (req, res) => {
     const { grupo, quantidade, nomes } = req.body || {};
     if (!grupo || !Array.isArray(nomes) || nomes.length === 0) {
       return res.status(400).json({ erro: 'grupo e nomes são obrigatórios' });
     }
     const n = Math.min(6, Math.max(2, parseInt(quantidade, 10) || 3));
     const participantes = nomes.map((nome) => ({ nome, numero: null }));
-    const montados = times.montarTimes(grupo, n, participantes);
-    const lista = pelada.getListaMaisRecente(grupo);
-    if (lista) times.salvarTimes(lista.id, montados);
-    res.json(montados);
+    res.json(Object.fromEntries(times.METODOS.map((m) => [m, times.montarPorMetodo(m, grupo, n, participantes)])));
   });
 
   api.get('/times/salvos', (req, res) => {
@@ -144,19 +169,20 @@ function rotasPainel(api, deps = {}) {
     res.json({
       lista: { id: lista.id, data_jogo: lista.data_jogo, nome: lista.nome },
       times: salvos?.times || [],
+      metodo: salvos?.metodo || null,
       atualizadoEm: salvos?.atualizadoEm || null,
     });
   });
 
   // Salva a edição manual (troca de time, substituição de última hora)
   api.post('/times/salvar', (req, res) => {
-    const { grupo, times: editados } = req.body || {};
+    const { grupo, times: editados, metodo } = req.body || {};
     if (!grupo || !Array.isArray(editados)) {
       return res.status(400).json({ erro: 'grupo e times são obrigatórios' });
     }
     const lista = pelada.getListaMaisRecente(grupo);
     if (!lista) return res.status(400).json({ erro: 'grupo sem lista' });
-    res.json(times.salvarTimes(lista.id, editados));
+    res.json(times.salvarTimes(lista.id, editados, metodo));
   });
 
   api.delete('/times/salvos', (req, res) => {

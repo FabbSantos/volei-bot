@@ -1,0 +1,145 @@
+// Montador pelo perfil (planilha do Diego, 13/11/2026): Função 1 → Função 2,
+// saque, meninas. Os perfis abaixo têm o formato da planilha de verdade (18
+// pessoas, 5 meninas, 5 batedores), com nomes fictícios.
+const assert = require('assert');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+
+const pasta = fs.mkdtempSync(path.join(os.tmpdir(), 'volei-perfis-'));
+process.env.DB_PATH = path.join(pasta, 'teste.db');
+
+const grupos = require('../src/modulos/grupos/repositorio');
+const pelada = require('../src/modulos/pelada/repositorio');
+const elenco = require('../src/modulos/elenco/repositorio');
+const perfis = require('../src/modulos/elenco/perfis');
+const times = require('../src/modulos/elenco/times');
+const { processarComandoAdmin } = require('../src/roteador');
+const { fecharBanco } = require('../src/nucleo/banco');
+
+let falhas = 0;
+async function caso(nome, fn) {
+  try {
+    await fn();
+    console.log(`  ok  ${nome}`);
+  } catch (err) {
+    falhas++;
+    console.log(`  FALHOU  ${nome}\n          ${err.message}`);
+  }
+}
+
+const G = 'pelada@g.us';
+const ADM = 'admins@g.us';
+// [nome, role1, role2, saque, menina]
+const PLANILHA = [
+  ['Alfa', 'Bloqueador', 'Normal', 'Normal', false],
+  ['Bravo', 'Normal', 'Normal', 'Bom', false],
+  ['Charlie', 'Normal', 'Normal', 'Regular', false],
+  ['Dora', 'Normal', 'Normal', 'Regular', true],
+  ['Eco', 'Defensor', 'Receptor', 'Bom', false],
+  ['Fani', 'Normal', 'Normal', 'Regular', true],
+  ['Gabi', 'Normal', 'Normal', 'Regular', true],
+  ['Hotel', 'Normal', 'Normal', 'Bom', false],
+  ['Iara', 'Defensor', 'Receptor', 'Normal', true],
+  ['Juca', 'Levantador', 'Defensor', 'Muito bom', false],
+  ['Kilo', 'Batedor', 'Defensor', 'Muito bom', false],
+  ['Lima', 'Defensor', 'Receptor', 'Bom', false],
+  ['Mike', 'Batedor', 'Receptor', 'Bom', false],
+  ['Nico', 'Batedor', 'Bloqueador', 'Muito bom', false],
+  ['Oscar', 'Batedor', 'Normal', 'Bom', false],
+  ['Papa', 'Normal', 'Normal', 'Bom', false],
+  ['Rita', 'Normal', 'Normal', 'Regular', true],
+  ['Sierra', 'Batedor', 'Normal', 'Bom', false],
+];
+
+(async () => {
+  grupos.registrarGrupoSeNovo(G, 'Vôlei Riachuelo');
+  grupos.registrarGrupoSeNovo(ADM, 'Admins');
+
+  console.log('\nregra Função 1 → Função 2');
+  const j = (nome, role1, role2 = 'Normal') => ({ nome, role1, role2 });
+  await caso('Função 1 de cada um quando não repete', () =>
+    assert.deepStrictEqual(perfis.funcoesDoTime([j('A', 'Batedor'), j('B', 'Defensor')]), { Batedor: 1, Defensor: 1 }));
+  await caso('time já tem a Função 1: conta a Função 2', () =>
+    assert.deepStrictEqual(perfis.funcoesDoTime([j('A', 'Batedor'), j('B', 'Batedor', 'Bloqueador')]), { Batedor: 1, Bloqueador: 1 }));
+  await caso('sem Função 2: conta a Função 1 repetida', () =>
+    assert.deepStrictEqual(perfis.funcoesDoTime([j('A', 'Batedor'), j('B', 'Batedor')]), { Batedor: 2 }));
+  await caso('Normal não conta função nenhuma', () =>
+    assert.deepStrictEqual(perfis.funcoesDoTime([j('A', 'Normal'), j('B', 'Normal')]), {}));
+
+  console.log('\nperfil no banco');
+  const ids = {};
+  for (const [nome, role1, role2, saque, menina] of PLANILHA) {
+    const jog = elenco.upsertJogador(G, nome);
+    ids[nome] = jog.id;
+    perfis.salvarPerfil(jog.id, { role1, role2, saque, menina });
+  }
+  await caso('salva uma célula sem mexer nas outras', () => {
+    perfis.salvarPerfil(ids.Juca, { saque: 'bom' });
+    assert.deepStrictEqual(perfis.perfilDe(ids.Juca), { role1: 'Levantador', role2: 'Defensor', saque: 'Bom', menina: false });
+    perfis.salvarPerfil(ids.Juca, { saque: 'Muito bom' });
+  });
+  await caso('valor fora da lista é recusado', () => {
+    assert.ok(perfis.salvarPerfil(ids.Juca, { role1: 'Goleiro' }).erro);
+    assert.strictEqual(perfis.perfilDe(ids.Juca).role1, 'Levantador');
+  });
+  await caso('quem nunca foi preenchido é Normal', () =>
+    assert.deepStrictEqual(perfis.perfilDe(9999), perfis.PADRAO));
+
+  console.log('\nmontagem pelo perfil (18 em 3 times)');
+  const participantes = PLANILHA.map(([nome]) => ({ nome, numero: null }));
+  const montados = times.montarTimesPorPerfil(G, 3, participantes);
+  const espalhamento = (vals) => Math.max(...vals) - Math.min(...vals);
+  await caso('times de 6', () => assert.deepStrictEqual(montados.map((t) => t.jogadores.length), [6, 6, 6]));
+  await caso('meninas espalhadas (5 → 2/2/1)', () =>
+    assert.deepStrictEqual(montados.map((t) => t.meninas).sort(), [1, 2, 2]));
+  await caso('cada função com no máximo 1 de diferença entre os times', () => {
+    for (const f of ['Batedor', 'Bloqueador', 'Levantador', 'Defensor', 'Receptor']) {
+      assert.ok(espalhamento(montados.map((t) => t.funcoes[f] || 0)) <= 1, `${f}: ${montados.map((t) => t.funcoes[f] || 0)}`);
+    }
+  });
+  await caso('saque médio parecido (até 0,5 de diferença)', () =>
+    assert.ok(espalhamento(montados.map((t) => t.saque)) <= 0.5, montados.map((t) => t.saque).join(' / ')));
+  await caso('mesma gente, mesmos times (prévia = envio)', () => {
+    const deNovo = times.montarTimesPorPerfil(G, 3, [...participantes].reverse());
+    assert.deepStrictEqual(deNovo.map((t) => t.jogadores.map((x) => x.nome).sort()), montados.map((t) => t.jogadores.map((x) => x.nome).sort()));
+  });
+
+  console.log('\n#timesde com os dois montadores');
+  const lista = pelada.criarLista(G, '20/11', null, 18).lista;
+  for (const [nome] of PLANILHA) pelada.registrarPresencaHistorica(lista.id, nome, `${nome.toLowerCase()}@c.us`);
+  const respostas = [];
+  const porta = (body) => ({ body, origem: 'grupoadmin', chatId: ADM, autor: 'F', reply: async (t) => { respostas.push(t); }, enviarPara: async () => {} });
+
+  await caso('comparar mostra os dois e não salva', async () => {
+    await processarComandoAdmin(porta('#timesde riachuelo 3 comparar'));
+    const r = respostas.pop();
+    assert.ok(r.includes('pelas notas') && r.includes('pelo perfil'), r);
+    assert.strictEqual(times.getTimesSalvos(lista.id), null);
+  });
+  await caso('"perfil" monta e salva com o montador do perfil', async () => {
+    await processarComandoAdmin(porta('#timesde riachuelo 3 perfil'));
+    const r = respostas.pop();
+    assert.ok(r.includes('pelo perfil') && r.includes('Prévia'), r);
+    const salvos = times.getTimesSalvos(lista.id);
+    assert.strictEqual(salvos.metodo, 'perfil');
+    assert.ok(salvos.times[0].jogadores.every((x) => x.temPerfil));
+  });
+  await caso('sem método mostra os salvos (e diz qual montador)', async () => {
+    await processarComandoAdmin(porta('#timesde riachuelo'));
+    const r = respostas.pop();
+    assert.ok(r.includes('salvos') && r.includes('pelo perfil'), r);
+  });
+  await caso('"notas" troca pro montador de sempre', async () => {
+    await processarComandoAdmin(porta('#timesde riachuelo 3 notas'));
+    assert.strictEqual(times.getTimesSalvos(lista.id).metodo, 'notas');
+  });
+
+  fecharBanco();
+  fs.rmSync(pasta, { recursive: true, force: true });
+  if (falhas) {
+    console.log(`\n${falhas} falha(s)`);
+    process.exit(1);
+  }
+  console.log('\ntudo ok');
+})();

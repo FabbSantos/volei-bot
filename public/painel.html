@@ -88,6 +88,10 @@
   .time-cartao ul { list-style: none; margin: 0; padding: 0; }
   .time-cartao li { display: flex; justify-content: space-between; gap: 0.5rem; padding: 0.2rem 0; border-bottom: 1px solid var(--grade); }
   .time-cartao li:last-child { border-bottom: none; }
+  .comparacao { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; margin-top: 1rem; }
+  .comparacao .times-grid { grid-template-columns: 1fr; margin-top: 0.5rem; }
+  .resumo-perfil { color: var(--tinta-2); font-size: 0.8rem; margin-bottom: 0.4rem; }
+  #tabPerfis select { padding: 0.2rem 0.4rem; }
   .grafico-caixa { position: relative; height: 340px; margin-top: 0.6rem; }
   .selecao-jogadores { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.6rem; }
   .selecao-jogadores button {
@@ -122,6 +126,7 @@
 <nav class="abas">
   <button data-aba="elenco" class="ativa">Elenco</button>
   <button data-aba="notadia">Nota do dia</button>
+  <button data-aba="perfis">Perfis</button>
   <button data-aba="times">Times</button>
   <button data-aba="evolucao">Evolução</button>
 </nav>
@@ -168,6 +173,25 @@
     </div>
   </section>
 
+  <section class="aba" id="aba-perfis">
+    <div class="cartao" style="padding:0.7rem 1.2rem">
+      <strong>Perfil de jogo — a planilha do Diego aqui dentro</strong>
+      <span class="mut">— alimenta o montador <em>🧩 pelo perfil</em> da aba Times. Salva sozinho ao mudar.</span>
+      <div class="mut" style="margin-top:0.4rem">
+        <strong>Função 1 / Função 2</strong>: o que a pessoa faz que <em>se destaca</em>. Quem ataca e bloqueia mas no normal da pelada é <em>Normal</em> — é a maioria, e tá certo.
+        O montador olha a Função 1; se o time já tem alguém com ela, conta a Função 2.
+        <strong>Saque</strong> é equilibrado pela média do time. <strong>🎀 Menina</strong>: são espalhadas antes de tudo (todas baixas — duas no mesmo time pesa no ataque).
+      </div>
+    </div>
+    <div class="cartao">
+      <div class="linhaform" style="margin:0 0 0.6rem">
+        <button id="btnPerfisSemana" class="primario">⭐ Elenco da semana</button>
+        <button id="btnPerfisTodos">Todos do elenco</button>
+      </div>
+      <table id="tabPerfis"></table>
+    </div>
+  </section>
+
   <section class="aba" id="aba-times">
     <div class="cartao">
       <div class="linhaform">
@@ -175,11 +199,14 @@
         <button id="btnUsarSemana">⭐ Usar a lista da semana</button>
         <button id="btnMarcarTodos">Todo o elenco</button>
         <button id="btnDesmarcar">Limpar</button>
+        <label>Montador: <select id="selMetodo"><option value="notas">⭐ pelas notas</option><option value="perfil">🧩 pelo perfil</option></select></label>
         <button class="primario" id="btnMontar">Montar times</button>
+        <button id="btnComparar" title="Monta com os dois métodos lado a lado, sem salvar">⚖️ Comparar os dois</button>
         <button id="btnEnviarTimes">📣 Enviar pro grupo</button>
       </div>
       <div class="selecao-jogadores" id="selTimes"></div>
       <div id="statusTimes" class="aviso"></div>
+      <div class="comparacao" id="comparacao"></div>
       <div class="times-grid" id="timesMontados"></div>
       <div class="linhaform" id="caixaSubstituir" style="display:none">
         <strong>Chegou alguém de última hora?</strong>
@@ -252,6 +279,8 @@ let ajusteFinoAberto = false;
 let filtroSemana = true; // Elenco abre focado na galera da semana
 let timesAtuais = [];
 let timesSalvosEm = null;
+let timesMetodo = 'notas'; // qual montador gerou os times da tela
+let filtroPerfisSemana = true;
 let selecionadosTimes = new Set();
 let selecionadosEvolucao = []; // ordem importa: define o slot de cor de cada um
 
@@ -297,7 +326,50 @@ async function carregarElenco() {
   desenharElenco();
   desenharSelecaoTimes();
   desenharSelecaoEvolucao();
+  desenharPerfis();
 }
+
+// ---- perfis -----------------------------------------------------------------
+function desenharPerfis() {
+  const naSemana = new Set(elenco.idsNaSemana || []);
+  const temSemana = naSemana.size > 0;
+  $('#btnPerfisSemana').classList.toggle('primario', filtroPerfisSemana && temSemana);
+  $('#btnPerfisTodos').classList.toggle('primario', !filtroPerfisSemana || !temSemana);
+  $('#btnPerfisSemana').textContent = `⭐ Elenco da semana${temSemana ? ` (${naSemana.size})` : ''}`;
+  const visiveis = (filtroPerfisSemana && temSemana) ? elenco.jogadores.filter((j) => naSemana.has(j.id)) : elenco.jogadores;
+  const ordenado = [...visiveis].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  const opcoes = (lista, atual) => lista.map((o) => `<option ${o === atual ? 'selected' : ''}>${o}</option>`).join('');
+  const comPerfil = new Set(Object.keys(elenco.perfis || {}).map(Number));
+  const linhas = ['<tr><th>Jogador</th><th>Função 1</th><th>Função 2</th><th>Saque</th><th>🎀 Menina</th></tr>'];
+  if (!ordenado.length) linhas.push('<tr><td colspan="5" class="mut">Ninguém aqui ainda.</td></tr>');
+  for (const j of ordenado) {
+    const p = perfilDoElenco(j.id);
+    linhas.push(`<tr>
+      <td><strong>${j.nome}</strong> ${emojiDaCategoria(j.categoria)}${comPerfil.has(j.id) ? '' : ' <span class="chip" title="nunca preenchido: entra como Normal">novo</span>'}</td>
+      <td><select data-perfil="${j.id}" data-campo="role1">${opcoes(elenco.roles || [], p.role1)}</select></td>
+      <td><select data-perfil="${j.id}" data-campo="role2">${opcoes(elenco.roles || [], p.role2)}</select></td>
+      <td><select data-perfil="${j.id}" data-campo="saque">${opcoes(elenco.saques || [], p.saque)}</select></td>
+      <td><input type="checkbox" data-perfil="${j.id}" data-campo="menina" ${p.menina ? 'checked' : ''}></td>
+    </tr>`);
+  }
+  $('#tabPerfis').innerHTML = linhas.join('');
+  document.querySelectorAll('#tabPerfis [data-perfil]').forEach((el) => {
+    el.addEventListener('change', async () => {
+      const id = parseInt(el.dataset.perfil, 10);
+      const valor = el.type === 'checkbox' ? el.checked : el.value;
+      try {
+        const novo = await api('/perfil', { method: 'POST', body: { jogador_id: id, [el.dataset.campo]: valor } });
+        elenco.perfis = { ...(elenco.perfis || {}), [id]: novo };
+        toast('Perfil salvo ✔');
+        desenharPerfis();
+      } catch (e) {
+        toast(`Não salvou: ${e.message}`);
+      }
+    });
+  });
+}
+$('#btnPerfisSemana').addEventListener('click', () => { filtroPerfisSemana = true; desenharPerfis(); });
+$('#btnPerfisTodos').addEventListener('click', () => { filtroPerfisSemana = false; desenharPerfis(); });
 
 $('#btnFiltroSemana').addEventListener('click', () => { filtroSemana = true; desenharElenco(); });
 $('#btnFiltroTodos').addEventListener('click', () => { filtroSemana = false; desenharElenco(); });
@@ -310,6 +382,29 @@ const emojiDaCategoria = (c) => (rotuloDaCategoria(c) || '').split(' ')[0];
 const resumoDoTime = (t) => [4, 3, 2, 1]
   .map((c) => [emojiDaCategoria(c), t.jogadores.filter((j) => j.categoria === c).length])
   .filter(([, n]) => n).map(([e, n]) => `${e}×${n}`).join(' ') || 'sem avaliação';
+// O olhar do perfil: funções (regra do Diego: Função 1; se o time já tem,
+// Função 2), meninas e saque médio — mesma conta do servidor (perfis.js)
+const EMOJI_ROLE = { Batedor: '💥', Bloqueador: '🧱', Levantador: '🎯', Defensor: '🛡️', Receptor: '🙌' };
+const PESO_SAQUE = { 'Muito bom': 4, Bom: 3, Normal: 2, Regular: 1, Ruim: 0 };
+function funcoesDoTime(jogadores) {
+  const contagem = {};
+  const repetidos = [];
+  for (const j of [...jogadores].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))) {
+    if (!j.role1 || j.role1 === 'Normal') continue;
+    if (contagem[j.role1]) repetidos.push(j); else contagem[j.role1] = 1;
+  }
+  for (const j of repetidos) {
+    const f = j.role2 && j.role2 !== 'Normal' && !contagem[j.role2] ? j.role2 : j.role1;
+    contagem[f] = (contagem[f] || 0) + 1;
+  }
+  return contagem;
+}
+const resumoPerfilDoTime = (t) => {
+  const fs = Object.entries(EMOJI_ROLE).map(([r, e]) => [e, t.funcoes?.[r] || 0]).filter(([, n]) => n).map(([e, n]) => `${e}${n}`).join(' ');
+  return [fs || 'sem funções', t.meninas ? `🎀${t.meninas}` : '', `🏐 ${fmt(t.saque ?? 2, 1)}`].filter(Boolean).join(' · ');
+};
+// O perfil de um jogador do elenco (quem não tem entra como Normal)
+const perfilDoElenco = (id) => (elenco.perfis || {})[id] || { role1: 'Normal', role2: 'Normal', saque: 'Normal', menina: false };
 // A categoria que um votante deu: a escolhida, ou a tirada das notas antigas dele
 function categoriaDoVotante(j, votante) {
   const alvo = votante.toLowerCase();
@@ -567,10 +662,45 @@ $('#btnDesmarcar').addEventListener('click', () => { selecionadosTimes.clear(); 
 $('#btnMontar').addEventListener('click', async () => {
   if (selecionadosTimes.size < 2) return toast('Seleciona os jogadores primeiro');
   if (timesAtuais.length && !confirm('Já existem times salvos nessa lista. Montar de novo joga fora os ajustes que você fez. Continuar?')) return;
-  timesAtuais = await api('/times', { method: 'POST', body: { grupo: grupoAtual(), quantidade: parseInt($('#selQtdTimes').value, 10), nomes: [...selecionadosTimes] } });
+  const metodo = $('#selMetodo').value;
+  timesAtuais = await api('/times', { method: 'POST', body: { grupo: grupoAtual(), quantidade: parseInt($('#selQtdTimes').value, 10), nomes: [...selecionadosTimes], metodo } });
+  timesMetodo = metodo;
   timesSalvosEm = new Date().toISOString();
+  $('#comparacao').innerHTML = '';
   desenharTimes();
   toast('Times montados e salvos ✔');
+});
+
+// Os dois montadores com a mesma gente, lado a lado. Nada é salvo até
+// clicar em "Usar estes"
+const ROTULO_METODO = { notas: '⭐ Pelas notas', perfil: '🧩 Pelo perfil' };
+let comparados = null;
+$('#btnComparar').addEventListener('click', async () => {
+  if (selecionadosTimes.size < 2) return toast('Seleciona os jogadores primeiro');
+  comparados = await api('/times/comparar', { method: 'POST', body: { grupo: grupoAtual(), quantidade: parseInt($('#selQtdTimes').value, 10), nomes: [...selecionadosTimes] } });
+  $('#comparacao').innerHTML = Object.entries(comparados).map(([metodo, ts]) => `
+    <div>
+      <div class="linhaform" style="margin-top:0;justify-content:space-between">
+        <strong>${ROTULO_METODO[metodo]}</strong>
+        <button data-usar="${metodo}">Usar estes</button>
+      </div>
+      <div class="times-grid">${ts.map((t) => `
+        <div class="time-cartao">
+          <h3>Time ${t.numero}</h3>
+          <div class="media">${resumoDoTime(t)}${t.altos ? ` · ${t.altos} alto(s) 📏` : ''}</div>
+          <div class="resumo-perfil">${resumoPerfilDoTime(t)}</div>
+          <ul>${t.jogadores.map((j) => `<li><span>${nomeComMarcas(j)}</span></li>`).join('')}</ul>
+        </div>`).join('')}</div>
+    </div>`).join('')
+    + '<p class="aviso" style="grid-column:1/-1">💥 batedor · 🧱 bloqueador · 🎯 levantador · 🛡️ defensor · 🙌 receptor · 🎀 meninas · 🏐 saque médio (0 ruim – 4 muito bom). Nada foi salvo: <strong>Usar estes</strong> salva na lista e substitui os times atuais.</p>';
+  document.querySelectorAll('[data-usar]').forEach((btn) => btn.addEventListener('click', async () => {
+    if (timesAtuais.length && !confirm('Substituir os times salvos (e os ajustes feitos neles) por estes?')) return;
+    timesAtuais = comparados[btn.dataset.usar];
+    timesMetodo = btn.dataset.usar;
+    $('#comparacao').innerHTML = '';
+    desenharTimes();
+    await salvarTimes(`Times ${ROTULO_METODO[timesMetodo].toLowerCase()} salvos ✔`);
+  }));
 });
 
 // Traz do servidor a montagem salva desta lista (se houver)
@@ -578,6 +708,7 @@ async function carregarTimesSalvos() {
   try {
     const r = await api(`/times/salvos?grupo=${encodeURIComponent(grupoAtual())}`);
     timesAtuais = r.times || [];
+    timesMetodo = r.metodo || 'notas';
     timesSalvosEm = r.atualizadoEm;
   } catch {
     timesAtuais = [];
@@ -608,10 +739,19 @@ $('#btnEnviarTimes').addEventListener('click', async () => {
 
 function recalcularTimes() {
   for (const t of timesAtuais) {
-    t.media = t.jogadores.length ? t.jogadores.reduce((s, j) => s + (j.nota ?? 3), 0) / t.jogadores.length : 0;
+    const n = t.jogadores.length;
+    t.media = n ? t.jogadores.reduce((s, j) => s + (j.nota ?? 3), 0) / n : 0;
     t.altos = t.jogadores.filter((j) => j.altura === 'alto').length;
+    t.funcoes = funcoesDoTime(t.jogadores);
+    t.meninas = t.jogadores.filter((j) => j.menina).length;
+    t.saque = n ? t.jogadores.reduce((s, j) => s + (PESO_SAQUE[j.saque] ?? 2), 0) / n : 0;
   }
 }
+// Nome no cartão: altura, categoria e, se tiver, as funções e o 🎀
+const nomeComMarcas = (j) => {
+  const funcoes = [j.role1, j.role2].filter((r) => r && r !== 'Normal').map((r) => EMOJI_ROLE[r]).join('');
+  return `${j.nome}${j.altura === 'alto' ? ' 📏' : ''} ${emojiDaCategoria(j.categoria)}${funcoes ? ` <span class="mut">${funcoes}</span>` : ''}${j.menina ? ' 🎀' : ''}`;
+};
 
 // Toda edição é gravada na hora: recarregar a página (ou o bot) mostra a
 // versão mais nova, não a montagem original
@@ -619,7 +759,7 @@ async function salvarTimes(aviso) {
   try {
     await api('/times/salvar', {
       method: 'POST',
-      body: { grupo: grupoAtual(), times: timesAtuais.map((t) => ({ jogadores: t.jogadores })) },
+      body: { grupo: grupoAtual(), metodo: timesMetodo, times: timesAtuais.map((t) => ({ jogadores: t.jogadores })) },
     });
     timesSalvosEm = new Date().toISOString();
     if (aviso) toast(aviso);
@@ -635,7 +775,7 @@ function desenharStatusTimes() {
   const quando = timesSalvosEm
     ? new Date(timesSalvosEm).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
     : null;
-  el.innerHTML = `💾 Times salvos${quando ? ` (${quando})` : ''} na lista ${elenco.listaAtual?.data_jogo || ''} — o bot mostra esta versão no <code>#timesde</code>. Editar aqui salva na hora.`;
+  el.innerHTML = `💾 Times ${ROTULO_METODO[timesMetodo]?.toLowerCase() || ''} salvos${quando ? ` (${quando})` : ''} na lista ${elenco.listaAtual?.data_jogo || ''} — o bot mostra esta versão no <code>#timesde</code>. Editar aqui salva na hora.`;
 }
 
 function desenharTimes() {
@@ -645,8 +785,9 @@ function desenharTimes() {
     <div class="time-cartao">
       <h3>Time ${t.numero}</h3>
       <div class="media">${resumoDoTime(t)}${t.altos ? ` · ${t.altos} alto(s) 📏` : ''} · ${t.jogadores.length} jogador(es)</div>
+      <div class="resumo-perfil">${resumoPerfilDoTime(t)}</div>
       <ul>${t.jogadores.map((j, ji) => `<li>
-        <span>${j.nome}${j.altura === 'alto' ? ' 📏' : ''} ${emojiDaCategoria(j.categoria)}</span>
+        <span>${nomeComMarcas(j)}</span>
         <span style="display:flex;gap:0.25rem;align-items:center">
           <select data-mover="${ti}:${ji}" title="mudar de time">${timesAtuais.map((x) => `<option ${x.numero === t.numero ? 'selected' : ''}>${x.numero}</option>`).join('')}</select>
           <button data-sai="${ti}:${ji}" title="saiu / não foi">✕</button>
@@ -704,6 +845,8 @@ $('#btnEntrarNoTime').addEventListener('click', async () => {
     categoria: jogador.categoria ?? null,
     altura: jogador.altura ?? null,
     conhecido: jogador.notaTime != null,
+    ...perfilDoElenco(jogador.id),
+    jogador_id: jogador.id,
   });
   desenharTimes();
   await salvarTimes(`${jogador.nome} entrou no Time ${destino + 1}`);
@@ -852,6 +995,7 @@ async function trocarGrupo() {
   selecionadosEvolucao = [];
   timesAtuais = [];
   $('#timesMontados').innerHTML = '';
+  $('#comparacao').innerHTML = '';
   await recarregarTudo({ remarcarTimes: true });
 }
 

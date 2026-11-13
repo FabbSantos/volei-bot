@@ -6,17 +6,36 @@ const pelada = require('../pelada/repositorio');
 const { resolverGrupo } = require('../grupos/remoto');
 const elenco = require('./repositorio');
 const times = require('./times');
+const perfis = require('./perfis');
 const seed = require('./seed');
 
 // Prévia por padrão (times só na resposta do admin); "enviar" no fim é o que
 // posta no grupo da pelada — a montagem é determinística, então a prévia e o
 // envio produzem exatamente os mesmos times
-const REGEX_TIMES_DE = /^#timesde\s+(.+?)(?:\s+([2-6]))?(?:\s+(enviar|refazer))?$/i;
+// Dois montadores (13/11/2026): "notas" (o de sempre) e "perfil" (funções,
+// saque e meninas — a planilha do Diego). Dizer o método monta de novo com
+// ele; "comparar" mostra os dois lado a lado sem salvar nada.
+const REGEX_TIMES_DE = /^#timesde\s+(.+?)(?:\s+([2-6]))?(?:\s+(notas|perfil))?(?:\s+(enviar|refazer|comparar))?$/i;
 const REGEX_IMPORTAR_ELENCO_DE = /^#importarelencode\s+(.+)$/i;
 // Quem conta nas médias: #votos riachuelo (situação), "-nome" tira os
 // votos da pessoa, "+nome" devolve. Só no privado do dono do bot — fora dele o
 // bot fica mudo, e o comando não aparece em ajuda nenhuma.
 const REGEX_VOTOS = /^#votos\s+(.+?)(?:\s+([+-])\s*(.+))?$/i;
+
+const ROTULO_METODO = { notas: '⭐ *pelas notas*', perfil: '🧩 *pelo perfil*' };
+const EMOJI_CATEGORIA = { 4: '🔥', 3: '👍', 2: '🙂', 1: '😬' };
+const LEGENDA_RESUMO = '💥 batedor · 🧱 bloqueador · 🎯 levantador · 🛡️ defensor · 🙌 receptor · 🎀 meninas · 📏 altos · 🏐 saque médio (0 ruim – 4 muito bom)';
+
+// Uma linha por time com os dois olhares — categorias (o que o montador das
+// notas equilibra) e funções/meninas/saque (o que o do perfil equilibra)
+function resumoDoTime(t) {
+  const contar = (pares) => pares.filter(([, n]) => n).map(([e, n]) => `${e}${n}`).join(' ');
+  const categorias = contar([4, 3, 2, 1].map((c) => [EMOJI_CATEGORIA[c], t.jogadores.filter((j) => j.categoria === c).length]));
+  const funcoes = contar(Object.entries(perfis.EMOJI_ROLE).map(([role, e]) => [e, t.funcoes?.[role] || 0]));
+  const extras = contar([['🎀', t.meninas], ['📏', t.altos]]);
+  const saque = `🏐${(t.saque ?? 2).toFixed(1).replace('.', ',')}`;
+  return [categorias || '—', funcoes, extras, saque].filter(Boolean).join(' · ');
+}
 
 const timesDe = comando(REGEX_TIMES_DE, async (msg, m) => {
   // Nome de grupo terminando em número (ex: "Quadra 7") engoliria a
@@ -35,47 +54,62 @@ const timesDe = comando(REGEX_TIMES_DE, async (msg, m) => {
     return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* ainda não tem lista.`);
   }
 
-  const modo = (m[3] || '').toLowerCase();
+  const metodoPedido = (m[3] || '').toLowerCase() || null;
+  const modo = (m[4] || '').toLowerCase();
   const enviar = modo === 'enviar';
-  const refazer = modo === 'refazer';
+  const refazer = modo === 'refazer' || Boolean(metodoPedido);
+  const principal = () => pelada.entradasPrincipais(lista.id);
+  const poucos = (n) => `Só ${n} pessoa(s) na principal da lista ${lista.data_jogo} — não dá pra montar ${quantidade} times.`;
+
+  if (modo === 'comparar') {
+    const gente = principal();
+    if (gente.length < quantidade) return msg.reply(poucos(gente.length));
+    const bloco = (metodo) => {
+      const ts = times.montarPorMetodo(metodo, r.grupo.chat_id, quantidade, gente);
+      return `${ROTULO_METODO[metodo]}\n${ts.map((t) => `*Time ${t.numero}:* ${t.jogadores.map((j) => j.nome).join(', ')}\n   ${resumoDoTime(t)}`).join('\n')}`;
+    };
+    return msg.reply(
+      `⚖️ *Os dois montadores na lista ${lista.data_jogo}* (nada foi salvo nem enviado)\n\n${bloco('notas')}\n\n${bloco('perfil')}\n\n` +
+      `_${LEGENDA_RESUMO}_\nPra ficar com um: *#timesde ${m[1]} ${quantidade} notas* ou *#timesde ${m[1]} ${quantidade} perfil*`
+    );
+  }
 
   // Times salvos (montados/editados no painel ou aqui) mandam: só refaz
   // quando pedido explicitamente — senão a edição manual seria perdida
   const salvos = refazer ? null : times.getTimesSalvos(lista.id);
   let montados;
+  let metodo = metodoPedido || 'notas';
   let origem = 'novos';
   if (salvos?.times?.length) {
     montados = salvos.times;
+    metodo = salvos.metodo;
     origem = 'salvos';
   } else {
-    const principal = pelada.entradasPrincipais(lista.id);
-    if (principal.length < quantidade) {
-      return msg.reply(`Só ${principal.length} pessoa(s) na principal da lista ${lista.data_jogo} — não dá pra montar ${quantidade} times.`);
-    }
-    montados = times.montarTimes(r.grupo.chat_id, quantidade, principal);
-    times.salvarTimes(lista.id, montados);
+    const gente = principal();
+    if (gente.length < quantidade) return msg.reply(poucos(gente.length));
+    montados = times.montarPorMetodo(metodo, r.grupo.chat_id, quantidade, gente);
+    times.salvarTimes(lista.id, montados, metodo);
   }
 
   const anuncioGrupo = times.anuncioDosTimes(lista.data_jogo, montados.map((t) => t.jogadores.map((j) => j.nome)));
 
-  // O que só o ADMIN vê: quantos de cada categoria por time (sem número de
-  // nota — 28/10/2026) e quem entrou sem avaliação
-  const EMOJI = { 4: '🔥', 3: '👍', 2: '🙂', 1: '😬' };
-  const resumo = (t) => [4, 3, 2, 1]
-    .map((c) => [EMOJI[c], t.jogadores.filter((j) => j.categoria === c).length])
-    .filter(([, n]) => n).map(([e, n]) => `${e}${n}`).join(' ') || '—';
-  // Um time por linha: tudo numa linha ficava ilegível no celular
-  const comAltos = montados.some((t) => t.altos > 0);
-  const mediasTexto = `📊 *Por time (só pra vocês):*\n${montados.map((t, i) =>
-    `Time ${i + 1}: ${resumo(t)}${comAltos ? ` · 📏${t.altos}` : ''}`).join('\n')}`;
+  // O que só o ADMIN vê: categorias e funções por time (sem número de nota —
+  // 28/10/2026) e quem entrou sem avaliação. Um time por linha: tudo numa
+  // linha ficava ilegível no celular
+  const mediasTexto = `📊 *Por time (só pra vocês)* — ${ROTULO_METODO[metodo]}\n${montados.map((t, i) =>
+    `Time ${i + 1}: ${resumoDoTime(t)}`).join('\n')}\n_${LEGENDA_RESUMO}_`;
   const desconhecidos = montados.flatMap((t) => t.jogadores).filter((j) => !j.conhecido).map((j) => j.nome);
-  const avisoDesconhecidos = desconhecidos.length > 0
-    ? `\n⚠️ ${desconhecidos.length} sem avaliação no elenco (entraram como 🙂 de boa): ${desconhecidos.slice(0, 6).join(', ')}${desconhecidos.length > 6 ? ` e mais ${desconhecidos.length - 6}` : ''}. Cadastra/vota no painel.`
-    : '';
+  const semPerfil = metodo === 'perfil' ? montados.flatMap((t) => t.jogadores).filter((j) => !j.temPerfil).map((j) => j.nome) : [];
+  const listarAlguns = (nomes) => `${nomes.slice(0, 6).join(', ')}${nomes.length > 6 ? ` e mais ${nomes.length - 6}` : ''}`;
+  const avisoDesconhecidos = (desconhecidos.length > 0
+    ? `\n⚠️ ${desconhecidos.length} sem avaliação no elenco (entraram como 🙂 de boa): ${listarAlguns(desconhecidos)}. Cadastra/vota no painel.`
+    : '') + (semPerfil.length > 0
+    ? `\n⚠️ ${semPerfil.length} sem perfil (entraram como Normal): ${listarAlguns(semPerfil)}. Preenche na aba Perfis do painel.`
+    : '');
 
   if (!enviar) {
     const notaOrigem = origem === 'salvos'
-      ? `\n💾 São os times *salvos* (montados/editados no painel). Pra jogar tudo fora e montar de novo: *#timesde ${m[1]} ${quantidade} refazer*.`
+      ? `\n💾 São os times *salvos* (montados/editados no painel). Pra jogar tudo fora e montar de novo: *#timesde ${m[1]} ${quantidade} refazer* (ou com *notas*/*perfil* pra escolher o montador).`
       : `\n💾 Salvos — pode editar no painel que o bot passa a mostrar a versão editada.`;
     return msg.reply(
       `${anuncioGrupo}\n\n👆 *Prévia — o grupo NÃO recebeu nada.*\n${mediasTexto}${avisoDesconhecidos}${notaOrigem}\nGostou? Manda *#timesde ${m[1]} ${quantidade} enviar* que sai igualzinho (sem essa parte de baixo).`
