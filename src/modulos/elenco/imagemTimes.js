@@ -54,7 +54,7 @@ function htmlDosTimes({ titulo, subtitulo, colunas }) {
     </div>`).join('');
   return `<!doctype html><html><head><meta charset="utf-8"><style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #f1f5f9; font-family: 'Liberation Sans', Arial, 'Noto Color Emoji', 'WenQuanYi Micro Hei', sans-serif; color: #0f172a; }
+  body { background: #f1f5f9; font-family: 'Liberation Sans', Arial, 'Noto Color Emoji', 'WenQuanYi Micro Hei', 'DejaVu Sans', sans-serif; color: #0f172a; }
   #quadro { width: ${largura}px; padding: 20px; }
   h1 { font-size: 22px; } .sub { color: #64748b; font-size: 14px; margin: 2px 0 14px; }
   .colunas { display: flex; gap: 16px; align-items: flex-start; }
@@ -100,7 +100,7 @@ function htmlAnuncio({ dataJogo, versao, times }) {
   }).join('');
   return `<!doctype html><html><head><meta charset="utf-8"><style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Liberation Sans', Arial, 'Noto Color Emoji', 'WenQuanYi Micro Hei', sans-serif; }
+  body { font-family: 'Liberation Sans', Arial, 'Noto Color Emoji', 'WenQuanYi Micro Hei', 'DejaVu Sans', sans-serif; }
   #quadro { width: ${largura}px; padding: 28px; background: linear-gradient(160deg, #0f172a, #1e3a8a); color: #fff; }
   .topo { text-align: center; margin-bottom: 22px; }
   h1 { font-size: 30px; letter-spacing: .5px; }

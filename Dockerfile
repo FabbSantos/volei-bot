@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     fonts-liberation \
     fonts-noto-color-emoji \
     fonts-wqy-microhei \
+    fonts-dejavu-core \
     libasound2 \
     libatk-bridge2.0-0 \
     libatk1.0-0 \
