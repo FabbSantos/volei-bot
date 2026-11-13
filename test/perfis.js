@@ -144,6 +144,30 @@ const PLANILHA = [
     assert.ok(enviados.pop().includes('NASA 3.0 🚀'));
   });
 
+  console.log('\nsorteio puro');
+  await caso('sorteio: times do mesmo tamanho, todo mundo uma vez só', () => {
+    const ts = times.montarSorteio(G, 3, participantes);
+    assert.deepStrictEqual(ts.map((t) => t.jogadores.length), [6, 6, 6]);
+    assert.deepStrictEqual(ts.flatMap((t) => t.jogadores.map((x) => x.nome)).sort(), PLANILHA.map(([n]) => n).sort());
+  });
+  await caso('sorteio: muda conforme a sorte (e não é a ordem da lista)', () => {
+    let s = 7;
+    const semente = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+    const a = times.montarSorteio(G, 3, participantes, semente).map((t) => t.jogadores.map((x) => x.nome).join());
+    const b = times.montarSorteio(G, 3, participantes, semente).map((t) => t.jogadores.map((x) => x.nome).join());
+    assert.notDeepStrictEqual(a, b);
+  });
+  await caso('"#timesde ... aleatorio enviar": sorteia, salva e anuncia como NASA 1.0', async () => {
+    const enviados = [];
+    await processarComandoAdmin({ ...porta('#timesde riachuelo 3 aleatorio enviar'), enviarPara: async (_c, t) => { enviados.push(t); } });
+    assert.strictEqual(times.getTimesSalvos(lista.id).metodo, 'sorteio');
+    assert.ok(enviados.pop().includes('TECNOLOGIA DA NASA 1.0 🚀'));
+  });
+  await caso('comparar continua só notas x perfil', async () => {
+    await processarComandoAdmin(porta('#timesde riachuelo 3 comparar'));
+    assert.ok(!respostas.pop().includes('sorteio'));
+  });
+
   console.log('\nfotos dos times');
   const imagemTimes = require('../src/modulos/elenco/imagemTimes');
   const fotos = [];

@@ -17,7 +17,10 @@ db.exec(`
 `);
 // Qual montador gerou os times salvos: 'notas' (o de sempre) ou 'perfil'
 migrarColunas('times_montados', { metodo: "TEXT NOT NULL DEFAULT 'notas'" });
-const METODOS = ['notas', 'perfil'];
+// Montadores (13/11/2026): notas, perfil e sorteio (puro acaso). O comparar
+// só põe lado a lado os dois que equilibram — sorteio não tem o que comparar.
+const METODOS = ['notas', 'perfil', 'sorteio'];
+const METODOS_COMPARAVEIS = ['notas', 'perfil'];
 
 pelada.quandoApagarLista((listaId) => {
   db.prepare('DELETE FROM times_montados WHERE lista_id = ?').run(listaId);
@@ -328,18 +331,32 @@ function montarTimes(chatId, quantidadeTimes, participantes) {
   return times.map((time, i) => comResumo(time, i));
 }
 
-// Um ponto de entrada pros dois montadores
+// Sorteio puro: embaralha (Fisher-Yates) e distribui em rodízio — times do
+// mesmo tamanho, sem olhar nota, perfil, nada. A avaliação só entra no resumo
+// que os admins veem. Cada chamada sorteia de novo (por isso fica salvo).
+function montarSorteio(chatId, quantidadeTimes, participantes, aleatorio = Math.random) {
+  const gente = avaliar(chatId, participantes);
+  for (let i = gente.length - 1; i > 0; i--) {
+    const j = Math.floor(aleatorio() * (i + 1));
+    [gente[i], gente[j]] = [gente[j], gente[i]];
+  }
+  const times = Array.from({ length: quantidadeTimes }, () => []);
+  gente.forEach((p, i) => times[i % quantidadeTimes].push(p));
+  return times.map((time, i) => comResumo(time, i));
+}
+
+// Um ponto de entrada pros montadores
 function montarPorMetodo(metodo, chatId, quantidadeTimes, participantes) {
-  return metodo === 'perfil'
-    ? montarTimesPorPerfil(chatId, quantidadeTimes, participantes)
-    : montarTimes(chatId, quantidadeTimes, participantes);
+  if (metodo === 'perfil') return montarTimesPorPerfil(chatId, quantidadeTimes, participantes);
+  if (metodo === 'sorteio') return montarSorteio(chatId, quantidadeTimes, participantes);
+  return montarTimes(chatId, quantidadeTimes, participantes);
 }
 
 // O texto que o GRUPO vê: zero pista de como foi montado — nada de médias,
 // notas ou método. Tecnologia da NASA e ponto. 🚀
 // Mesmo formato no #timesde e no botão "anunciar" do painel. A única pista do
 // montador é a "versão": notas = NASA 2, perfil = NASA 3.0 (pedido de 13/11/2026).
-const VERSAO_NASA = { notas: 'NOVA TECNOLOGIA DA NASA 2', perfil: 'NOVA TECNOLOGIA DA NASA 3.0' };
+const VERSAO_NASA = { notas: 'NOVA TECNOLOGIA DA NASA 2', perfil: 'NOVA TECNOLOGIA DA NASA 3.0', sorteio: 'TECNOLOGIA DA NASA 1.0' };
 const versaoNasa = (metodo) => VERSAO_NASA[metodo] || VERSAO_NASA.notas;
 
 function anuncioDosTimes(dataJogo, times, metodo = 'notas') {
@@ -368,5 +385,5 @@ async function anunciarNoGrupo({ enviarImagemHtml, enviarTexto }, dataJogo, nome
 
 module.exports = {
   anunciarNoGrupo,
-  METODOS, montarTimes, montarTimesPorPerfil, montarPorMetodo, custoPorPerfil, salvarTimes, getTimesSalvos, apagarTimesSalvos, equilibrarMedias, anuncioDosTimes, versaoNasa,
+  METODOS, METODOS_COMPARAVEIS, montarSorteio, montarTimes, montarTimesPorPerfil, montarPorMetodo, custoPorPerfil, salvarTimes, getTimesSalvos, apagarTimesSalvos, equilibrarMedias, anuncioDosTimes, versaoNasa,
 };

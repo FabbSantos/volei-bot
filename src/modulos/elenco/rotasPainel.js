@@ -159,7 +159,7 @@ function rotasPainel(api, deps = {}) {
     }
     const n = Math.min(6, Math.max(2, parseInt(quantidade, 10) || 3));
     const participantes = nomes.map((nome) => ({ nome, numero: null }));
-    res.json(Object.fromEntries(times.METODOS.map((m) => [m, times.montarPorMetodo(m, grupo, n, participantes)])));
+    res.json(Object.fromEntries(times.METODOS_COMPARAVEIS.map((m) => [m, times.montarPorMetodo(m, grupo, n, participantes)])));
   });
 
   api.get('/times/salvos', (req, res) => {

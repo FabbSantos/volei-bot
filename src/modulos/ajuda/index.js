@@ -91,7 +91,7 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 *#cobrarsubiude <grupo>* — cobra só quem subiu da espera (prazo: dia do jogo, 17h)
 *#timesde <grupo> 3* — PRÉVIA dos times em foto (só você vê: categoria, funções, meninas e saque de cada um); mostra os salvos se já existirem · *... texto* — a prévia em texto
 *#timesde <grupo> 3 enviar* — posta no grupo em foto, só com os nomes · *... refazer* — remonta do zero
-*#timesde <grupo> 3 perfil* — monta pelo perfil (funções, saque, meninas — aba Perfis do painel) · *... notas* — pelo nível, o de sempre · *... comparar* — os dois lado a lado em foto, sem salvar
+*#timesde <grupo> 3 perfil* — monta pelo perfil (funções, saque, meninas — aba Perfis do painel) · *... notas* — pelo nível, o de sempre · *... sorteio* — 100% aleatório (cada vez sai um) · *... comparar* — notas x perfil lado a lado em foto, sem salvar
 *#destaquede <grupo>* — enquetes do 🌟 destaque de cada time + equilíbrio (sai sozinho 30min depois do jogo; resultado no dia seguinte 12h) · *... teste* posta aqui no grupo de admins · *... resultado* mostra a apuração · *... anunciar* anuncia já
 *#importarelencode <grupo>* — importa o elenco/notas da planilha antiga (uma vez)
 *#fixode <grupo> 3* — liga/desliga a vaga cativa (📌)

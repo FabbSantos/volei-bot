@@ -199,7 +199,7 @@
         <button id="btnUsarSemana">⭐ Usar a lista da semana</button>
         <button id="btnMarcarTodos">Todo o elenco</button>
         <button id="btnDesmarcar">Limpar</button>
-        <label>Montador: <select id="selMetodo"><option value="notas">⭐ pelas notas</option><option value="perfil">🧩 pelo perfil</option></select></label>
+        <label>Montador: <select id="selMetodo"><option value="notas">⭐ pelas notas</option><option value="perfil">🧩 pelo perfil</option><option value="sorteio">🎲 sorteio puro</option></select></label>
         <button class="primario" id="btnMontar">Montar times</button>
         <button id="btnComparar" title="Monta com os dois métodos lado a lado, sem salvar">⚖️ Comparar os dois</button>
         <button id="btnEnviarTimes">📣 Enviar pro grupo</button>
@@ -673,7 +673,7 @@ $('#btnMontar').addEventListener('click', async () => {
 
 // Os dois montadores com a mesma gente, lado a lado. Nada é salvo até
 // clicar em "Usar estes"
-const ROTULO_METODO = { notas: '⭐ Pelas notas', perfil: '🧩 Pelo perfil' };
+const ROTULO_METODO = { notas: '⭐ Pelas notas', perfil: '🧩 Pelo perfil', sorteio: '🎲 No sorteio' };
 let comparados = null;
 $('#btnComparar').addEventListener('click', async () => {
   if (selecionadosTimes.size < 2) return toast('Seleciona os jogadores primeiro');

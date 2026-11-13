@@ -16,14 +16,14 @@ const seed = require('./seed');
 // Dois montadores (13/11/2026): "notas" (o de sempre) e "perfil" (funções,
 // saque e meninas — a planilha do Diego). Dizer o método monta de novo com
 // ele; "comparar" mostra os dois lado a lado sem salvar nada.
-const REGEX_TIMES_DE = /^#timesde\s+(.+?)(?:\s+([2-6]))?(?:\s+(notas|perfil))?(?:\s+(enviar|refazer|comparar|foto|texto))?$/i;
+const REGEX_TIMES_DE = /^#timesde\s+(.+?)(?:\s+([2-6]))?(?:\s+(notas|perfil|sorteio|aleat[oó]rio|random))?(?:\s+(enviar|refazer|comparar|foto|texto))?$/i;
 const REGEX_IMPORTAR_ELENCO_DE = /^#importarelencode\s+(.+)$/i;
 // Quem conta nas médias: #votos riachuelo (situação), "-nome" tira os
 // votos da pessoa, "+nome" devolve. Só no privado do dono do bot — fora dele o
 // bot fica mudo, e o comando não aparece em ajuda nenhuma.
 const REGEX_VOTOS = /^#votos\s+(.+?)(?:\s+([+-])\s*(.+))?$/i;
 
-const ROTULO_METODO = { notas: '⭐ *pelas notas*', perfil: '🧩 *pelo perfil*' };
+const ROTULO_METODO = { notas: '⭐ *pelas notas*', perfil: '🧩 *pelo perfil*', sorteio: '🎲 *no sorteio*' };
 const EMOJI_CATEGORIA = { 4: '🔥', 3: '👍', 2: '🙂', 1: '😬' };
 const LEGENDA_RESUMO = '💥 batedor • 🧱 bloqueador • 🎯 levantador • 🛡️ defensor • 🙌 receptor • 🎀 meninas • 📏 altos • 🏐 saque médio (0 ruim – 4 muito bom)';
 
@@ -40,7 +40,7 @@ function resumoDoTime(t) {
 
 // "Print" dos times (13/11/2026: o texto do comparar ficava ilegível). Devolve
 // false se não deu — quem chamou cai no texto de sempre.
-const TITULO_FOTO = { notas: '⭐ Pelas notas (NASA 2)', perfil: '🧩 Pelo perfil (NASA 3.0)' };
+const TITULO_FOTO = { notas: '⭐ Pelas notas (NASA 2)', perfil: '🧩 Pelo perfil (NASA 3.0)', sorteio: '🎲 Sorteio puro (NASA 1.0)' };
 async function enviarFoto(msg, dados, legenda) {
   if (!msg.enviarImagemHtml) return false;
   try {
@@ -69,7 +69,8 @@ const timesDe = comando(REGEX_TIMES_DE, async (msg, m) => {
     return msg.reply(`*${r.grupo.nome || r.grupo.chat_id}* ainda não tem lista.`);
   }
 
-  const metodoPedido = (m[3] || '').toLowerCase() || null;
+  // aleatório/random são o mesmo sorteio
+  const metodoPedido = (m[3] || '').toLowerCase().replace(/^(aleat[oó]rio|random)$/, 'sorteio') || null;
   const modo = (m[4] || '').toLowerCase();
   const enviar = modo === 'enviar';
   const refazer = modo === 'refazer' || Boolean(metodoPedido);
@@ -79,13 +80,13 @@ const timesDe = comando(REGEX_TIMES_DE, async (msg, m) => {
   if (modo === 'comparar') {
     const gente = principal();
     if (gente.length < quantidade) return msg.reply(poucos(gente.length));
-    const montadosPor = Object.fromEntries(times.METODOS.map((mt) => [mt, times.montarPorMetodo(mt, r.grupo.chat_id, quantidade, gente)]));
+    const montadosPor = Object.fromEntries(times.METODOS_COMPARAVEIS.map((mt) => [mt, times.montarPorMetodo(mt, r.grupo.chat_id, quantidade, gente)]));
     const cabecalho = `⚖️ *Os dois montadores na lista ${lista.data_jogo}* (nada foi salvo nem enviado)`;
     const praFicar = `Pra ficar com um: *#timesde ${m[1]} ${quantidade} notas* ou *#timesde ${m[1]} ${quantidade} perfil*`;
     const foto = await enviarFoto(msg, {
       titulo: `Os dois montadores — ${lista.data_jogo}`,
       subtitulo: 'Nada foi salvo nem enviado',
-      colunas: times.METODOS.map((mt) => ({ titulo: TITULO_FOTO[mt], times: montadosPor[mt] })),
+      colunas: times.METODOS_COMPARAVEIS.map((mt) => ({ titulo: TITULO_FOTO[mt], times: montadosPor[mt] })),
     }, `${cabecalho}\n${praFicar}`);
     if (foto) return null;
     const bloco = (metodo) =>
@@ -134,7 +135,9 @@ const timesDe = comando(REGEX_TIMES_DE, async (msg, m) => {
   if (!enviar && modo !== 'texto') {
     const notaFoto = origem === 'salvos'
       ? `\n💾 São os times *salvos*. Pra montar de novo: *#timesde ${m[1]} ${quantidade} refazer* (ou *perfil* / *notas* no lugar de refazer).`
-      : '\n💾 Salvos — dá pra editar no painel.';
+      : metodo === 'sorteio'
+        ? `\n💾 Salvos — não gostou? *#timesde ${m[1]} ${quantidade} sorteio* sorteia de novo.`
+        : '\n💾 Salvos — dá pra editar no painel.';
     const foto = await enviarFoto(msg, {
       titulo: `Times — ${lista.data_jogo}`,
       subtitulo: `${TITULO_FOTO[metodo]} | prévia, o grupo não recebeu nada`,
