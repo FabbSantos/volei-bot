@@ -337,14 +337,18 @@ function montarPorMetodo(metodo, chatId, quantidadeTimes, participantes) {
 
 // O texto que o GRUPO vê: zero pista de como foi montado — nada de médias,
 // notas ou método. Tecnologia da NASA e ponto. 🚀
-// Mesmo formato no #timesde e no botão "anunciar" do painel.
-function anuncioDosTimes(dataJogo, times) {
+// Mesmo formato no #timesde e no botão "anunciar" do painel. A única pista do
+// montador é a "versão": notas = NASA 2, perfil = NASA 3.0 (pedido de 13/11/2026).
+const VERSAO_NASA = { notas: 'NOVA TECNOLOGIA DA NASA 2', perfil: 'NOVA TECNOLOGIA DA NASA 3.0' };
+const versaoNasa = (metodo) => VERSAO_NASA[metodo] || VERSAO_NASA.notas;
+
+function anuncioDosTimes(dataJogo, times, metodo = 'notas') {
   const linhas = times.map((t, i) =>
     `⚔️ *Time ${i + 1}*\n${t.map((nome) => `• ${nome}`).join('\n')}`
   );
-  return `🏐 *Times da pelada${dataJogo ? ` — ${dataJogo}` : ''}*\nMontados com a NOVA TECNOLOGIA DA NASA 2 🚀\n\n${linhas.join('\n\n')}\n\nBom jogo! 🔥`;
+  return `🏐 *Times da pelada${dataJogo ? ` — ${dataJogo}` : ''}*\nMontados com a ${versaoNasa(metodo)} 🚀\n\n${linhas.join('\n\n')}\n\nBom jogo! 🔥`;
 }
 
 module.exports = {
-  METODOS, montarTimes, montarTimesPorPerfil, montarPorMetodo, custoPorPerfil, salvarTimes, getTimesSalvos, apagarTimesSalvos, equilibrarMedias, anuncioDosTimes,
+  METODOS, montarTimes, montarTimesPorPerfil, montarPorMetodo, custoPorPerfil, salvarTimes, getTimesSalvos, apagarTimesSalvos, equilibrarMedias, anuncioDosTimes, versaoNasa,
 };

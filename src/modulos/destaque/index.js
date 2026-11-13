@@ -126,11 +126,11 @@ const enquetesDa = (rodadaId) =>
 
 // ---- postar -------------------------------------------------------------------
 
-function textoDeAbertura(lista, teste, resultadoEm) {
+function textoDeAbertura(lista, teste, resultadoEm, metodo = 'notas') {
   return `${teste ? '🧪 *TESTE* — só aqui no grupo de admins, a pelada não vê nada.\n\n' : ''}` +
     `🏐 *Fim de pelada${lista.data_jogo ? ` (${lista.data_jogo})` : ''}!* Hora de votar no 🌟 *destaque* de cada time.\n\n` +
     `Não é o melhor da quadra: é quem jogou *acima do próprio normal* hoje. Voto em si mesmo não conta 😏\n\n` +
-    `E na última enquete: os times da *NOVA TECNOLOGIA DA NASA 2* 🚀 ficaram equilibrados?\n\n` +
+    `E na última enquete: os times da *${times.versaoNasa(metodo)}* 🚀 ficaram equilibrados?\n\n` +
     `${teste ? 'Resultado: *#destaquede <grupo> resultado* 👇' : `Resultado ${resultadoEm} 👇`}`;
 }
 
@@ -145,7 +145,7 @@ async function postar(canal, lista, destino, { teste = false } = {}) {
   const rodadaId = r.lastInsertRowid;
   const guardar = db.prepare('INSERT INTO destaque_enquetes (rodada_id, tipo, time_numero, msg_id, opcoes) VALUES (?, ?, ?, ?, ?)');
 
-  await canal.enviarTexto(destino, textoDeAbertura(lista, teste, 'amanhã ao meio-dia'));
+  await canal.enviarTexto(destino, textoDeAbertura(lista, teste, 'amanhã ao meio-dia', salvos.metodo));
   for (const t of comGente) {
     const opcoes = t.jogadores.slice(0, MAX_OPCOES).map((j) => j.nome);
     const msgId = await canal.enviarEnquete(destino, `🌟 Destaque do Time ${t.numero} — quem jogou acima do próprio normal?`, opcoes);

@@ -134,6 +134,15 @@ const PLANILHA = [
     await processarComandoAdmin(porta('#timesde riachuelo 3 notas'));
     assert.strictEqual(times.getTimesSalvos(lista.id).metodo, 'notas');
   });
+  await caso('anúncio: notas = NASA 2, perfil = NASA 3.0', async () => {
+    const enviados = [];
+    const portaEnvio = (body) => ({ ...porta(body), enviarPara: async (_c, t) => { enviados.push(t); } });
+    await processarComandoAdmin(portaEnvio('#timesde riachuelo enviar'));
+    assert.ok(enviados.pop().includes('NASA 2 🚀'));
+    await processarComandoAdmin(porta('#timesde riachuelo 3 perfil'));
+    await processarComandoAdmin(portaEnvio('#timesde riachuelo enviar'));
+    assert.ok(enviados.pop().includes('NASA 3.0 🚀'));
+  });
 
   fecharBanco();
   fs.rmSync(pasta, { recursive: true, force: true });

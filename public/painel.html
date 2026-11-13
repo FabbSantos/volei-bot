@@ -728,6 +728,7 @@ $('#btnEnviarTimes').addEventListener('click', async () => {
       body: {
         grupo: grupoAtual(),
         dataJogo: listas[0]?.data_jogo ?? null,
+        metodo: timesMetodo,
         times: timesAtuais.map((t) => ({ jogadores: t.jogadores.map((j) => j.nome) })),
       },
     });

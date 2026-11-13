@@ -194,14 +194,14 @@ function rotasPainel(api, deps = {}) {
   // Publica no grupo EXATAMENTE os times montados/ajustados na página —
   // mesmo texto do #timesde enviar: tecnologia da NASA, zero pistas do método
   api.post('/times/anunciar', async (req, res) => {
-    const { grupo, dataJogo, times: montados } = req.body || {};
+    const { grupo, dataJogo, times: montados, metodo } = req.body || {};
     if (!deps.enviarPara) {
       return res.status(503).json({ erro: 'Envio pro grupo indisponível (bot desconectado?).' });
     }
     if (!grupo || !Array.isArray(montados) || montados.length === 0) {
       return res.status(400).json({ erro: 'grupo e times são obrigatórios' });
     }
-    const anuncio = times.anuncioDosTimes(dataJogo, montados.map((t) => t.jogadores || []));
+    const anuncio = times.anuncioDosTimes(dataJogo, montados.map((t) => t.jogadores || []), times.METODOS.includes(metodo) ? metodo : 'notas');
     try {
       await deps.enviarPara(grupo, anuncio);
       res.json({ ok: true });

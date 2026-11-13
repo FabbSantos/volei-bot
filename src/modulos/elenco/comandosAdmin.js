@@ -91,7 +91,7 @@ const timesDe = comando(REGEX_TIMES_DE, async (msg, m) => {
     times.salvarTimes(lista.id, montados, metodo);
   }
 
-  const anuncioGrupo = times.anuncioDosTimes(lista.data_jogo, montados.map((t) => t.jogadores.map((j) => j.nome)));
+  const anuncioGrupo = times.anuncioDosTimes(lista.data_jogo, montados.map((t) => t.jogadores.map((j) => j.nome)), metodo);
 
   // O que só o ADMIN vê: categorias e funções por time (sem número de nota —
   // 28/10/2026) e quem entrou sem avaliação. Um time por linha: tudo numa
