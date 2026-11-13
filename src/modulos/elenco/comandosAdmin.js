@@ -16,7 +16,7 @@ const seed = require('./seed');
 // Dois montadores (13/11/2026): "notas" (o de sempre) e "perfil" (funções,
 // saque e meninas — a planilha do Diego). Dizer o método monta de novo com
 // ele; "comparar" mostra os dois lado a lado sem salvar nada.
-const REGEX_TIMES_DE = /^#timesde\s+(.+?)(?:\s+([2-6]))?(?:\s+(notas|perfil))?(?:\s+(enviar|refazer|comparar|foto))?$/i;
+const REGEX_TIMES_DE = /^#timesde\s+(.+?)(?:\s+([2-6]))?(?:\s+(notas|perfil))?(?:\s+(enviar|refazer|comparar|foto|texto))?$/i;
 const REGEX_IMPORTAR_ELENCO_DE = /^#importarelencode\s+(.+)$/i;
 // Quem conta nas médias: #votos riachuelo (situação), "-nome" tira os
 // votos da pessoa, "+nome" devolve. Só no privado do dono do bot — fora dele o
@@ -129,15 +129,17 @@ const timesDe = comando(REGEX_TIMES_DE, async (msg, m) => {
     ? `\n⚠️ ${semPerfil.length} sem perfil (entraram como Normal): ${listarAlguns(semPerfil)}. Preenche na aba Perfis do painel.`
     : '');
 
-  if (modo === 'foto') {
+  // A prévia sai em FOTO por padrão (pedido de 13/11/2026); "texto" no fim
+  // pede a prévia antiga, em texto ("foto" continua aceito, é o mesmo)
+  if (!enviar && modo !== 'texto') {
     const notaFoto = origem === 'salvos'
-      ? `\n💾 São os times *salvos*. Pra montar de novo: *#timesde ${m[1]} ${quantidade} refazer foto* (ou *perfil foto* / *notas foto*).`
+      ? `\n💾 São os times *salvos*. Pra montar de novo: *#timesde ${m[1]} ${quantidade} refazer* (ou *perfil* / *notas* no lugar de refazer).`
       : '\n💾 Salvos — dá pra editar no painel.';
     const foto = await enviarFoto(msg, {
       titulo: `Times — ${lista.data_jogo}`,
       subtitulo: `${TITULO_FOTO[metodo]} | prévia, o grupo não recebeu nada`,
       colunas: [{ titulo: null, times: montados }],
-    }, `📸 *Prévia — o grupo NÃO recebeu nada.* ${ROTULO_METODO[metodo]}${avisoDesconhecidos}${notaFoto}\nGostou? *#timesde ${m[1]} ${quantidade} enviar*`);
+    }, `📸 *Prévia — o grupo NÃO recebeu nada.* ${ROTULO_METODO[metodo]}${avisoDesconhecidos}${notaFoto}\nGostou? *#timesde ${m[1]} ${quantidade} enviar* (vai pro grupo em foto, só com os nomes). Em texto: *#timesde ${m[1]} texto*`);
     if (foto) return null;
     // sem foto (navegador ocupado?): cai na prévia em texto logo abaixo
   }
@@ -147,7 +149,7 @@ const timesDe = comando(REGEX_TIMES_DE, async (msg, m) => {
       ? `\n💾 São os times *salvos* (montados/editados no painel). Pra jogar tudo fora e montar de novo: *#timesde ${m[1]} ${quantidade} refazer* (ou com *notas*/*perfil* pra escolher o montador).`
       : `\n💾 Salvos — pode editar no painel que o bot passa a mostrar a versão editada.`;
     return msg.reply(
-      `${anuncioGrupo}\n\n👆 *Prévia — o grupo NÃO recebeu nada.*\n${mediasTexto}${avisoDesconhecidos}${notaOrigem}\nGostou? Manda *#timesde ${m[1]} ${quantidade} enviar* que vai pro grupo em foto, com esses nomes (sem essa parte de baixo). Pra ver os detalhes em imagem: *#timesde ${m[1]} foto*.`
+      `${anuncioGrupo}\n\n👆 *Prévia — o grupo NÃO recebeu nada.*\n${mediasTexto}${avisoDesconhecidos}${notaOrigem}\nGostou? Manda *#timesde ${m[1]} ${quantidade} enviar* que vai pro grupo em foto, com esses nomes (sem essa parte de baixo).`
     );
   }
 

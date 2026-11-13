@@ -177,6 +177,19 @@ const PLANILHA = [
     assert.ok(f.html.includes('Pelo perfil') && f.legenda.includes('Prévia'), f.legenda);
     assert.strictEqual(times.getTimesSalvos(lista.id).metodo, 'perfil');
   });
+  await caso('#timesde sem nada no fim já mostra a prévia em foto', async () => {
+    respostas.length = 0;
+    await processarComandoAdmin(portaFoto('#timesde riachuelo'));
+    const f = fotos.pop();
+    assert.ok(f.html.includes('Time 1') && f.legenda.includes('Prévia'), f.legenda);
+    assert.strictEqual(respostas.length, 0, 'sem texto junto');
+  });
+  await caso('"texto" no fim: a prévia antiga, em texto', async () => {
+    const antes = fotos.length;
+    await processarComandoAdmin(portaFoto('#timesde riachuelo texto'));
+    assert.strictEqual(fotos.length, antes, 'não gera foto');
+    assert.ok(respostas.pop().includes('Prévia — o grupo NÃO recebeu nada'));
+  });
   await caso('enviar: o grupo recebe a foto só com os nomes', async () => {
     await processarComandoAdmin(portaFoto('#timesde riachuelo enviar'));
     const r = respostas.pop();
