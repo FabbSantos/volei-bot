@@ -7,6 +7,7 @@ const { resolverGrupo } = require('../grupos/remoto');
 const elenco = require('./repositorio');
 const times = require('./times');
 const perfis = require('./perfis');
+const imagemTimes = require('./imagemTimes');
 const seed = require('./seed');
 
 // Prévia por padrão (times só na resposta do admin); "enviar" no fim é o que
@@ -15,7 +16,7 @@ const seed = require('./seed');
 // Dois montadores (13/11/2026): "notas" (o de sempre) e "perfil" (funções,
 // saque e meninas — a planilha do Diego). Dizer o método monta de novo com
 // ele; "comparar" mostra os dois lado a lado sem salvar nada.
-const REGEX_TIMES_DE = /^#timesde\s+(.+?)(?:\s+([2-6]))?(?:\s+(notas|perfil))?(?:\s+(enviar|refazer|comparar))?$/i;
+const REGEX_TIMES_DE = /^#timesde\s+(.+?)(?:\s+([2-6]))?(?:\s+(notas|perfil))?(?:\s+(enviar|refazer|comparar|foto))?$/i;
 const REGEX_IMPORTAR_ELENCO_DE = /^#importarelencode\s+(.+)$/i;
 // Quem conta nas médias: #votos riachuelo (situação), "-nome" tira os
 // votos da pessoa, "+nome" devolve. Só no privado do dono do bot — fora dele o
@@ -24,7 +25,7 @@ const REGEX_VOTOS = /^#votos\s+(.+?)(?:\s+([+-])\s*(.+))?$/i;
 
 const ROTULO_METODO = { notas: '⭐ *pelas notas*', perfil: '🧩 *pelo perfil*' };
 const EMOJI_CATEGORIA = { 4: '🔥', 3: '👍', 2: '🙂', 1: '😬' };
-const LEGENDA_RESUMO = '💥 batedor · 🧱 bloqueador · 🎯 levantador · 🛡️ defensor · 🙌 receptor · 🎀 meninas · 📏 altos · 🏐 saque médio (0 ruim – 4 muito bom)';
+const LEGENDA_RESUMO = '💥 batedor • 🧱 bloqueador • 🎯 levantador • 🛡️ defensor • 🙌 receptor • 🎀 meninas • 📏 altos • 🏐 saque médio (0 ruim – 4 muito bom)';
 
 // Uma linha por time com os dois olhares — categorias (o que o montador das
 // notas equilibra) e funções/meninas/saque (o que o do perfil equilibra)
@@ -34,7 +35,21 @@ function resumoDoTime(t) {
   const funcoes = contar(Object.entries(perfis.EMOJI_ROLE).map(([role, e]) => [e, t.funcoes?.[role] || 0]));
   const extras = contar([['🎀', t.meninas], ['📏', t.altos]]);
   const saque = `🏐${(t.saque ?? 2).toFixed(1).replace('.', ',')}`;
-  return [categorias || '—', funcoes, extras, saque].filter(Boolean).join(' · ');
+  return [categorias || '—', funcoes, extras, saque].filter(Boolean).join('  |  ');
+}
+
+// "Print" dos times (13/11/2026: o texto do comparar ficava ilegível). Devolve
+// false se não deu — quem chamou cai no texto de sempre.
+const TITULO_FOTO = { notas: '⭐ Pelas notas (NASA 2)', perfil: '🧩 Pelo perfil (NASA 3.0)' };
+async function enviarFoto(msg, dados, legenda) {
+  if (!msg.enviarImagemHtml) return false;
+  try {
+    await msg.enviarImagemHtml(imagemTimes.htmlDosTimes(dados), legenda);
+    return true;
+  } catch (err) {
+    console.warn(`[times] não consegui gerar a foto: ${err.message}`);
+    return false;
+  }
 }
 
 const timesDe = comando(REGEX_TIMES_DE, async (msg, m) => {
@@ -64,13 +79,20 @@ const timesDe = comando(REGEX_TIMES_DE, async (msg, m) => {
   if (modo === 'comparar') {
     const gente = principal();
     if (gente.length < quantidade) return msg.reply(poucos(gente.length));
-    const bloco = (metodo) => {
-      const ts = times.montarPorMetodo(metodo, r.grupo.chat_id, quantidade, gente);
-      return `${ROTULO_METODO[metodo]}\n${ts.map((t) => `*Time ${t.numero}:* ${t.jogadores.map((j) => j.nome).join(', ')}\n   ${resumoDoTime(t)}`).join('\n')}`;
-    };
+    const montadosPor = Object.fromEntries(times.METODOS.map((mt) => [mt, times.montarPorMetodo(mt, r.grupo.chat_id, quantidade, gente)]));
+    const cabecalho = `⚖️ *Os dois montadores na lista ${lista.data_jogo}* (nada foi salvo nem enviado)`;
+    const praFicar = `Pra ficar com um: *#timesde ${m[1]} ${quantidade} notas* ou *#timesde ${m[1]} ${quantidade} perfil*`;
+    const foto = await enviarFoto(msg, {
+      titulo: `Os dois montadores — ${lista.data_jogo}`,
+      subtitulo: 'Nada foi salvo nem enviado',
+      colunas: times.METODOS.map((mt) => ({ titulo: TITULO_FOTO[mt], times: montadosPor[mt] })),
+    }, `${cabecalho}\n${praFicar}`);
+    if (foto) return null;
+    const bloco = (metodo) =>
+      `${ROTULO_METODO[metodo]}\n${montadosPor[metodo].map((t) => `*Time ${t.numero}:* ${t.jogadores.map((j) => j.nome).join(', ')}\n   ${resumoDoTime(t)}`).join('\n')}`;
     return msg.reply(
-      `⚖️ *Os dois montadores na lista ${lista.data_jogo}* (nada foi salvo nem enviado)\n\n${bloco('notas')}\n\n${bloco('perfil')}\n\n` +
-      `_${LEGENDA_RESUMO}_\nPra ficar com um: *#timesde ${m[1]} ${quantidade} notas* ou *#timesde ${m[1]} ${quantidade} perfil*`
+      `${cabecalho}\n\n${bloco('notas')}\n\n${bloco('perfil')}\n\n` +
+      `_${LEGENDA_RESUMO}_\n${praFicar}`
     );
   }
 
@@ -107,22 +129,39 @@ const timesDe = comando(REGEX_TIMES_DE, async (msg, m) => {
     ? `\n⚠️ ${semPerfil.length} sem perfil (entraram como Normal): ${listarAlguns(semPerfil)}. Preenche na aba Perfis do painel.`
     : '');
 
+  if (modo === 'foto') {
+    const notaFoto = origem === 'salvos'
+      ? `\n💾 São os times *salvos*. Pra montar de novo: *#timesde ${m[1]} ${quantidade} refazer foto* (ou *perfil foto* / *notas foto*).`
+      : '\n💾 Salvos — dá pra editar no painel.';
+    const foto = await enviarFoto(msg, {
+      titulo: `Times — ${lista.data_jogo}`,
+      subtitulo: `${TITULO_FOTO[metodo]} | prévia, o grupo não recebeu nada`,
+      colunas: [{ titulo: null, times: montados }],
+    }, `📸 *Prévia — o grupo NÃO recebeu nada.* ${ROTULO_METODO[metodo]}${avisoDesconhecidos}${notaFoto}\nGostou? *#timesde ${m[1]} ${quantidade} enviar*`);
+    if (foto) return null;
+    // sem foto (navegador ocupado?): cai na prévia em texto logo abaixo
+  }
+
   if (!enviar) {
     const notaOrigem = origem === 'salvos'
       ? `\n💾 São os times *salvos* (montados/editados no painel). Pra jogar tudo fora e montar de novo: *#timesde ${m[1]} ${quantidade} refazer* (ou com *notas*/*perfil* pra escolher o montador).`
       : `\n💾 Salvos — pode editar no painel que o bot passa a mostrar a versão editada.`;
     return msg.reply(
-      `${anuncioGrupo}\n\n👆 *Prévia — o grupo NÃO recebeu nada.*\n${mediasTexto}${avisoDesconhecidos}${notaOrigem}\nGostou? Manda *#timesde ${m[1]} ${quantidade} enviar* que sai igualzinho (sem essa parte de baixo).`
+      `${anuncioGrupo}\n\n👆 *Prévia — o grupo NÃO recebeu nada.*\n${mediasTexto}${avisoDesconhecidos}${notaOrigem}\nGostou? Manda *#timesde ${m[1]} ${quantidade} enviar* que vai pro grupo em foto, com esses nomes (sem essa parte de baixo). Pra ver os detalhes em imagem: *#timesde ${m[1]} foto*.`
     );
   }
 
+  let como;
   try {
-    await msg.enviarPara(r.grupo.chat_id, anuncioGrupo);
+    como = await times.anunciarNoGrupo({
+      enviarImagemHtml: msg.enviarImagemHtmlPara && ((html, legenda) => msg.enviarImagemHtmlPara(r.grupo.chat_id, html, legenda)),
+      enviarTexto: (texto) => msg.enviarPara(r.grupo.chat_id, texto),
+    }, lista.data_jogo, montados.map((t) => t.jogadores.map((j) => j.nome)), metodo);
   } catch (err) {
-    return msg.reply(`⚠️ Não consegui mandar no grupo (${err.message}).`);
+    return msg.reply(`⚠️ Não consegui enviar no grupo (${err.message}).`);
   }
   return msg.reply(
-    `⚔️ ${quantidade} times anunciados na lista ${lista.data_jogo}.\n${mediasTexto}${avisoDesconhecidos}`
+    `⚔️ ${quantidade} times anunciados na lista ${lista.data_jogo}${como === 'foto' ? ' (em foto)' : ''}.\n${mediasTexto}${avisoDesconhecidos}`
   );
 });
 

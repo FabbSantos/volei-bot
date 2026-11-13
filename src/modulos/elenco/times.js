@@ -349,6 +349,24 @@ function anuncioDosTimes(dataJogo, times, metodo = 'notas') {
   return `🏐 *Times da pelada${dataJogo ? ` — ${dataJogo}` : ''}*\nMontados com a ${versaoNasa(metodo)} 🚀\n\n${linhas.join('\n\n')}\n\nBom jogo! 🔥`;
 }
 
+// Anúncio no grupo: como FOTO (nomes bem espaçados, 13/11/2026); se o print
+// falhar ou o canal não tiver foto, sai o texto de sempre. Devolve 'foto'|'texto'.
+async function anunciarNoGrupo({ enviarImagemHtml, enviarTexto }, dataJogo, nomesPorTime, metodo = 'notas') {
+  if (enviarImagemHtml) {
+    try {
+      const imagemTimes = require('./imagemTimes');
+      const html = imagemTimes.htmlAnuncio({ dataJogo, versao: versaoNasa(metodo), times: nomesPorTime });
+      await enviarImagemHtml(html, `🏐 *Times da pelada${dataJogo ? ` — ${dataJogo}` : ''}* 🚀\nBom jogo! 🔥`);
+      return 'foto';
+    } catch (err) {
+      console.warn(`[times] anúncio em foto falhou (${err.message}) — indo em texto`);
+    }
+  }
+  await enviarTexto(anuncioDosTimes(dataJogo, nomesPorTime, metodo));
+  return 'texto';
+}
+
 module.exports = {
+  anunciarNoGrupo,
   METODOS, montarTimes, montarTimesPorPerfil, montarPorMetodo, custoPorPerfil, salvarTimes, getTimesSalvos, apagarTimesSalvos, equilibrarMedias, anuncioDosTimes, versaoNasa,
 };

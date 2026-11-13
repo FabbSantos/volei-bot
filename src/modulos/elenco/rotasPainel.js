@@ -201,10 +201,12 @@ function rotasPainel(api, deps = {}) {
     if (!grupo || !Array.isArray(montados) || montados.length === 0) {
       return res.status(400).json({ erro: 'grupo e times são obrigatórios' });
     }
-    const anuncio = times.anuncioDosTimes(dataJogo, montados.map((t) => t.jogadores || []), times.METODOS.includes(metodo) ? metodo : 'notas');
     try {
-      await deps.enviarPara(grupo, anuncio);
-      res.json({ ok: true });
+      const como = await times.anunciarNoGrupo({
+        enviarImagemHtml: deps.enviarImagemHtmlPara && ((html, legenda) => deps.enviarImagemHtmlPara(grupo, html, legenda)),
+        enviarTexto: (texto) => deps.enviarPara(grupo, texto),
+      }, dataJogo, montados.map((t) => t.jogadores || []), times.METODOS.includes(metodo) ? metodo : 'notas');
+      res.json({ ok: true, como });
     } catch (err) {
       res.status(502).json({ erro: `Falha ao mandar no grupo: ${err.message}` });
     }

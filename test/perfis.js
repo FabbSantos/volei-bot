@@ -144,6 +144,54 @@ const PLANILHA = [
     assert.ok(enviados.pop().includes('NASA 3.0 🚀'));
   });
 
+  console.log('\nfotos dos times');
+  const imagemTimes = require('../src/modulos/elenco/imagemTimes');
+  const fotos = [];
+  const portaFoto = (body, falha = false) => ({
+    ...porta(body),
+    enviarImagemHtml: async (html, legenda) => { if (falha) throw new Error('chrome ocupado'); fotos.push({ html, legenda }); },
+    enviarImagemHtmlPara: async (chatId, html, legenda) => { if (falha) throw new Error('chrome ocupado'); fotos.push({ chatId, html, legenda }); },
+    enviarPara: async (chatId, texto) => { fotos.push({ chatId, texto }); },
+  });
+  await caso('o HTML escapa nome com < e &', () => {
+    const html = imagemTimes.htmlAnuncio({ dataJogo: '20/11', versao: 'X', times: [['<b>Zé & cia</b>']] });
+    assert.ok(html.includes('&lt;b&gt;Zé &amp; cia&lt;/b&gt;') && !html.includes('<b>Zé'));
+  });
+  await caso('comparar vai em foto, com os dois montadores, sem salvar', async () => {
+    times.apagarTimesSalvos(lista.id);
+    respostas.length = 0;
+    await processarComandoAdmin(portaFoto('#timesde riachuelo 3 comparar'));
+    const f = fotos.pop();
+    assert.ok(f.html.includes('Pelas notas') && f.html.includes('Pelo perfil') && f.html.includes('Juca'), 'html');
+    assert.ok(f.legenda.includes('nada foi salvo'));
+    assert.strictEqual(respostas.length, 0, 'não manda o texto junto');
+    assert.strictEqual(times.getTimesSalvos(lista.id), null);
+  });
+  await caso('foto falhou: comparar cai no texto', async () => {
+    await processarComandoAdmin(portaFoto('#timesde riachuelo 3 comparar', true));
+    assert.ok(respostas.pop().includes('pelo perfil'));
+  });
+  await caso('"perfil foto" monta, salva e mostra a prévia em imagem', async () => {
+    await processarComandoAdmin(portaFoto('#timesde riachuelo 3 perfil foto'));
+    const f = fotos.pop();
+    assert.ok(f.html.includes('Pelo perfil') && f.legenda.includes('Prévia'), f.legenda);
+    assert.strictEqual(times.getTimesSalvos(lista.id).metodo, 'perfil');
+  });
+  await caso('enviar: o grupo recebe a foto só com os nomes', async () => {
+    await processarComandoAdmin(portaFoto('#timesde riachuelo enviar'));
+    const r = respostas.pop();
+    assert.ok(r.includes('(em foto)'), r);
+    const f = fotos.pop();
+    assert.strictEqual(f.chatId, G);
+    assert.ok(f.html.includes('NASA 3.0') && f.html.includes('Juca'));
+    assert.ok(!/MB|👍|😬|💥|🛡️|🎀|📏|saque|class="cat"/i.test(f.html),'nada de nota, função ou saque na foto do grupo');
+  });
+  await caso('enviar com a foto falhando: vai o texto de sempre', async () => {
+    await processarComandoAdmin(portaFoto('#timesde riachuelo enviar', true));
+    const f = fotos.pop();
+    assert.ok(f.texto && f.texto.includes('NASA 3.0 🚀') && f.texto.includes('• Juca'));
+  });
+
   fecharBanco();
   fs.rmSync(pasta, { recursive: true, force: true });
   if (falhas) {

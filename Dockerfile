@@ -3,6 +3,8 @@ FROM node:20-slim
 # Bibliotecas que o Chrome for Testing (baixado pelo Puppeteer) precisa em runtime
 RUN apt-get update && apt-get install -y \
     fonts-liberation \
+    fonts-noto-color-emoji \
+    fonts-wqy-microhei \
     libasound2 \
     libatk-bridge2.0-0 \
     libatk1.0-0 \

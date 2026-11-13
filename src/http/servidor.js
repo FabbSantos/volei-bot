@@ -4,6 +4,7 @@ const path = require('path');
 const express = require('express');
 const { registrarPainel } = require('./painel');
 const { enviarArquivoNoChat } = require('../whatsapp/contatos');
+const { enviarHtmlComoImagem } = require('../whatsapp/print');
 
 // sessao: ver whatsapp/sessao.js — o servidor só lê o estado e envia por ela
 function criarServidor(sessao) {
@@ -35,6 +36,12 @@ function criarServidor(sessao) {
       const cliente = sessao.cliente();
       if (!cliente) return Promise.reject(new Error('bot desconectado'));
       return cliente.sendText(chatId, texto, opcoes);
+    },
+    // Times anunciados como foto pelo botão do painel
+    enviarImagemHtmlPara: (chatId, html, legenda) => {
+      const cliente = sessao.cliente();
+      if (!cliente) return Promise.reject(new Error('bot desconectado'));
+      return enviarHtmlComoImagem(cliente, chatId, html, legenda);
     },
     // Os cortes de #replay saem por aqui quando o vídeo termina de processar
     enviarArquivoPara: (chatId, caminho, legenda) => {

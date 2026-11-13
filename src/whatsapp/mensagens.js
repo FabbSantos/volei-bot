@@ -6,6 +6,7 @@ const grupos = require('../modulos/grupos/repositorio');
 const {
   ADMIN_NUMBER, enviarFigurinhaNoChat, enviarArquivoNoChat, enviarEnqueteNoChat, lerVotosDaEnquete, baixarMidia, lidParaNumero, listarAdminsDoGrupo, listarMembrosDoGrupo, ehAdminDoBot, ehAdminDoGrupo,
 } = require('./contatos');
+const { enviarHtmlComoImagem } = require('./print');
 
 const NOME_GRUPO_ALVO = process.env.NOME_GRUPO_ALVO || null; // opcional: filtrar por nome do grupo
 
@@ -23,6 +24,9 @@ function portaDeAdmin(client, message, origem, sessao) {
     enviarFigurinhaPara: (chatId, caminho) => enviarFigurinhaNoChat(client, chatId, caminho),
     enviarArquivoPara: (chatId, caminho, legenda) => enviarArquivoNoChat(client, chatId, caminho, legenda),
     enviarEnquetePara: (chatId, titulo, opcoes) => enviarEnqueteNoChat(client, chatId, titulo, opcoes),
+    // Foto de um HTML (os times do #timesde comparar/foto) nesta conversa
+    enviarImagemHtml: (html, legenda) => enviarHtmlComoImagem(client, message.from, html, legenda),
+    enviarImagemHtmlPara: (chatId, html, legenda) => enviarHtmlComoImagem(client, chatId, html, legenda),
     lerVotos: (msgId) => lerVotosDaEnquete(client, msgId),
     getAdminsDoGrupo: (chatId) => listarAdminsDoGrupo(client, chatId),
     saude: sessao.saudeDoProcesso,
