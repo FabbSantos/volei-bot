@@ -109,10 +109,6 @@ caso('complemento: R$ 5 de quem não é mensalista — pergunta aos admins', () 
 });
 caso('complemento: R$ 17 continua sendo a lista (Ryan)', () =>
   assert.strictEqual(alvos(dec({ lista: FERIADO, entradas: comMensais, leitura: leitura({ valor_centavos: 1700 }), remetente: '5521900000005@c.us' })), 'Ryan'));
-caso('complemento: mensalista SEM o mês pago (paga pelada a pelada) manda R$ 5 — não é ➕, pergunta', () => {
-  const d = dec({ lista: FERIADO, entradas: comMensais, leitura: leitura({ valor_centavos: 500 }), remetente: MARCEL, mesPago: (x) => x.nome !== 'Marcel' });
-  assert.strictEqual(d.acao, 'perguntar');
-});
 caso('complemento: R$ 22 (lista + complemento) fica pros admins', () =>
   assert.strictEqual(dec({ lista: FERIADO, entradas: comMensais, leitura: leitura({ valor_centavos: 2200 }), remetente: MARCEL }).acao, 'perguntar'));
 caso('Thiago manda R$ 24 sem legenda: ele e a Duda', () =>

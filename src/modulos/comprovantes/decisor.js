@@ -84,7 +84,6 @@ const unicos = (entradas) => [...new Map(entradas.map((e) => [e.id, e])).values(
 function decidir({
   leitura, lista, entradas, remetente, recebedorEsperado, usado, dependentes = [],
   ehDoRemetente = () => false, valorMes = 0, agora = new Date(), nomesDoRemetente = [],
-  mesPago = () => true,
 }) {
   if (!leitura.eh_comprovante_pix) return { acao: 'ignorar' };
   const perguntar = (motivo, candidatos = []) => ({ acao: 'perguntar', tipo: 'problema', motivo, candidatos });
@@ -122,9 +121,7 @@ function decidir({
   if (complemento && leitura.valor_centavos && leitura.valor_centavos % valor !== 0
     && leitura.valor_centavos % complemento === 0) {
     const quantos = leitura.valor_centavos / complemento;
-    // Só quem tem o mês pago deve SÓ o complemento; mensalista que paga
-    // pelada a pelada deve a lista inteira
-    const devendo = entradas.filter((e) => e.mensalista && !e.pago && e.tipo === 'principal' && mesPago(e));
+    const devendo = entradas.filter((e) => e.mensalista && !e.pago && e.tipo === 'principal');
     const meus = devendo.filter((e) => (e.numero && usuario(e.numero) === usuario(remetente))
       || ehDoRemetente(e) || (leitura.pagador_nome && nomeCasa(e.nome, leitura.pagador_nome)));
     const citados = leitura.legenda_para.map((n) => devendo.find((e) => normalizarTexto(e.nome) === normalizarTexto(n))).filter(Boolean);
