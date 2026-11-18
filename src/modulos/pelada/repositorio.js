@@ -38,6 +38,9 @@ migrarColunas('listas', {
   valor_centavos: 'INTEGER NOT NULL DEFAULT 0',
   nome: 'TEXT',
   lembrete_em: 'TEXT', // dia (YYYY-MM-DD) do último lembrete de pagamento enviado
+  // Sexta que a mensalidade não cobre inteira (18/11/2026: feriado de 3h a
+  // mais no mês): cada mensalista completa esse valor, marcado com o ➕
+  complemento_mensal_centavos: 'INTEGER NOT NULL DEFAULT 0',
 });
 migrarColunas('entradas', {
   pago: 'INTEGER NOT NULL DEFAULT 0',
@@ -339,6 +342,9 @@ function montarListaFormatada(listaId, dataJogo) {
   ).all(listaId);
 
   let texto = `📋 *${lista?.nome || 'Lista do vôlei'} — ${dataJogo}*\n`;
+  if (lista?.complemento_mensal_centavos) {
+    texto += `➕ Mensalistas completam *${formatarReais(lista.complemento_mensal_centavos)}* nesta (o Pix vira ➕)\n`;
+  }
   texto += `━━━━━━━━━━━━━━━\n`;
   texto += `🟢 *PRINCIPAL* (${principal.length}/${limites.principal})\n`;
   texto += principal.length
@@ -384,7 +390,11 @@ function montarListaFormatada(listaId, dataJogo) {
 // Grava o pago com snapshot do valor vigente: se o #valor mudar depois,
 // o que já entrou em caixa não é reescrito
 function aplicarPago(entrada, listaId, pago) {
-  const valorPago = pago ? (getLista(listaId)?.valor_centavos || 0) : 0;
+  const lista = getLista(listaId);
+  // Mensalista numa lista com complemento: o ➕ dele vale o complemento
+  const mensalista = db.prepare('SELECT mensalista FROM entradas WHERE id = ?').get(entrada.id)?.mensalista;
+  const valorDaVez = mensalista && lista?.complemento_mensal_centavos ? lista.complemento_mensal_centavos : (lista?.valor_centavos || 0);
+  const valorPago = pago ? valorDaVez : 0;
   db.prepare('UPDATE entradas SET pago = ?, valor_pago_centavos = ? WHERE id = ?')
     .run(pago ? 1 : 0, valorPago, entrada.id);
   return { nome: entrada.nome };
@@ -419,7 +429,14 @@ function resumoPagamentos(listaId) {
   // paga, mas ele já pagou esta pelada — 05/11/2026 o agiota cobrava os fixos
   // que estavam com ➕). Mensalista devendo tudo aparece como "(mês)".
   const mesPago = mensalistaComMesPago(lista);
-  const estaEmDia = (e) => Boolean(e.pago) || (e.mensalista && mesPago(e));
+  // Com complemento (sexta que a mensalidade não cobre inteira), o mês pago não
+  // basta: o mensalista só fica em dia com o ➕ — e a cobrança diz quanto falta
+  const complemento = lista?.complemento_mensal_centavos || 0;
+  const estaEmDia = (e) => Boolean(e.pago) || (e.mensalista && mesPago(e) && !complemento);
+  const rotuloPendente = (e) => {
+    if (!e.mensalista) return e.nome;
+    return complemento && mesPago(e) ? `${e.nome} (+${formatarReais(complemento)})` : `${e.nome} (mês)`;
+  };
 
   return {
     totalPessoas: entradas.length,
@@ -430,13 +447,13 @@ function resumoPagamentos(listaId) {
     nomesPagos: pagos.map((e) => e.nome),
     pendentes: principal
       .filter((e) => !estaEmDia(e))
-      .map((e) => (e.mensalista ? `${e.nome} (mês)` : e.nome)),
+      .map(rotuloPendente),
     // Mesma lista com o WhatsApp de cada um (quando dá pra marcar): o
     // convidado cadastrado na mão não tem número de verdade
     pendentesComZap: principal
       .filter((e) => !estaEmDia(e))
       .map((e) => ({
-        nome: e.mensalista ? `${e.nome} (mês)` : e.nome,
+        nome: rotuloPendente(e),
         numero: numeroSintetico(e.numero) ? null : e.numero,
       })),
     // Quem subiu da espera e ainda não pagou — prazo próprio (dia do jogo, 17h)
@@ -455,6 +472,10 @@ function resumoPagamentos(listaId) {
 
 function setarValorLista(listaId, centavos) {
   db.prepare('UPDATE listas SET valor_centavos = ? WHERE id = ?').run(centavos, listaId);
+}
+
+function setarComplementoMensal(listaId, centavos) {
+  db.prepare('UPDATE listas SET complemento_mensal_centavos = ? WHERE id = ?').run(centavos, listaId);
 }
 
 // A cobrança automática só existe com lista ABERTA: depois do jogo o assunto
@@ -593,6 +614,7 @@ module.exports = {
   listarCombinada,
   resumoPagamentos,
   setarValorLista,
+  setarComplementoMensal,
   listasParaLembrete,
   marcarLembreteEnviado,
 };

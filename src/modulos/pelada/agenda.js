@@ -29,6 +29,23 @@ db.exec(`
   );
 `);
 
+// Datas especiais (18/11/2026: feriado de 20/11 virou sexta de 3h): valor,
+// nome e o complemento dos mensalistas pra UMA data — vence a regra da última
+// sexta. Some sozinha depois que a lista dessa data abre.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS agenda_especiais (
+    chat_id TEXT NOT NULL,
+    data_jogo TEXT NOT NULL,         -- "20/11"
+    valor INTEGER NOT NULL,
+    nome TEXT,
+    complemento INTEGER NOT NULL DEFAULT 0, -- o que cada mensalista completa nessa lista
+    PRIMARY KEY (chat_id, data_jogo)
+  );
+`);
+
+const especiaisDo = (chatId) => db.prepare('SELECT * FROM agenda_especiais WHERE chat_id = ? ORDER BY data_jogo').all(chatId);
+const especialDe = (chatId, dataJogo) => db.prepare('SELECT * FROM agenda_especiais WHERE chat_id = ? AND data_jogo = ?').get(chatId, dataJogo);
+
 const DIAS = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 const DIA_MS = 24 * 60 * 60 * 1000;
 // Brasília é UTC-3 o ano inteiro (sem horário de verão desde 2019): os campos
@@ -89,7 +106,8 @@ function descrever(a) {
   if (!a) return 'sem agenda';
   const base = `toda *${DIAS[a.dia_abertura]}* às *${a.hora}h${a.minuto ? doisDigitos(a.minuto) : ''}* abre a lista da *${DIAS[a.dia_jogo]}*`;
   const ultima = a.valor_ultima != null ? ` · na última ${DIAS[a.dia_jogo]} do mês: ${formatarReais(a.valor_ultima)}${a.nome_ultima ? ` "${a.nome_ultima}"` : ''}` : '';
-  return `${a.ativo ? '🟢' : '⚪ (desligada)'} ${base}${ultima}`;
+  const especiais = especiaisDo(a.chat_id).map((e) => `\n   📌 *${e.data_jogo}*: ${formatarReais(e.valor)}${e.nome ? ` "${e.nome}"` : ''}${e.complemento ? ` · mensalistas completam ${formatarReais(e.complemento)}` : ''}`).join('');
+  return `${a.ativo ? '🟢' : '⚪ (desligada)'} ${base}${ultima}${especiais}`;
 }
 
 // Roda a cada minuto. abrir(agenda, { dataJogo, valor, nome }) abre de fato
@@ -105,12 +123,16 @@ async function verificar(abrir, agoraMs = Date.now()) {
       // #pago caem sempre na mais recente; ela já não serve pra nada)
       const abertasAntes = db.prepare("SELECT id FROM listas WHERE chat_id = ? AND status = 'aberta'").all(a.chat_id);
       for (const l of abertasAntes) pelada.encerrarLista(l.id);
+      const doDia = especialDe(a.chat_id, c.dataJogo);
       const especial = c.ultimaDoMes && a.valor_ultima != null;
-      await abrir(a, { dataJogo: c.dataJogo, valor: especial ? a.valor_ultima : null, nome: especial ? a.nome_ultima : null });
+      await abrir(a, doDia
+        ? { dataJogo: c.dataJogo, valor: doDia.valor, nome: doDia.nome, complemento: doDia.complemento }
+        : { dataJogo: c.dataJogo, valor: especial ? a.valor_ultima : null, nome: especial ? a.nome_ultima : null });
       abertas.push({ chatId: a.chat_id, dataJogo: c.dataJogo });
     }
     // Abriu agora, ou um admin já tinha aberto na mão: não mexe mais nessa data
     db.prepare('UPDATE agenda_listas SET ultima_data = ? WHERE chat_id = ?').run(c.dataJogo, a.chat_id);
+    db.prepare('DELETE FROM agenda_especiais WHERE chat_id = ? AND data_jogo = ?').run(a.chat_id, c.dataJogo);
   }
   return abertas;
 }
@@ -127,6 +149,25 @@ const agendaDe = comando(REGEX_AGENDA_DE, (msg, m) => {
   const exemplo = `*#agendalistade ${m[1]} quarta 13h sexta* (opcional no fim: *ultima 17 Sexta 3h*)`;
 
   if (!resto) return msg.reply(`📅 Agenda de *${nomeGrupo}*: ${descrever(getAgenda(chatId))}\n\nPra mudar: ${exemplo} · pra desligar: *#agendalistade ${m[1]} off*`);
+  // Data especial: "dia 20/11 17 mensal 5 Sexta 3h" · "dia 20/11 off"
+  const dia = resto.match(/^dia\s+(\d{1,2})\/(\d{1,2})\s+(.+)$/i);
+  if (dia) {
+    const dataJogo = `${doisDigitos(Number(dia[1]))}/${doisDigitos(Number(dia[2]))}`;
+    if (/^(off|tirar|remover)$/i.test(dia[3].trim())) {
+      const r2 = db.prepare('DELETE FROM agenda_especiais WHERE chat_id = ? AND data_jogo = ?').run(chatId, dataJogo);
+      return msg.reply(r2.changes ? `📌 ${dataJogo} volta a abrir como uma ${DIAS[getAgenda(chatId)?.dia_jogo ?? 5]} qualquer.` : `${dataJogo} não tinha nada especial.`);
+    }
+    const e = dia[3].match(/^(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?)(?:\s+mensal(?:istas?)?\s*\+?\s*(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?))?(?:\s+(.+))?$/i);
+    if (!e) return msg.reply(`Não entendi 🤔 Ex.: *#agendalistade ${m[1]} dia 20/11 17 mensal 5 Sexta 3h*`);
+    if (!getAgenda(chatId)) return msg.reply(`*${nomeGrupo}* não tem agenda — a data especial só vale pra lista que a agenda abre.`);
+    const especial = { valor: paraCentavos(e[1]), nome: (e[3] || '').trim() || null, complemento: e[2] ? paraCentavos(e[2]) : 0 };
+    db.prepare(`INSERT INTO agenda_especiais (chat_id, data_jogo, valor, nome, complemento) VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(chat_id, data_jogo) DO UPDATE SET valor = excluded.valor, nome = excluded.nome, complemento = excluded.complemento`)
+      .run(chatId, dataJogo, especial.valor, especial.nome, especial.complemento);
+    const jaAberta = pelada.listasDoGrupo(chatId).some((l) => l.data_jogo === dataJogo);
+    return msg.reply(`📌 Lista de *${dataJogo}* vai abrir com ${formatarReais(especial.valor)} por pessoa${especial.nome ? `, nome "${especial.nome}"` : ''}${especial.complemento ? `, e cada mensalista completa ${formatarReais(especial.complemento)}` : ''}.${jaAberta ? '\n⚠️ Só que essa lista já está aberta: usa *#valorlistade* e *#complementode*.' : ''}\n\n📅 ${descrever(getAgenda(chatId))}`);
+  }
+
   if (/^(off|desligar|parar)$/i.test(resto)) {
     if (!getAgenda(chatId)) return msg.reply(`*${nomeGrupo}* não tem agenda.`);
     salvarAgenda(chatId, { ativo: 0 });
@@ -150,4 +191,4 @@ const agendaDe = comando(REGEX_AGENDA_DE, (msg, m) => {
   return msg.reply(`📅 Agenda de *${nomeGrupo}* ligada: ${descrever(a)}.${proxima}`);
 });
 
-module.exports = { comandos: [agendaDe], verificar, cicloAtual, lerDia, lerHora, getAgenda, salvarAgenda, descrever };
+module.exports = { comandos: [agendaDe], verificar, cicloAtual, lerDia, lerHora, getAgenda, salvarAgenda, descrever, especialDe };

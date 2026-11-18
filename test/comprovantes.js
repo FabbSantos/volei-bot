@@ -94,6 +94,23 @@ caso('Fabrício (mensalista) manda R$ 12 e paga pela Kamila: marca a Kamila', ()
   assert.strictEqual(alvos(dec({ leitura: leitura({ pagador_nome: 'FABRICIO B SANTOS' }), remetente: FAB, dependentes: [{ dependente_nome: 'Kamila Vianna', dependente_numero: KAMILA }] })), 'Kamila Vianna'));
 caso('a Kamila manda o comprovante que o Fabrício pagou: marca a Kamila', () =>
   assert.strictEqual(alvos(dec({ leitura: leitura({ pagador_nome: 'Fabricio Bahiense Santos' }), remetente: KAMILA })), 'Kamila Vianna'));
+// Feriado de 20/11/2026: lista R$ 17 e cada mensalista completa R$ 5
+const FERIADO = { ...LISTA, valor_centavos: 1700, complemento_mensal_centavos: 500 };
+const MARCEL = '5521911111111@c.us';
+const comMensais = [...base.entradas, e(6, 'Marcel', MARCEL, { mensalista: 1 }), e(7, 'Diego', '5521933333333@c.us', { mensalista: 1 })];
+caso('complemento: Marcel (mensalista) manda R$ 5 — ➕ dele', () =>
+  assert.strictEqual(alvos(dec({ lista: FERIADO, entradas: comMensais, leitura: leitura({ valor_centavos: 500 }), remetente: MARCEL })), 'Marcel'));
+caso('complemento: Fabrício manda R$ 10 por ele e pelo Diego (legenda) — os dois', () =>
+  assert.strictEqual(alvos(dec({ lista: FERIADO, entradas: comMensais, leitura: leitura({ valor_centavos: 1000, pagador_nome: 'FABRICIO BAHIENSE', legenda_para: ['Diego'], legenda_inclui_remetente: true }), remetente: FAB })), 'Diego, Fabrício Bahiense'));
+caso('complemento: R$ 5 de quem não é mensalista — pergunta aos admins', () => {
+  const d = dec({ lista: FERIADO, entradas: comMensais, leitura: leitura({ valor_centavos: 500 }), remetente: '5521900000005@c.us' });
+  assert.strictEqual(d.acao, 'perguntar');
+  assert.match(d.motivo, /complemento de 1 mensalista/);
+});
+caso('complemento: R$ 17 continua sendo a lista (Ryan)', () =>
+  assert.strictEqual(alvos(dec({ lista: FERIADO, entradas: comMensais, leitura: leitura({ valor_centavos: 1700 }), remetente: '5521900000005@c.us' })), 'Ryan'));
+caso('complemento: R$ 22 (lista + complemento) fica pros admins', () =>
+  assert.strictEqual(dec({ lista: FERIADO, entradas: comMensais, leitura: leitura({ valor_centavos: 2200 }), remetente: MARCEL }).acao, 'perguntar'));
 caso('Thiago manda R$ 24 sem legenda: ele e a Duda', () =>
   assert.strictEqual(alvos(dec({ leitura: leitura({ valor_centavos: 2400 }), remetente: THIAGO, dependentes: [{ dependente_nome: 'Duda', dependente_numero: DUDA }] })), 'Duda, Thiago Rodrigues'));
 caso('Thiago manda R$ 12 sem legenda, os dois devendo: pergunta', () => {

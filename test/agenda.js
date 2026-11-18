@@ -12,6 +12,7 @@ process.env.DB_PATH = path.join(pasta, 'teste.db');
 const grupos = require('../src/modulos/grupos/repositorio');
 const pelada = require('../src/modulos/pelada/repositorio');
 const agenda = require('../src/modulos/pelada/agenda');
+const mensalistas = require('../src/modulos/mensalistas/repositorio');
 const { processarComandoAdmin } = require('../src/roteador');
 const { fecharBanco } = require('../src/nucleo/banco');
 
@@ -84,9 +85,11 @@ async function fluxo() {
   const admin = (texto) => processarComandoAdmin(portaAdmin(texto));
   // O que o main.js faz: o próprio #abrirlistade
   const abertas = [];
-  const abrir = async (a, { dataJogo, valor, nome }) => {
-    abertas.push({ dataJogo, valor, nome });
-    const especial = valor != null ? ` ${(valor / 100).toString().replace('.', ',')}${nome ? ` ${nome}` : ''}` : '';
+  const abrir = async (a, { dataJogo, valor, nome, complemento }) => {
+    abertas.push({ dataJogo, valor, nome, ...(complemento !== undefined ? { complemento } : {}) });
+    const reais = (c) => (c / 100).toString().replace('.', ',');
+    const doMensal = complemento ? ` mensal+${reais(complemento)}` : '';
+    const especial = valor != null ? ` ${reais(valor)}${doMensal}${nome ? ` ${nome}` : ''}` : '';
     await processarComandoAdmin(portaAdmin(`#abrirlistade ${a.chat_id} ${dataJogo}${especial}`));
   };
 
@@ -140,6 +143,57 @@ async function fluxo() {
   caso('#agendalistade sem nada mostra a agenda (desligada)', () => assert.match(respostas.at(-1), /desligada/));
   await admin('#agendalistade riachuelo toda hora');
   caso('formato errado: explica', () => assert.match(respostas.at(-1), /Não entendi/));
+
+  // Feriado de 20/11/2026: sexta de 3h fora da última do mês, e a mensalidade
+  // não cobre — cada mensalista completa R$ 5
+  console.log('\ndata especial e complemento do mensal');
+  const M1 = '5521911111111@c.us';
+  const M2 = '5521922222222@c.us';
+  mensalistas.adicionarMensalista(G, 'Marcel', M1);
+  mensalistas.adicionarMensalista(G, 'Bianca', M2);
+  mensalistas.marcarMesPagoPorPosicao(G, 1, true, 4100);
+  mensalistas.marcarMesPagoPorPosicao(G, 2, true, 4100);
+  await admin('#agendalistade riachuelo quarta 13h sexta ultima 17 Sexta 3h');
+  await admin('#agendalistade riachuelo dia 20/11 17 mensal 5 Sexta 3h');
+  caso('#agendalistade ... dia 20/11: confirma e mostra na agenda', () => {
+    assert.match(respostas.at(-1), /\*20\/11\* vai abrir com R\$ 17,00 por pessoa, nome "Sexta 3h", e cada mensalista completa R\$ 5,00/);
+    assert.match(respostas.at(-1), /📌 \*20\/11\*: R\$ 17,00 "Sexta 3h" · mensalistas completam R\$ 5,00/);
+  });
+  enviados.length = 0;
+  await agenda.verificar(abrir, br(18, 11, 13));
+  const feriado = pelada.getListaMaisRecente(G);
+  caso('quarta 18/11 13h: abre a 20/11 como Sexta 3h, R$ 17, complemento R$ 5', () => {
+    assert.deepStrictEqual(abertas.at(-1), { dataJogo: '20/11', valor: 1700, nome: 'Sexta 3h', complemento: 500 });
+    assert.strictEqual(feriado.data_jogo, '20/11');
+    assert.strictEqual(feriado.valor_centavos, 1700);
+    assert.strictEqual(feriado.nome, 'Sexta 3h');
+    assert.strictEqual(feriado.complemento_mensal_centavos, 500);
+  });
+  caso('o anúncio avisa do complemento', () =>
+    assert.ok(enviados.some((m) => m.chatId === G && /Sexta 3h\* aberta pro dia \*20\/11\* — R\$ 17,00/.test(m.t) && /Mensalistas completam \*R\$ 5,00\*/.test(m.t)), enviados.map((m) => m.t).join('\n---\n')));
+  caso('a data especial some depois de usada', () => assert.strictEqual(agenda.especialDe(G, '20/11'), undefined));
+  caso('mês pago não basta: os dois aparecem devendo "(+R$ 5,00)"', () =>
+    assert.deepStrictEqual(pelada.resumoPagamentos(feriado.id).pendentes.sort(), ['Bianca (+R$ 5,00)', 'Marcel (+R$ 5,00)']));
+  pelada.marcarPagoPorNumero(feriado.id, M1, true);
+  caso('➕ do Marcel: em dia, e entra no caixa como R$ 5', () => {
+    const r = pelada.resumoPagamentos(feriado.id);
+    assert.deepStrictEqual(r.pendentes, ['Bianca (+R$ 5,00)']);
+    assert.strictEqual(r.arrecadadoCentavos, 500);
+    assert.match(pelada.montarListaFormatada(feriado.id, '20/11'), /Marcel — Mensal ✅ ➕/);
+  });
+  await admin('#complementode riachuelo 0');
+  caso('#complementode 0 tira: mês pago volta a bastar', () =>
+    assert.deepStrictEqual(pelada.resumoPagamentos(feriado.id).pendentes, []));
+  await admin('#complementode riachuelo 5');
+  caso('#complementode 5 põe de volta', () => {
+    assert.match(respostas.at(-1), /cada mensalista completa R\$ 5,00/);
+    assert.strictEqual(pelada.getLista(feriado.id).complemento_mensal_centavos, 500);
+  });
+  await agenda.verificar(abrir, br(25, 11, 13));
+  caso('27/11 (última do mês) abre Sexta 3h normal, sem complemento', () => {
+    assert.deepStrictEqual(abertas.at(-1), { dataJogo: '27/11', valor: 1700, nome: 'Sexta 3h' });
+    assert.strictEqual(pelada.getListaMaisRecente(G).complemento_mensal_centavos, 0);
+  });
 }
 
 fluxo()

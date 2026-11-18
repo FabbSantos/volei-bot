@@ -52,6 +52,7 @@
 📡 *Consulta/gestão remota (<grupo> = pedaço do nome ou chat_id):*
 *#abrirlistade <grupo> 07/08 17 Sexta 3h* — abre a lista de lá (valor e nome opcionais) e anuncia no grupo
 *#agendalistade <grupo> quarta 13h sexta* — abre a lista sozinho toda semana (fim opcional: *ultima 17 Sexta 3h* pra última sexta do mês) · *... off* desliga · sem nada: mostra a agenda
+*#agendalistade <grupo> dia 20/11 17 mensal 5 Sexta 3h* — data especial (feriado): valor, nome e quanto cada mensalista completa · *... dia 20/11 off* tira
 *#abrirextrade <grupo> 29/09 15* — pelada extra: só os fixos entram sozinhos, e pagam como todo mundo (a mensalidade não cobre)
 *#editarlistade <grupo> 07/08 Nome* — corrige data/nome da lista atual (nome opcional)
 *#encerrarlistade <grupo>* — encerra a lista (trava nomes) e anuncia; com *quieto* no fim, não anuncia
@@ -90,6 +91,7 @@
 *#valormesde <grupo> 53* — mensalidade · *#vagasmensalistasde <grupo> 12* — vagas
 *#valorde <grupo> 25* — valor padrão por pessoa (vale pras próximas listas)
 *#valorlistade <grupo> 30* — valor só da lista aberta agora (ex: sexta de 3h)
+*#complementode <grupo> 5* — na lista aberta, cada mensalista completa R$ 5 (o mês pago não basta: fica em dia com o ➕) · *0* tira
 
 *#grupoadmin <chat_id>* — (só no privado) define o grupo de admins; com "off" no fim, desfaz
 *#admin* — mostra essa ajuda
@@ -148,6 +150,7 @@ Repetir #ativargrupo num grupo já ativo só atualiza o tamanho.
 📡 *Consulta/gestão remota (<grupo> = pedaço do nome ou chat_id):*
 *#abrirlistade <grupo> 07/08 17 Sexta 3h* — abre a lista de lá (valor e nome opcionais) e anuncia no grupo
 *#agendalistade <grupo> quarta 13h sexta* — abre a lista sozinho toda semana (fim opcional: *ultima 17 Sexta 3h* pra última sexta do mês) · *... off* desliga · sem nada: mostra a agenda
+*#agendalistade <grupo> dia 20/11 17 mensal 5 Sexta 3h* — data especial (feriado): valor, nome e quanto cada mensalista completa · *... dia 20/11 off* tira
 *#abrirextrade <grupo> 29/09 15* — pelada extra: só os fixos entram sozinhos, e pagam como todo mundo (a mensalidade não cobre)
 *#editarlistade <grupo> 07/08 Nome* — corrige data/nome da lista atual (nome opcional)
 *#encerrarlistade <grupo>* — encerra a lista (trava nomes) e anuncia; com *quieto* no fim, não anuncia
@@ -186,6 +189,7 @@ Repetir #ativargrupo num grupo já ativo só atualiza o tamanho.
 *#valormesde <grupo> 53* — mensalidade · *#vagasmensalistasde <grupo> 12* — vagas
 *#valorde <grupo> 25* — valor padrão por pessoa (vale pras próximas listas)
 *#valorlistade <grupo> 30* — valor só da lista aberta agora (ex: sexta de 3h)
+*#complementode <grupo> 5* — na lista aberta, cada mensalista completa R$ 5 (o mês pago não basta: fica em dia com o ➕) · *0* tira
 
 *#grupoadmin <chat_id>* — (só no privado) define o grupo de admins; com "off" no fim, desfaz
 *#admin* — mostra essa ajuda
@@ -3667,6 +3671,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
   "valor_centavos": 1700,
   "nome": "Sexta Nova",
   "lembrete_em": null,
+  "complemento_mensal_centavos": 0,
   "naEspera": 0,
   "entradas": [
    {
@@ -3712,6 +3717,7 @@ Pagou? Manda o comprovante aqui que os admins dão o ✅. O agiota agradece. �
   "valor_centavos": 0,
   "nome": "Pelada da planilha",
   "lembrete_em": null,
+  "complemento_mensal_centavos": 0,
   "naEspera": 0,
   "entradas": [
    {
@@ -6833,6 +6839,8 @@ Montados com a NOVA TECNOLOGIA DA NASA 2 🚀
 
 Bom jogo! 🔥
 
+=== agenda_especiais (chat_id, complemento, data_jogo, nome, valor)
+
 === agenda_listas (ativo, atualizado_em, chat_id, dia_abertura, dia_jogo, hora, minuto, nome_ultima, ultima_data, valor_ultima)
 
 === apelidos (apelido, criado_em, id, jogador_id)
@@ -6937,9 +6945,9 @@ Bom jogo! 🔥
 {"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:13:06.000Z","id":18,"nome":"Stephanie Bastos","numero":null}
 {"altura":null,"chat_id":"g1@g.us","criado_em":"2026-09-18T15:18:54.000Z","id":19,"nome":"Novato Painel","numero":"5521900000010@c.us"}
 
-=== listas (chat_id, criada_em, data_jogo, id, lembrete_em, nome, status, valor_centavos)
-{"chat_id":"g1@g.us","criada_em":"2026-09-18T15:03:40.000Z","data_jogo":"14/10","id":2,"lembrete_em":null,"nome":"Sexta Nova","status":"encerrada","valor_centavos":1700}
-{"chat_id":"g1@g.us","criada_em":"2026-07-31T21:00:00.000Z","data_jogo":"31/07","id":4,"lembrete_em":null,"nome":"Pelada da planilha","status":"encerrada","valor_centavos":0}
+=== listas (chat_id, complemento_mensal_centavos, criada_em, data_jogo, id, lembrete_em, nome, status, valor_centavos)
+{"chat_id":"g1@g.us","complemento_mensal_centavos":0,"criada_em":"2026-09-18T15:03:40.000Z","data_jogo":"14/10","id":2,"lembrete_em":null,"nome":"Sexta Nova","status":"encerrada","valor_centavos":1700}
+{"chat_id":"g1@g.us","complemento_mensal_centavos":0,"criada_em":"2026-07-31T21:00:00.000Z","data_jogo":"31/07","id":4,"lembrete_em":null,"nome":"Pelada da planilha","status":"encerrada","valor_centavos":0}
 
 === mensalidades (id, mensalista_id, mes, pago_em, valor_centavos)
 {"id":5,"mensalista_id":3,"mes":"2026-09","pago_em":"2026-09-18T15:06:25.000Z","valor_centavos":5300}

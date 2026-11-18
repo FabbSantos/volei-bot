@@ -62,6 +62,7 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 📡 *Consulta/gestão remota (<grupo> = pedaço do nome ou chat_id):*
 *#abrirlistade <grupo> 07/08 17 Sexta 3h* — abre a lista de lá (valor e nome opcionais) e anuncia no grupo
 *#agendalistade <grupo> quarta 13h sexta* — abre a lista sozinho toda semana (fim opcional: *ultima 17 Sexta 3h* pra última sexta do mês) · *... off* desliga · sem nada: mostra a agenda
+*#agendalistade <grupo> dia 20/11 17 mensal 5 Sexta 3h* — data especial (feriado): valor, nome e quanto cada mensalista completa · *... dia 20/11 off* tira
 *#abrirextrade <grupo> 29/09 15* — pelada extra: só os fixos entram sozinhos, e pagam como todo mundo (a mensalidade não cobre)
 *#editarlistade <grupo> 07/08 Nome* — corrige data/nome da lista atual (nome opcional)
 *#encerrarlistade <grupo>* — encerra a lista (trava nomes) e anuncia; com *quieto* no fim, não anuncia
@@ -100,6 +101,7 @@ const TEXTO_AJUDA_ADMIN = `🔧 *Comandos de admin (privado ou grupo de admins)*
 *#valormesde <grupo> 53* — mensalidade · *#vagasmensalistasde <grupo> 12* — vagas
 *#valorde <grupo> 25* — valor padrão por pessoa (vale pras próximas listas)
 *#valorlistade <grupo> 30* — valor só da lista aberta agora (ex: sexta de 3h)
+*#complementode <grupo> 5* — na lista aberta, cada mensalista completa R$ 5 (o mês pago não basta: fica em dia com o ➕) · *0* tira
 
 *#grupoadmin <chat_id>* — (só no privado) define o grupo de admins; com "off" no fim, desfaz
 *#admin* — mostra essa ajuda
@@ -140,7 +142,7 @@ async function responderMalformadoNoGrupo(msg, texto) {
 // Qualquer variação dos comandos de admin que não casou é sintaxe errada
 // (ex: "18 -6", "#listade" sem grupo, "#listargrupos x") — responde com o
 // uso em vez de ficar mudo e deixar o admin achando que funcionou
-const MALFORMADO_NO_ADMIN = /^#(ativargrupo|desativargrupo|abrirlistade|editarlistade|encerrarlistade|reabrirlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|adicionarde|renomearde|cobrarde|cobrarsubiude|timesde|importarelencode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|grupoadmin|listargrupos|admin|replays?|comprovante|pagapor|naopagapor|agendalistade|destaquede)\b/i;
+const MALFORMADO_NO_ADMIN = /^#(ativargrupo|desativargrupo|abrirlistade|editarlistade|encerrarlistade|reabrirlistade|cancelarlistade|listade|pagosde|adminsde|mensalistasde|mensalistade|abrirmensalistasde|fecharmensalistasde|reiniciarmensalistasde|pagomesde|naopagomesde|pagode|naopagode|removerde|adicionarde|renomearde|cobrarde|cobrarsubiude|timesde|importarelencode|fixode|removermensalistade|valormesde|vagasmensalistasde|valorde|valorlistade|complementode|grupoadmin|listargrupos|admin|replays?|comprovante|pagapor|naopagapor|agendalistade|destaquede)\b/i;
 // Comando do grupo de pelada digitado no contexto admin (ex: responder um
 // comprovante encaminhado com #pago) — aponta o equivalente remoto
 const DE_GRUPO_NO_ADMIN = /^#(pago|naopago|valor|valorpadr[aã]o|valormes|mostralista|remover|encerrarlista|lista|mensalistas?|pagomes|naopagomes|fixo|removermensalista|vagasmensalistas|inadimplente|quitado)\b/i;

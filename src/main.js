@@ -89,7 +89,7 @@ iniciarVigiaDoDrive({
 // Agenda de abertura da lista ("toda quarta 13h, a da sexta"): quem abre é
 // o próprio #abrirlistade, como se um admin tivesse mandado — mesma lista,
 // mesmo anúncio. A resposta dele vai pro grupo de admins.
-async function abrirListaAgendada(agendaDoGrupo, { dataJogo, valor, nome }) {
+async function abrirListaAgendada(agendaDoGrupo, { dataJogo, valor, nome, complemento }) {
   const cliente = sessao.cliente();
   if (!cliente) throw new Error('bot desconectado');
   const avisarAdmins = async (texto) => {
@@ -97,7 +97,9 @@ async function abrirListaAgendada(agendaDoGrupo, { dataJogo, valor, nome }) {
       try { await cliente.sendText(chatId, texto); } catch (err) { console.warn(`[agenda] aviso não saiu: ${err.message}`); }
     }
   };
-  const especial = valor != null ? ` ${(valor / 100).toString().replace('.', ',')}${nome ? ` ${nome}` : ''}` : '';
+  const reais = (centavos) => (centavos / 100).toString().replace('.', ',');
+  const doMensal = complemento ? ` mensal+${reais(complemento)}` : '';
+  const especial = valor != null ? ` ${reais(valor)}${doMensal}${nome ? ` ${nome}` : ''}` : '';
   console.log(`[agenda] abrindo a lista de ${dataJogo} em ${agendaDoGrupo.chat_id}`);
   await processarComandoAdmin({
     body: `#abrirlistade ${agendaDoGrupo.chat_id} ${dataJogo}${especial}`,

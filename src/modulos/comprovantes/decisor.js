@@ -112,6 +112,30 @@ function decidir({
 
   const valor = lista.valor_centavos;
   if (!valor) return perguntar('a lista não tem valor definido');
+
+  // Complemento do mensal (sexta que a mensalidade não cobre inteira, ex.:
+  // R$ 5 no feriado de 3h de 20/11/2026): Pix que fecha com ele e não com a
+  // lista é de mensalista — vira o ➕ de quem enviou (e de quem ele paga).
+  // Misturado com lista (R$ 17 + R$ 5) fica pros admins.
+  const complemento = lista.complemento_mensal_centavos || 0;
+  if (complemento && leitura.valor_centavos && leitura.valor_centavos % valor !== 0
+    && leitura.valor_centavos % complemento === 0) {
+    const quantos = leitura.valor_centavos / complemento;
+    const devendo = entradas.filter((e) => e.mensalista && !e.pago && e.tipo === 'principal');
+    const meus = devendo.filter((e) => (e.numero && usuario(e.numero) === usuario(remetente))
+      || ehDoRemetente(e) || (leitura.pagador_nome && nomeCasa(e.nome, leitura.pagador_nome)));
+    const citados = leitura.legenda_para.map((n) => devendo.find((e) => normalizarTexto(e.nome) === normalizarTexto(n))).filter(Boolean);
+    const alvos = citados.length || leitura.legenda_inclui_remetente
+      ? unicos([...(leitura.legenda_inclui_remetente ? meus : []), ...citados])
+      : unicos([...meus, ...ligadosAoRemetente(devendo, dependentes, nomesDoRemetente)]);
+    if (alvos.length === quantos) return { acao: 'marcar', alvos };
+    return perguntar(
+      `${formatarReais(leitura.valor_centavos)} parece o complemento de ${quantos} mensalista(s) (${formatarReais(complemento)} cada), ` +
+      `mas achei ${alvos.length ? nomes(alvos) : 'ninguém devendo o complemento'}`,
+      alvos,
+    );
+  }
+
   if (!leitura.valor_centavos || leitura.valor_centavos % valor !== 0) {
     const mensal = valorMes && leitura.valor_centavos === valorMes ? ' (parece a mensalidade — marca com #pagomesde)' : '';
     return perguntar(`${formatarReais(leitura.valor_centavos || 0)} não fecha com ${formatarReais(valor)} por pessoa${mensal}`);

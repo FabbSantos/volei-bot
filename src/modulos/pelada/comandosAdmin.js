@@ -43,7 +43,10 @@ const REGEX_PAGOS_DE = /^#pagosde\s+(.+)$/i;
 const REGEX_PAGO_DE = /^#pagode\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$/i;
 const REGEX_NAOPAGO_DE = /^#naopagode\s+(.+?)\s+(\d{1,3}(?:\s*[-,]\s*\d{1,3})*)$/i;
 const REGEX_VALOR_DE = /^#valorde\s+(.+?)\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?)$/i;
-const REGEX_VALOR_LISTA_DE = /^#valorlistade\s+(.+?)\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?)$/i;
+const REGEX_COMPLEMENTO_NO_NOME = /^mensal(?:istas?)?\s*\+\s*(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?)\s*(.*)$/i;
+// #complementode riachuelo 5 — cada mensalista completa R$ 5 na lista aberta (0 tira)
+const REGEX_COMPLEMENTO_DE = /^#complementode\s+(.+?)\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?)$/i;
+const REGEX_VALOR_LISTA_DE =/^#valorlistade\s+(.+?)\s+(?:r\$\s*)?(\d{1,4}(?:[.,]\d{1,2})?)$/i;
 
 const nomeDo = (grupo) => grupo.nome || grupo.chat_id;
 
@@ -114,13 +117,18 @@ const abrirLista = comando(REGEX_ABRIR_LISTA_DE, async (msg, m) => {
   if (r.mensagem) return msg.reply(r.mensagem);
   const dataJogo = m[2];
   const valorCriacao = m[3] ? paraCentavos(m[3]) : null;
-  const nomeLista = m[4]?.trim() || null;
+  // "mensal+5" antes do nome: cada mensalista completa R$ 5 nesta lista
+  // (é assim que a agenda abre uma data especial)
+  const comMensal = (m[4] || '').trim().match(REGEX_COMPLEMENTO_NO_NOME);
+  const complemento = comMensal ? paraCentavos(comMensal[1]) : 0;
+  const nomeLista = (comMensal ? comMensal[2] : m[4])?.trim() || null;
   const nomeGrupo = nomeDo(r.grupo);
 
   const { ja_existia, lista } = pelada.criarLista(r.grupo.chat_id, dataJogo, nomeLista, valorCriacao);
   if (ja_existia) {
     return msg.reply(`Já existe lista pro dia ${dataJogo} em *${nomeGrupo}*. Vê com *#listade*.`);
   }
+  if (complemento) pelada.setarComplementoMensal(lista.id, complemento);
 
   // Anuncia direto no grupo da pelada — senão ninguém fica sabendo que abriu
   const anuncio = `✅ Lista ${nomeLista ? `*${nomeLista}* ` : ''}aberta pro dia *${dataJogo}*${
@@ -474,9 +482,28 @@ const valorListaDe = comando(REGEX_VALOR_LISTA_DE, async (msg, m) => {
   return msg.reply(`💰 Lista *${lista.data_jogo}* de *${nomeDo(r.grupo)}*: ${formatarReais(centavos)} por pessoa.`);
 });
 
+const complementoDe = comando(REGEX_COMPLEMENTO_DE, async (msg, m) => {
+  if (nomeEngoliuValor(m[1], m[2])) {
+    return msg.reply(`"${m[1]} ${m[2]}" parece ser o nome do grupo — faltou o valor. Ex: *#complementode ${m[1]} ${m[2]} 5*`);
+  }
+  const r = resolverGrupo(m[1]);
+  if (r.mensagem) return msg.reply(r.mensagem);
+  const lista = pelada.getListaMaisRecente(r.grupo.chat_id);
+  if (!lista) return msg.reply(`*${nomeDo(r.grupo)}* ainda não tem lista.`);
+  const centavos = paraCentavos(m[2]);
+  pelada.setarComplementoMensal(lista.id, centavos);
+  if (!centavos) {
+    return msg.reply(`➕ Lista *${lista.data_jogo}*: mensalista volta a ficar em dia só com o mês pago.`);
+  }
+  return msg.reply(
+    `➕ Lista *${lista.data_jogo}* de *${nomeDo(r.grupo)}*: cada mensalista completa ${formatarReais(centavos)}. ` +
+    `Quem tem o mês pago só fica em dia com o ➕ (Pix de ${formatarReais(centavos)} marca sozinho, ou *#pagode*), e a cobrança mostra "(+${formatarReais(centavos)})".`
+  );
+});
+
 module.exports = {
   comandos: [
-    abrirExtra, abrirLista, cobrarDe, cobrarSubiuDe, renomearDe, adicionarDe, removerDe,
+    abrirExtra, abrirLista, complementoDe, cobrarDe, cobrarSubiuDe, renomearDe, adicionarDe, removerDe,
     editarListaDe, reabrirListaDe, encerrarListaDe, cancelarListaDe, listaDe, pagosDe,
     pagoDe, naoPagoDe, valorDe, valorListaDe,
   ],
