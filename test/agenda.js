@@ -181,6 +181,20 @@ async function fluxo() {
     assert.strictEqual(r.arrecadadoCentavos, 500);
     assert.match(pelada.montarListaFormatada(feriado.id, '20/11'), /Marcel — Mensal ✅ ➕/);
   });
+  // Quem combinou pagar pelada a pelada (mensalista sem o mês pago): o ➕ é
+  // a lista inteira, não o complemento
+  const M3 = '5521933333333@c.us';
+  pelada.adicionarEntrada(feriado.id, 'Kamila', M3);
+  require('../src/nucleo/banco').db.prepare('UPDATE entradas SET mensalista = 1 WHERE lista_id = ? AND numero = ?').run(feriado.id, M3);
+  // (lista de mês que já virou conta como mês pago pra todo mundo — o teste
+  // rodando depois de nov/2026 cai nesse caso, e aí o ➕ dela é o complemento)
+  const mesDelaPago = pelada.mensalistaComMesPago(pelada.getLista(feriado.id))({ numero: M3 });
+  caso('mensalista sem o mês pago aparece devendo "(mês)"', () =>
+    assert.ok(pelada.resumoPagamentos(feriado.id).pendentes.includes(mesDelaPago ? 'Kamila (+R$ 5,00)' : 'Kamila (mês)')));
+  pelada.marcarPagoPorNumero(feriado.id, M3, true);
+  caso('➕ dela entra no caixa como R$ 17 (a pelada inteira)', () =>
+    assert.strictEqual(pelada.resumoPagamentos(feriado.id).arrecadadoCentavos, 500 + (mesDelaPago ? 500 : 1700)));
+
   await admin('#complementode riachuelo 0');
   caso('#complementode 0 tira: mês pago volta a bastar', () =>
     assert.deepStrictEqual(pelada.resumoPagamentos(feriado.id).pendentes, []));

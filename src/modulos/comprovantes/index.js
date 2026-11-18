@@ -156,6 +156,7 @@ async function processar(msg, grupo, ler, agora) {
     ehDoRemetente,
     nomesDoRemetente: remetenteNomes,
     valorMes: grupo.valor_mes_centavos || 0,
+    mesPago: pelada.mensalistaComMesPago(lista),
     agora,
   });
   if (decisao.acao === 'ignorar') return;

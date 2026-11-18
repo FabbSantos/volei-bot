@@ -391,9 +391,12 @@ function montarListaFormatada(listaId, dataJogo) {
 // o que já entrou em caixa não é reescrito
 function aplicarPago(entrada, listaId, pago) {
   const lista = getLista(listaId);
-  // Mensalista numa lista com complemento: o ➕ dele vale o complemento
-  const mensalista = db.prepare('SELECT mensalista FROM entradas WHERE id = ?').get(entrada.id)?.mensalista;
-  const valorDaVez = mensalista && lista?.complemento_mensal_centavos ? lista.complemento_mensal_centavos : (lista?.valor_centavos || 0);
+  // Mensalista de mês pago numa lista com complemento: o ➕ dele vale o
+  // complemento. Sem o mês pago (quem combinou pagar pelada a pelada), o ➕
+  // é a pelada inteira
+  const linha = db.prepare('SELECT mensalista, numero FROM entradas WHERE id = ?').get(entrada.id);
+  const soComplemento = linha?.mensalista && lista?.complemento_mensal_centavos && mensalistaComMesPago(lista)(linha);
+  const valorDaVez = soComplemento ? lista.complemento_mensal_centavos : (lista?.valor_centavos || 0);
   const valorPago = pago ? valorDaVez : 0;
   db.prepare('UPDATE entradas SET pago = ?, valor_pago_centavos = ? WHERE id = ?')
     .run(pago ? 1 : 0, valorPago, entrada.id);
@@ -581,6 +584,7 @@ function historico(chatId) {
 }
 
 module.exports = {
+  mensalistaComMesPago,
   quandoApagarLista,
   promoverEsperaDaListaAtiva,
   criarLista,
